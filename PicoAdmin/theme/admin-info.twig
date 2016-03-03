@@ -1,0 +1,15 @@
+{# You may overwrite this template by adding a admin-info.twig to your custom theme #}
+
+{% extends "index.twig" %}
+
+{% block stylesheets %}
+    {{ parent() }}
+
+    <style type="text/css">
+        .admin-token[data-token=""] {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}{% endblock %}

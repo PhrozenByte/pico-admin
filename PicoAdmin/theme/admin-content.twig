@@ -1,0 +1,14 @@
+{# You may overwrite this template by adding a admin-content.twig to your custom theme #}
+
+{% extends "index.twig" %}
+
+{% block documentTitle %}Pico Admin Login | {{ site_title }}{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+    <h2>This is going to be a 2-column layout</h2>
+    <p>... with a pages list on the left and the editor on the right.</p>
+
+    {{ parent() }}
+{% endblock %}
