@@ -1,0 +1,31 @@
+{
+    "name": "PhrozenByte/pico-admin",
+    "description": "This is Pico's official admin plugin. Pico is a stupidly simple, blazing fast, flat file CMS.",
+    "keywords": ["admin","pico","pico-plugin"],
+    "homepage": "http://picocms.org/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daniel Rudolf",
+            "homepage": "http://daniel-rudolf.de/",
+            "role": "Lead Developer"
+        },
+        {
+            "name": "The Pico Community",
+            "homepage": "https://github.com/PhrozenByte/pico-admin/graphs/contributors",
+            "role": "Contributors"
+        }
+    ],
+    "support": {
+        "docs": "http://picocms.org/docs/pico-admin/",
+        "issues": "https://github.com/PhrozenByte/pico-admin/issues",
+        "source": "https://github.com/PhrozenByte/pico-admin"
+    },
+    "require": {
+        "php": ">=5.3.7",
+        "ircmaxell/password-compat": "^1.0"
+    },
+    "autoload": {
+        "psr-0": { "PicoAdmin": "PicoAdmin/" }
+    }
+}
