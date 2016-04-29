@@ -1,12 +1,12 @@
 {# You may overwrite this template by adding a admin-info.twig to your custom theme #}
 
-{% extends "index.twig" %}
+{% extends "admin.twig" %}
 
 {% block stylesheets %}
     {{ parent() }}
 
     <style type="text/css">
-        .admin-token[data-token=""] {
+        .admin-auth-token[data-auth-token=""] {
             display: none;
         }
     </style>

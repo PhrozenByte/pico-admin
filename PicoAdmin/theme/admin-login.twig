@@ -1,6 +1,6 @@
 {# You may overwrite this template by adding a admin-login.twig to your custom theme #}
 
-{% extends "index.twig" %}
+{% extends "admin.twig" %}
 
 {% block documentTitle %}Pico Admin Login | {{ site_title }}{% endblock %}
 
@@ -8,22 +8,10 @@
 
 {% block content %}
     <form action="" method="post">
-        {# TODO: instead of using the password directly, protect the user's password
-                 from passive network sniffing by hashing it client-side once again
-                 using the auth_client_salt config variable #}
-        {% if admin_auth_plaintext %}
-            <p>
-                <strong>Warning:</strong> You transmitted your password in plain text.
-                This is highly discouraged! You are probably blocking/disabling JavaScript,
-                so your browser isn't able to hash the password client-side. You can't use
-                the admin panel without JavaScript anyway, so please enable JavaScript.
-            </p>
-        {% endif %}
-
         <fieldset>
             <legend>Pico Admin Login</legend>
 
-            <input type="password" name="auth_token{# password #}" placeholder="Password" />
+            <input type="password" name="password" placeholder="Password" />
             <input type="submit" value="Login" />
         </fieldset>
     </form>

@@ -26,9 +26,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
         if ($module === 'content') {
             switch ($action) {
                 case 'show':
+                default:
                     // TODO: $payload obviously needs to be validated...
-                    $this->action = $action;
-                    $this->page = $payload;
+                    $this->action = !empty($action) ? $action : 'show';
+                    $this->page = !empty($payload) ? $payload : 'index';
                     return;
             }
         }

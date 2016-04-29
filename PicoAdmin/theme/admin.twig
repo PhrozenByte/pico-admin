@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8" />
+
+    {% block documentHeader %}
+        <title>{% block title %}{% if meta.title %}{{ meta.title }} | {% endif %}Pico Admin Panel | {{ site_title }}{% endblock %}</title>
+        {% if meta.description %}
+            <meta name="description" content="{{ meta.description|striptags }}">
+        {% endif %}{% if meta.robots %}
+            <meta name="robots" content="{{ meta.robots }}">
+        {% endif %}
+    {% endblock %}
+
+    {% block stylesheets %}
+        <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,700" type="text/css" />
+        <link rel="stylesheet" href="{{ theme_url }}/style.css" type="text/css" />
+    {% endblock %}
+
+    {% block javascript %}
+        <script src="{{ theme_url }}/scripts/modernizr-2.6.1.min.js"></script>
+        {% if admin_auth_client_token %}
+            <script>
+                var AUTH_CLIENT_TOKEN = '{{ admin_auth_client_token|escape('js') }}';
+            </script>
+        {% endif %}
+    {% endblock %}
+</head>
+<body>
+
+    <header id="header">
+        <div class="inner clearfix">
+            <h1><a href="{{ "index"|link }}" id="logo">{{ site_title }}</a></h1>
+            {% block header %}
+                <nav>
+                    <a href="#" class="menu-icon"></a>
+                    <ul>
+                        {% block nav "" %}
+                    </ul>
+                </nav>
+            {% endblock %}
+        </div>
+    </header>
+
+    {% block pageContent %}
+        <section id="content">
+            <div class="inner">
+                {% block content content %}
+            </div>
+        </section>
+    {% endblock %}
+
+    <footer id="footer">
+        <div class="inner">
+            <a href="http://picocms.org/docs/pico-admin/">Pico Admin</a> is a plugin for <a href="http://picocms.org/">Pico</a>.
+            It was made by <a href="http://daniel-rudolf.de">Daniel Rudolf</a> and is maintained by
+            <a href="https://github.com/PhrozenByte/pico-admin/graphs/contributors">The Pico Community</a>.
+            Released under the <a href="https://github.com/PhrozenByte/pico-admin/blob/master/LICENSE">MIT license</a>.
+        </div>
+    </footer>
+
+</body>
+</html>
