@@ -13,12 +13,13 @@
     {% endblock %}
 
     {% block stylesheets %}
-        <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,700" type="text/css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" type="text/css" />
         <link rel="stylesheet" href="{{ theme_url }}/style.css" type="text/css" />
     {% endblock %}
 
     {% block javascript %}
         <script src="{{ theme_url }}/scripts/modernizr-2.6.1.min.js"></script>
+        <script src="{{ admin_theme_url }}/js/utils.js"></script>
         {% if admin_auth_client_token %}
             <script>
                 var AUTH_CLIENT_TOKEN = '{{ admin_auth_client_token|escape('js') }}';

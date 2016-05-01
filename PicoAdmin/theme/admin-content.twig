@@ -4,11 +4,56 @@
 
 {% block documentTitle %}Pico Admin Login | {{ site_title }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.css" type="text/css" />
+{% endblock %}
+
+{% block javascript %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        {# you can overwrite this global variable to modify the options of SimpleMDE in your theme #}
+        var simplemdeOptions = {{ config.PicoAdmin.PicoContentAdmin.SimpleMDE|json_encode }};
+
+        var simplemdeXhr = null;
+        utils.extend(simplemdeOptions, {
+            element: '#simplemde',
+            initialValue: '{{ current_page.raw_content|escape('js') }}',
+            previewRender: function(plainText, preview) {
+                if (simplemdeXhr !== null) {
+                    simplemdeXhr.abort();
+                }
+
+                simplemdeXhr = utils.ajax(
+                    '{{ ( "content/preview/" ~ current_page.id )|admin_link }}',
+                    {
+                        markdown: plainText,
+                        auth_client_token: AUTH_CLIENT_TOKEN
+                    },
+                    function (xhr, statusText, response) {
+                        preview.innerHTML = response;
+                    },
+                    function (xhr, statusText, response) {
+                        preview.innerHTML = 'Failed!';
+                    },
+                    function () {
+                        simplemdeXhr = null;
+                    }
+                );
+
+                return "Loading...";
+            }
+        });
+    </script>
+{% endblock %}
+
 {% block header %}{% endblock %}
 
 {% block content %}
-    <h2>This is going to be a 2-column layout</h2>
-    <p>... with a pages list on the left and the editor on the right.</p>
-
-    {{ parent() }}
+    <textarea id="simplemde"></textarea>
+    <script type="text/javascript">
+        simplemdeOptions.element = document.querySelector(simplemdeOptions.element);
+        var simplemde = new SimpleMDE(simplemdeOptions);
+    </script>
 {% endblock %}

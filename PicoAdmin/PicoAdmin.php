@@ -9,6 +9,8 @@ class PicoAdmin extends AbstractPicoPlugin
     protected $authenticated = false;
     protected $authenticationRequired = false;
 
+    protected $adminThemeUrl;
+
     private $authClientToken;
 
     /**
@@ -152,7 +154,11 @@ class PicoAdmin extends AbstractPicoPlugin
 
     public function onContentPrepared(&$content)
     {
-        $content = str_replace('%admin_url%', $this->getPageUrl($this->getPluginConfig('url')), $content);
+        $variables = array();
+        $variables['%admin_url%'] = rtrim($this->getPageUrl($this->getPluginConfig('url')), '/');
+        $variables['%admin_theme_url%'] = rtrim($this->getAdminThemeUrl(), '/');
+
+        $content = str_replace(array_keys($variables), $variables, $content);
     }
 
     public function onPageRendering(Twig_Environment &$twig, array &$twigVariables, &$templateName)
@@ -169,12 +175,17 @@ class PicoAdmin extends AbstractPicoPlugin
             $templateName = 'admin-' . $this->requestModule . '.twig';
         }
 
+        // register admin_link filter
+        $twig->addFilter(new Twig_SimpleFilter('admin_link', array($this, 'getAdminPageUrl')));
+
+        // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
         if ($this->authenticationRequired && !$this->authenticated) {
-            // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
             header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
         }
 
-        $twigVariables['admin_url'] = $this->getPluginConfig('url');
+        // register variables
+        $twigVariables['admin_url'] = rtrim($this->getPageUrl($this->getPluginConfig('url')));
+        $twigVariables['admin_theme_url'] = rtrim($this->getAdminThemeUrl(), '/');
 
         $twigVariables['admin_request'] = array(
             'module' => $this->requestModule,
@@ -252,5 +263,28 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         return ($result === 0);
+    }
+
+    public function getAdminPageUrl($page, $queryData = null)
+    {
+        $page = !empty($page) ? $this->getPluginConfig('url') . '/' . $page : $this->getPluginConfig('url');
+        return $this->getPageUrl($page, $queryData);
+    }
+
+    public function getAdminThemeUrl()
+    {
+        if (!empty($this->adminThemeUrl)) {
+            return $this->adminThemeUrl;
+        }
+
+        $basePath = dirname($_SERVER['SCRIPT_FILENAME']) . '/';
+        $basePathLength = strlen($basePath);
+        if (substr(__DIR__, 0, $basePathLength) === $basePath) {
+            $this->adminThemeUrl = $this->getBaseUrl() . substr(__DIR__, $basePathLength) . '/theme/';
+        } else {
+            $this->adminThemeUrl = $this->getBaseUrl() . 'plugins/PicoAdmin/theme/';
+        }
+
+        return $this->adminThemeUrl;
     }
 }
