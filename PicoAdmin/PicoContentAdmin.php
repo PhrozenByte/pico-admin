@@ -96,6 +96,13 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onContentLoaded(&$rawContent)
     {
         switch ($this->action) {
+            case 'edit':
+                // replace C-style block comments of meta data with a YAML frontmatter
+                $pattern = "/^\/\*[[:blank:]]*(?:\r)?\n"
+                    . "(?:(.*?)(?:\r)?\n)?\*\/[[:blank:]]*(?:(?:\r)?\n|$)/s";
+                $rawContent = preg_replace($pattern, "---\n\$1\n---\n", $rawContent);
+                break;
+
             case 'preview':
                 $rawContent = $this->previewContent;
                 break;
