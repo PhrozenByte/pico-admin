@@ -1,6 +1,12 @@
 ---
-Title: Welcome
+Title: Pico Admin
 ---
+
+<style type="text/css">
+    .admin-auth-token[data-auth-token=""] {
+        display: none;
+    }
+</style>
 
 ## Welcome to Pico's admin panel
 

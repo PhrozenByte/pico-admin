@@ -130,6 +130,10 @@ class PicoAdmin extends AbstractPicoPlugin
             case 'info':
                 $file = __DIR__ . '/content/info.md';
                 break;
+
+            case 'login':
+                $file = __DIR__ . '/content/login.md';
+                break;
         }
     }
 
@@ -145,10 +149,6 @@ class PicoAdmin extends AbstractPicoPlugin
                     $meta['admin_auth_client_salt'] = $this->generateAuthClientSalt();
                 }
                 break;
-
-            case 'login':
-                $meta['title'] = 'Login';
-                break;
         }
     }
 
@@ -163,16 +163,9 @@ class PicoAdmin extends AbstractPicoPlugin
 
     public function onPageRendering(Twig_Environment &$twig, array &$twigVariables, &$templateName)
     {
+        // fallback to frontend theme
         if (($this->requestModule === 'info') || ($this->requestModule === 'login')) {
-            // reset "404 Not Found" header
-            // TODO (Pico 2.0): skip the appropriate events instead
-            header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
-
-            // use plugin-specific templates
-            // Note: you can replace all admin templates by adding
-            // a equally named template to your custom theme (e.g. admin-login.twig)
-            $twig->getLoader()->addPath(__DIR__ . '/theme');
-            $templateName = 'admin-' . $this->requestModule . '.twig';
+            return;
         }
 
         // register admin_link filter
