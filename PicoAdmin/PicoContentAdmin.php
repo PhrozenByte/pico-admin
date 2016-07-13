@@ -67,15 +67,21 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onAdminRequest(PicoAdmin $admin, &$module, &$action, &$payload)
     {
         $this->admin = $admin;
-        $this->action = !empty($action) ? $action : 'edit';
-        $this->page = !empty($payload) ? $payload : 'index';
 
         if ($module === 'content') {
-            switch ($action) {
-                default:
-                    $action = $this->action;
-                    break;
+            if (empty($action)) {
+                $this->action = 'edit';
+                $this->page = !empty($payload) ? $payload : 'index';
 
+                header('307 Temporary Redirect');
+                header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
+                die();
+            } else {
+                $this->action = $action;
+                $this->page = $payload;
+            }
+
+            switch ($this->action) {
                 case 'preview':
                     $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
                     $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
@@ -167,13 +173,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
         foreach ($rawFiles as $file) {
             $id = substr($file, $contentDirLength, -$contentExtLength);
 
-            $files[$id] = array(
-                'id' => $id,
-                'path' => dirname($id),
-                'fileName' => basename($id),
-                'title' => isset($pages[$id]) ? $pages[$id]['title'] : null,
-                'children' => array()
-            );
+            if (!isset($files[$id])) {
+                $files[$id] = array(
+                    'id' => $id,
+                    'path' => dirname($id),
+                    'fileName' => basename($id),
+                    'title' => isset($pages[$id]) ? $pages[$id]['title'] : null,
+                    'children' => array()
+                );
+            } else {
+                // conflicting "sub.md" although "sub/index.md" exists
+                $files[$id]['id'] = $id;
+                $files[$id]['title'] = isset($pages[$id]) ? $pages[$id]['title'] : null;
+            }
 
             do {
                 $parentId = dirname($id);

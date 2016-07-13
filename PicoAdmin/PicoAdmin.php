@@ -261,7 +261,7 @@ class PicoAdmin extends AbstractPicoPlugin
     public function getAdminPageUrl($page, $queryData = null)
     {
         $page = !empty($page) ? $this->getPluginConfig('url') . '/' . $page : $this->getPluginConfig('url');
-        return $this->getPageUrl($page, $queryData);
+        return $this->getPageUrl($page, $queryData, false);
     }
 
     public function getAdminThemeUrl()
