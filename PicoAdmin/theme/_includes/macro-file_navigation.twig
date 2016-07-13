@@ -15,7 +15,7 @@
                     {% if file.fileName == '404' %}
                         <span class="fa fa-file-o fa-li" aria-hidden="true"></span>
                     {% else %}
-                        <span class="fa fa-file{% if files.index.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
+                        <span class="fa fa-file{% if file.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
                     {% endif %}
                     {% if file.path != '.' %}{{ file.path }}/{% endif %}<strong>{{ file.fileName }}</strong>{{ ext }}
                 </a>
