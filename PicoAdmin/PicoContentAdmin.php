@@ -119,7 +119,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
-                    . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*(?:(?:\r)?\n(.*?))?|(.*?))$/s";
+                    . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
+                    . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
                 if (preg_match($pattern, $rawContent, $rawMetaMatches)) {
                     $this->yamlContent = isset($rawMetaMatches[3]) ? $rawMetaMatches[3] : '';
                     $this->markdownContent = isset($rawMetaMatches[5]) ? $rawMetaMatches[5] : (isset($rawMetaMatches[4]) ? $rawMetaMatches[4] : '');
