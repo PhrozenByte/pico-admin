@@ -108,6 +108,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
+            case 'open':
             case 'preview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 break;
@@ -118,6 +119,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
+            case 'open':
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
                     . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
@@ -150,8 +152,20 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
                 $twigVariables['yaml_content'] = $this->yamlContent;
                 $twigVariables['markdown_content'] = $this->markdownContent;
-
                 $twigVariables['file_navigation'] = $this->getFileNavigation();
+                break;
+
+            case 'open':
+                $meta = $this->getFileMeta();
+
+                header('Content-Type: application/json; charset=UTF-8');
+                $templateName = 'admin-ajax.twig';
+
+                $twigVariables['json'] = array(
+                    'yaml' => $this->yamlContent,
+                    'markdown' => $this->markdownContent,
+                    'title' => $this->page . (isset($meta['title']) ? ' (' . $meta['title'] . ')' : '')
+                );
                 break;
 
             case 'preview':

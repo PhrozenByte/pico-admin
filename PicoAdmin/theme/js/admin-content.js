@@ -7,11 +7,41 @@ function PicoContentAdmin(authToken, baseUrl) {
     this.markdownEditorOptions = null;
     this.markdownEditor = null;
 
+    this.navigation = null;
+    this.currentPage = null;
+    this.titleTemplate = null;
+
+    this.openXhr = null;
     this.previewXhr = null;
 }
 
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
 PicoContentAdmin.prototype.constructor = PicoAdmin;
+
+PicoContentAdmin.prototype.navigateTo = function (page, callback) {
+    this.requestOpen(page, (function (xhr, statusText, response) {
+        var title = this.titleTemplate.replace('{1}', response.title);
+        this.update(page, title, response.yaml, response.markdown);
+        if (callback) callback(xhr, statusText, response);
+    }).bind(this));
+};
+
+PicoContentAdmin.prototype.requestOpen = function (page, success, error) {
+    if (this.openXhr !== null) {
+        this.openXhr.abort();
+    }
+
+    this.openXhr = this.ajax('content', 'open', page, {
+        responseType: 'json',
+        success: success,
+        error: error,
+        complete: (function () {
+            this.openXhr = null;
+        }).bind(this)
+    });
+
+    return this.openXhr;
+};
 
 PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error) {
     if (this.previewXhr !== null) {
@@ -31,6 +61,28 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
     });
 
     return this.previewXhr;
+};
+
+PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
+    this.currentPage = page;
+
+    // update page title
+    document.title = title;
+
+    // update navigation
+    var activeNavigationItem = this.getNavigation().querySelector('li.active');
+    if (activeNavigationItem) activeNavigationItem.classList.remove('active');
+
+    var navigationItem = this.getNavigation().querySelector('li[data-id="' + page + '"]');
+    if (navigationItem) navigationItem.classList.add('active');
+
+    // update YAML editor
+    this.getYamlEditor().setValue(yaml);
+    this.getYamlEditor().save();
+
+    // update Markdown editor
+    this.getMarkdownEditor().codemirror.setValue(markdown);
+    this.getMarkdownEditor().codemirror.save();
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
@@ -172,4 +224,68 @@ PicoContentAdmin.prototype.getMarkdownEditor = function () {
 
 PicoContentAdmin.prototype.getMarkdownEditorElement = function () {
     return (this.markdownEditor !== null) ? this.markdownEditor.element : null;
+};
+
+PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate) {
+    this.navigation = element;
+    this.currentPage = currentPage;
+    this.titleTemplate = titleTemplate;
+
+    // update navigation
+    var navigationItem = element.querySelector('li[data-id="' + currentPage + '"]');
+    if (navigationItem) navigationItem.classList.add('active');
+
+    // restore old editor states when navigating back/forward
+    // without the need of reloading the page
+    window.addEventListener('popstate', (function (event) {
+        if (event.state.PicoContentAdmin !== undefined) {
+            this.update(
+                event.state.PicoContentAdmin.page,
+                event.state.PicoContentAdmin.title,
+                event.state.PicoContentAdmin.yaml,
+                event.state.PicoContentAdmin.markdown
+            );
+        }
+    }).bind(this));
+
+    // clickable navigation items
+    utils.forEach(element.querySelectorAll('li > a'), (function (_, anchor) {
+        var page = anchor.parentNode.dataset.id,
+            path = anchor.href.replace(/^(?:https?:\/\/[^/]+(?:\/|$))?/, '');
+
+        anchor.addEventListener('click', (function (event) {
+            event.preventDefault();
+
+            // before navigating to the new page,
+            // store the current page data to allow fast back navigation
+            window.history.replaceState({
+                PicoContentAdmin: {
+                    page: currentPage,
+                    title: document.title,
+                    yaml: this.getYamlEditorElement().value,
+                    markdown: this.getMarkdownEditorElement().value
+                }
+            }, document.title, '/' + this.getBaseUrlPath() + '/content/edit/' + currentPage);
+
+            this.navigateTo(page, (function (xhr, statusText, response) {
+                // update browser history
+                window.history.pushState({
+                    PicoContentAdmin: {
+                        page: page,
+                        title: document.title,
+                        yaml: response.yaml,
+                        markdown: response.markdown
+                    }
+                }, document.title, path);
+            }).bind(this));
+        }).bind(this));
+    }).bind(this));
+};
+
+PicoContentAdmin.prototype.getNavigation = function () {
+    return this.navigation;
+};
+
+PicoContentAdmin.prototype.getCurrentPage = function () {
+    return this.currentPage;
 };
