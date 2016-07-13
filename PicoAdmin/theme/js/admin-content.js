@@ -1,5 +1,5 @@
-function PicoContentAdmin(authToken, urlTemplate) {
-    PicoAdmin.call(this, authToken, urlTemplate);
+function PicoContentAdmin(authToken, baseUrl) {
+    PicoAdmin.call(this, authToken, baseUrl);
 
     this.yamlEditorOptions = null;
     this.yamlEditor = null;
@@ -37,13 +37,17 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
     if (typeof element === 'string') element = document.querySelector(element);
     if (!utils.isPlainObject(options)) options = {};
 
+    // prepare CodeMirror options
     utils.extend(options, {
         element: element,
         mode: 'yaml'
     });
 
+    // init CodeMirror
     this.yamlEditorOptions = options;
     this.yamlEditor = new CodeMirror.fromTextArea(element, options);
+
+    // autosave changes
     this.yamlEditor.on('change', function (editor) { editor.save(); });
 
     return this.yamlEditor;
@@ -53,10 +57,15 @@ PicoContentAdmin.prototype.getYamlEditor = function () {
     return this.yamlEditor;
 };
 
+PicoContentAdmin.prototype.getYamlEditorElement = function () {
+    return (this.yamlEditor !== null) ? this.yamlEditor.getTextArea() : null;
+};
+
 PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     if (typeof element === 'string') element = document.querySelector(element);
     if (!utils.isPlainObject(options)) options = {};
 
+    // prepare SimpleMDE options
     utils.extend(options, {
         element: element,
         previewRender: (function (plainText, preview) {
@@ -82,6 +91,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         }).bind(this)
     });
 
+    // user extends/overwrites default shortcuts
     options.shortcuts = utils.extend({
         'toggleBold': 'Cmd-B',
         'toggleItalic': 'Cmd-I',
@@ -107,6 +117,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         'toggleFullScreen': null
     }, options.shortcuts || {});
 
+    // allow user to configure toolbar with button identifiers
     if (options.toolbar) {
         var toolbarButtons = [],
             builtInToolbarButtons = {
@@ -137,8 +148,10 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
 
         utils.forEach(options.toolbar, function (_, button) {
             if ((typeof button === 'string') && (builtInToolbarButtons[button] !== undefined)) {
+                // built-in toolbar button
                 toolbarButtons.push(utils.extend({ name: button }, builtInToolbarButtons[button]));
             } else {
+                // new toolbar button or a separator
                 toolbarButtons.push(button);
             }
         });
@@ -146,6 +159,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         options.toolbar = toolbarButtons;
     }
 
+    // init SimpleMDE
     this.markdownEditorOptions = options;
     this.markdownEditor = new SimpleMDE(options);
 
@@ -154,4 +168,8 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
 
 PicoContentAdmin.prototype.getMarkdownEditor = function () {
     return this.markdownEditor;
+};
+
+PicoContentAdmin.prototype.getMarkdownEditorElement = function () {
+    return (this.markdownEditor !== null) ? this.markdownEditor.element : null;
 };
