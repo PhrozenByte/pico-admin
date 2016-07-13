@@ -30,11 +30,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onConfigLoaded(array &$config)
     {
         $defaultPluginConfig = array(
-            'SimpleMDE' => array(
+            'yamlEditor' => array(),
+            'markdownEditor' => array(
                 'autofocus' => true,
                 'indentWithTabs' => true,
                 'tabSize' => 4,
-                'spellChecker' => false
+                'spellChecker' => false,
+                'toolbar' => array(
+                    'bold', 'italic', 'heading',
+                    '|', 'code', 'quote', 'unordered-list', 'ordered-list',
+                    '|', 'link', 'image', 'table', 'horizontal-rule',
+                    '|', 'undo', 'redo',
+                    '|', 'preview'
+                )
             )
         );
 
@@ -45,8 +53,12 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
         $pluginConfig = &$config['PicoAdmin']['PicoContentAdmin'];
 
-        if (isset($pluginConfig['SimpleMDE']) && is_array($pluginConfig['SimpleMDE'])) {
-            $pluginConfig['SimpleMDE'] += $defaultPluginConfig['SimpleMDE'];
+        if (isset($pluginConfig['yamlEditor']) && is_array($pluginConfig['yamlEditor'])) {
+            $pluginConfig['yamlEditor'] += $defaultPluginConfig['yamlEditor'];
+        }
+
+        if (isset($pluginConfig['markdownEditor']) && is_array($pluginConfig['markdownEditor'])) {
+            $pluginConfig['markdownEditor'] += $defaultPluginConfig['markdownEditor'];
         }
 
         $pluginConfig += $defaultPluginConfig;

@@ -5,27 +5,12 @@
 
     {% block documentHeader %}
         <title>{% block title %}{% if meta.title %}{{ meta.title }} | {% endif %}Pico Admin Panel | {{ site_title }}{% endblock %}</title>
-        {% if meta.description %}
-            <meta name="description" content="{{ meta.description|striptags }}">
-        {% endif %}{% if meta.robots %}
-            <meta name="robots" content="{{ meta.robots }}">
-        {% endif %}
+        <meta name="robots" content="noindex,nofollow">
     {% endblock %}
 
     {% block stylesheets %}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans:400,700" type="text/css" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400" type="text/css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans:400,700|Droid+Sans+Mono" type="text/css" />
         <link rel="stylesheet" href="{{ admin_theme_url }}/css/admin.css" type="text/css" />
-    {% endblock %}
-
-    {% block javascript %}
-        <script src="{{ theme_url }}/scripts/modernizr-2.6.1.min.js"></script>
-        <script src="{{ admin_theme_url }}/js/admin.js"></script>
-        {% if admin_auth_client_token %}
-            <script>
-                var AUTH_CLIENT_TOKEN = '{{ admin_auth_client_token|escape('js') }}';
-            </script>
-        {% endif %}
     {% endblock %}
 </head>
 <body>
@@ -53,6 +38,10 @@
                 Released under the <a href="https://github.com/PhrozenByte/pico-admin/blob/master/LICENSE">MIT license</a>.
             </p>
         </footer>
+    {% endblock %}
+
+    {% block javascript %}
+        <script src="{{ admin_theme_url }}/js/admin.js"></script>
     {% endblock %}
 
 </body>

@@ -28,7 +28,6 @@ body, main > aside { flex-direction: column; }
 
 main {
     flex: 1 0 auto;
-    width: 100vw;
     overflow-x: auto;
 }
 main > section { flex: 2 1 auto; }
