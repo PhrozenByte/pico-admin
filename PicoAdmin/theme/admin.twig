@@ -13,13 +13,14 @@
     {% endblock %}
 
     {% block stylesheets %}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" type="text/css" />
-        <link rel="stylesheet" href="{{ theme_url }}/style.css" type="text/css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans:400,700" type="text/css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400" type="text/css" />
+        <link rel="stylesheet" href="{{ admin_theme_url }}/css/admin.css" type="text/css" />
     {% endblock %}
 
     {% block javascript %}
         <script src="{{ theme_url }}/scripts/modernizr-2.6.1.min.js"></script>
-        <script src="{{ admin_theme_url }}/js/utils.js"></script>
+        <script src="{{ admin_theme_url }}/js/admin.js"></script>
         {% if admin_auth_client_token %}
             <script>
                 var AUTH_CLIENT_TOKEN = '{{ admin_auth_client_token|escape('js') }}';
@@ -29,36 +30,30 @@
 </head>
 <body>
 
-    <header id="header">
-        <div class="inner clearfix">
-            <h1><a href="{{ "index"|link }}" id="logo">{{ site_title }}</a></h1>
-            {% block header %}
+    {% block page %}
+        <main>
+            <aside>
+                <h1><a href="{{ "index"|link }}">{{ site_title }}</a></h1>
                 <nav>
-                    <a href="#" class="menu-icon"></a>
-                    <ul>
-                        {% block nav "" %}
-                    </ul>
+                    <h2 class="sr-only">Navigation</h2>
+                    {% block nav "" %}
                 </nav>
-            {% endblock %}
-        </div>
-    </header>
+            </aside>
 
-    {% block pageContent %}
-        <section id="content">
-            <div class="inner">
+            <section id="content">
                 {% block content content %}
-            </div>
-        </section>
-    {% endblock %}
+            </section>
+        </main>
 
-    <footer id="footer">
-        <div class="inner">
-            <a href="http://picocms.org/docs/pico-admin/">Pico Admin</a> is a plugin for <a href="http://picocms.org/">Pico</a>.
-            It was made by <a href="http://daniel-rudolf.de">Daniel Rudolf</a> and is maintained by
-            <a href="https://github.com/PhrozenByte/pico-admin/graphs/contributors">The Pico Community</a>.
-            Released under the <a href="https://github.com/PhrozenByte/pico-admin/blob/master/LICENSE">MIT license</a>.
-        </div>
-    </footer>
+        <footer>
+            <p>
+                <a href="http://picocms.org/docs/pico-admin/">Pico Admin</a> is a plugin for <a href="http://picocms.org/">Pico</a>.
+                It was made by <a href="http://daniel-rudolf.de">Daniel Rudolf</a> and is maintained by
+                <a href="https://github.com/PhrozenByte/pico-admin/graphs/contributors">The Pico Community</a>.
+                Released under the <a href="https://github.com/PhrozenByte/pico-admin/blob/master/LICENSE">MIT license</a>.
+            </p>
+        </footer>
+    {% endblock %}
 
 </body>
 </html>

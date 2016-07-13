@@ -1,59 +1,65 @@
 {# You may overwrite this template by adding a admin-content.twig to your custom theme #}
 
 {% extends "admin.twig" %}
-
-{% block documentTitle %}Pico Admin Login | {{ site_title }}{% endblock %}
+{% from "_includes/macro-file_navigation.twig" import file_navigation %}
 
 {% block stylesheets %}
     {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontawesome/4.6/css/font-awesome.min.css" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.css" type="text/css" />
+    <link rel="stylesheet" href="{{ admin_theme_url }}/css/admin-content.css" type="text/css" />
 {% endblock %}
 
 {% block javascript %}
     {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/g/codemirror@4(codemirror.min.js+mode/yaml/yaml.js)" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.js" type="text/javascript"></script>
+
     <script type="text/javascript">
         {# you can overwrite this global variable to modify the options of SimpleMDE in your theme #}
         var simplemdeOptions = {{ config.PicoAdmin.PicoContentAdmin.SimpleMDE|json_encode }};
+        var simplemdePreviewUrl = '{{ ( "content/preview/" ~ current_page.id )|admin_link|escape('js') }}';
+    </script>
 
-        var simplemdeXhr = null;
-        utils.extend(simplemdeOptions, {
-            element: '#simplemde',
-            initialValue: '{{ current_page.raw_content|escape('js') }}',
-            previewRender: function(plainText, preview) {
-                if (simplemdeXhr !== null) {
-                    simplemdeXhr.abort();
-                }
+    <script src="{{ admin_theme_url }}/js/admin-content.js" type="text/javascript"></script>
+{% endblock %}
 
-                simplemdeXhr = utils.ajax(
-                    '{{ ( "content/preview/" ~ current_page.id )|admin_link }}',
-                    {
-                        markdown: plainText,
-                        auth_client_token: AUTH_CLIENT_TOKEN
-                    },
-                    function (xhr, statusText, response) {
-                        preview.innerHTML = response;
-                    },
-                    function (xhr, statusText, response) {
-                        preview.innerHTML = 'Failed!';
-                    },
-                    function () {
-                        simplemdeXhr = null;
-                    }
-                );
+{% block content %}
+    <div class="yamlContainer">
+        <textarea>{{ yaml_content|escape('html') }}</textarea>
+    </div>
 
-                return "Loading...";
-            }
+    <div class="markdownContainer">
+        <textarea>{{ markdown_content|escape('html') }}</textarea>
+    </div>
+
+    <script type="text/javascript">
+        simplemdeOptions.element = document.querySelector(simplemdeOptions.element);
+        simplemdeOptions.yamlElement = document.querySelector(simplemdeOptions.yamlElement);
+
+        var markdownEditor, yamlEditor;
+        window.requestAnimationFrame(function () {
+            markdownEditor = new SimpleMDE(simplemdeOptions);
+
+            var content = document.getElementById('content');
+            content.insertBefore(markdownEditor.gui.toolbar, content.firstChild);
+
+            var footer = document.querySelector('footer');
+            footer.insertBefore(markdownEditor.gui.statusbar, footer.firstChild);
+        });
+
+        window.requestAnimationFrame(function () {
+            yamlEditor = new CodeMirror.fromTextArea(simplemdeOptions.yamlElement, { mode: 'yaml' });
+            yamlEditor.on('change', function (editor) { editor.save(); });
         });
     </script>
 {% endblock %}
 
-{% block header %}{% endblock %}
-
-{% block content %}
-    <textarea id="simplemde"></textarea>
-    <script type="text/javascript">
-        simplemdeOptions.element = document.querySelector(simplemdeOptions.element);
-        var simplemde = new SimpleMDE(simplemdeOptions);
-    </script>
+{% block nav %}
+    {% if file_navigation['.'] is defined %}
+        <h3>Pico Content Admin</h3>
+        <ul class="fa-ul">
+            {{ file_navigation(file_navigation['.']['children'], config.content_ext) }}
+        </ul>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,33 @@
+{% macro file_navigation(files, ext) %}
+    {% from _self import file_navigation %}
+    {% if files.index is defined %}
+        <li data-file-name="index">
+            <a href="#{{ files.index.id|escape('html_attr') }}"{% if files.index.title %} title="{{ files.index.title|escape('html_attr') }}"{% endif %}>
+                <span class="fa fa-file{% if files.index.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
+                {% if files.index.path != '.' %}{{ files.index.path }}/{% endif %}<strong>index</strong>{{ ext }}
+            </a>
+        </li>
+    {% endif %}
+    {% for file in files if file.fileName != 'index' %}
+        <li data-file-name="{{ file.fileName }}">
+            {% if file.id %}
+                <a href="#{{ file.id|escape('html_attr') }}"{% if file.title %} title="{{ file.title|escape('html_attr') }}"{% endif %}>
+                    {% if file.fileName == '404' %}
+                        <span class="fa fa-file-o fa-li" aria-hidden="true"></span>
+                    {% else %}
+                        <span class="fa fa-file{% if files.index.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
+                    {% endif %}
+                    {% if file.path != '.' %}{{ file.path }}/{% endif %}<strong>{{ file.fileName }}</strong>{{ ext }}
+                </a>
+            {% else %}
+                <span class="fa fa-folder-o fa-li" aria-hidden="true"></span>
+                <span>{{ file.fileName }}/</span>
+            {% endif %}
+            {% if file.children %}
+                <ul class="fa-ul">
+                    {{ file_navigation(file.children, ext) }}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+{% endmacro %}

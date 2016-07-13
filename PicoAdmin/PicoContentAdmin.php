@@ -19,7 +19,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
     protected $action;
     protected $page;
 
-    protected $previewContent;
+    protected $yamlContent;
+    protected $markdownContent;
 
     /**
      * Bootstrap the plugin's default configuration
@@ -32,7 +33,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
             'SimpleMDE' => array(
                 'autofocus' => true,
                 'indentWithTabs' => true,
-                'tabSize' => 4
+                'tabSize' => 4,
+                'spellChecker' => false
             )
         );
 
@@ -63,7 +65,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     break;
 
                 case 'preview':
-                    $this->previewContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
+                    $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
+                    $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
                     break;
             }
 
@@ -97,14 +100,20 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
-                // replace C-style block comments of meta data with a YAML frontmatter
-                $pattern = "/^\/\*[[:blank:]]*(?:\r)?\n"
-                    . "(?:(.*?)(?:\r)?\n)?\*\/[[:blank:]]*(?:(?:\r)?\n|$)/s";
-                $rawContent = preg_replace($pattern, "---\n\$1\n---\n", $rawContent);
+                $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
+                    . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*(?:(?:\r)?\n(.*?))?|(.*?))$/s";
+                if (preg_match($pattern, $rawContent, $rawMetaMatches)) {
+                    $this->yamlContent = isset($rawMetaMatches[3]) ? $rawMetaMatches[3] : '';
+                    $this->markdownContent = isset($rawMetaMatches[5]) ? $rawMetaMatches[5] : (isset($rawMetaMatches[4]) ? $rawMetaMatches[4] : '');
+                }
                 break;
 
             case 'preview':
-                $rawContent = $this->previewContent;
+                $rawContent = '';
+                if (!empty($this->yamlContent)) {
+                    $rawContent .= "---\n" . $this->yamlContent . "\n---\n\n";
+                }
+                $rawContent .= $this->markdownContent;
                 break;
         }
     }
@@ -119,11 +128,59 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
                 $templateName = 'admin-content.twig';
+
+                $twigVariables['yaml_content'] = $this->yamlContent;
+                $twigVariables['markdown_content'] = $this->markdownContent;
+
+                $twigVariables['file_navigation'] = $this->getFileNavigation();
                 break;
 
             case 'preview':
                 $templateName = 'admin-content-preview.twig';
                 break;
         }
+    }
+
+    protected function getFileNavigation()
+    {
+        $contentDir = $this->getConfig('content_dir');
+        $contentDirLength = strlen($contentDir);
+        $contentExt = $this->getConfig('content_ext');
+        $contentExtLength = strlen($contentExt);
+
+        $pages = $this->getPages();
+
+        $files = array();
+        $rawFiles = $this->getFiles($contentDir, $contentExt);
+        foreach ($rawFiles as $file) {
+            $id = substr($file, $contentDirLength, -$contentExtLength);
+
+            $files[$id] = array(
+                'id' => $id,
+                'path' => dirname($id),
+                'fileName' => basename($id),
+                'title' => isset($pages[$id]) ? $pages[$id]['title'] : null,
+                'children' => array()
+            );
+
+            do {
+                $parentId = dirname($id);
+                $fileName = basename($id);
+
+                if (!isset($files[$parentId])) {
+                    $files[$parentId] = array(
+                        'path' => dirname($parentId),
+                        'fileName' => basename($parentId),
+                        'children' => array($fileName => &$files[$id])
+                    );
+                } elseif (!isset($files[$parentId]['children'][$fileName])) {
+                    $files[$parentId]['children'][$fileName] = &$files[$id];
+                }
+
+                $id = $parentId;
+            } while ($parentId !== '.');
+        }
+
+        return $files;
     }
 }

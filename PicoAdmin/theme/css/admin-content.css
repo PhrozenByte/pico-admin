@@ -1,0 +1,50 @@
+#content,
+.markdownContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.markdownContainer,
+.markdownContainer .CodeMirror {
+    flex: 1 0 auto;
+}
+
+.yamlContainer .CodeMirror {
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 0.92rem;
+}
+
+.editor-toolbar,
+.CodeMirror {
+    border: 0 none;
+    border-left: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    border-radius: 0;
+}
+
+.CodeMirror,
+.CodeMirror-scroll {
+    min-height: 0;
+}
+
+aside nav ul li > * {
+    color: #444;
+    cursor: default;
+}
+aside nav ul li:hover > * { color: #2EAE9B; }
+
+aside nav ul li > a {
+    display: block;
+    cursor: pointer;
+}
+
+aside nav ul li .fa { color: #444; }
+aside nav ul li[data-file-name="index"] .fa { color: #009; }
+aside nav ul li[data-file-name="404"] .fa { color: #900; }
+
+footer .editor-statusbar {
+    float: right;
+    padding: 0;
+    font-size: 0.85rem;
+    color: #C0C0C0;
+}
