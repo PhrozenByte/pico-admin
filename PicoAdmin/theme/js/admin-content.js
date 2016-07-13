@@ -76,13 +76,9 @@ PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
     var navigationItem = this.getNavigation().querySelector('li[data-id="' + page + '"]');
     if (navigationItem) navigationItem.classList.add('active');
 
-    // update YAML editor
-    this.getYamlEditor().setValue(yaml);
-    this.getYamlEditor().save();
-
-    // update Markdown editor
-    this.getMarkdownEditor().codemirror.setValue(markdown);
-    this.getMarkdownEditor().codemirror.save();
+    // update content
+    this.setYaml(yaml);
+    this.setMarkdown(markdown);
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
@@ -90,7 +86,7 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
     if (!utils.isPlainObject(options)) options = {};
 
     // prepare CodeMirror options
-    utils.extend(options, {
+    options = utils.extend({ forceSync: false }, options, {
         element: element,
         mode: 'yaml'
     });
@@ -99,8 +95,10 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
     this.yamlEditorOptions = options;
     this.yamlEditor = new CodeMirror.fromTextArea(element, options);
 
-    // autosave changes
-    this.yamlEditor.on('change', function (editor) { editor.save(); });
+    // force syncing all changes
+    if (options.forceSync) {
+        this.yamlEditor.on('change', function (editor) { editor.save(); });
+    }
 
     return this.yamlEditor;
 };
@@ -109,8 +107,15 @@ PicoContentAdmin.prototype.getYamlEditor = function () {
     return this.yamlEditor;
 };
 
-PicoContentAdmin.prototype.getYamlEditorElement = function () {
-    return (this.yamlEditor !== null) ? this.yamlEditor.getTextArea() : null;
+PicoContentAdmin.prototype.getYaml = function () {
+    return (this.yamlEditor !== null) ? this.yamlEditor.getValue() : null;
+};
+
+PicoContentAdmin.prototype.setYaml = function (value) {
+    if (this.yamlEditor !== null) {
+        this.yamlEditor.setValue(value);
+        this.yamlEditor.save();
+    }
 };
 
 PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
@@ -222,8 +227,15 @@ PicoContentAdmin.prototype.getMarkdownEditor = function () {
     return this.markdownEditor;
 };
 
-PicoContentAdmin.prototype.getMarkdownEditorElement = function () {
-    return (this.markdownEditor !== null) ? this.markdownEditor.element : null;
+PicoContentAdmin.prototype.getMarkdown = function () {
+    return (this.markdownEditor !== null) ? this.markdownEditor.codemirror.getValue() : null;
+};
+
+PicoContentAdmin.prototype.setMarkdown = function (value) {
+    if (this.markdownEditor !== null) {
+        this.markdownEditor.codemirror.setValue(value);
+        this.markdownEditor.codemirror.save();
+    }
 };
 
 PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate) {
@@ -251,7 +263,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     // clickable navigation items
     utils.forEach(element.querySelectorAll('li > a'), (function (_, anchor) {
         var page = anchor.parentNode.dataset.id,
-            path = anchor.href.replace(/^(?:https?:\/\/[^/]+(?:\/|$))?/, '');
+            path = '/' + anchor.href.replace(/^(?:https?:\/\/[^/]+(?:\/|$))?/, '');
 
         anchor.addEventListener('click', (function (event) {
             event.preventDefault();
@@ -260,12 +272,12 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
             // store the current page data to allow fast back navigation
             window.history.replaceState({
                 PicoContentAdmin: {
-                    page: currentPage,
+                    page: this.currentPage,
                     title: document.title,
-                    yaml: this.getYamlEditorElement().value,
-                    markdown: this.getMarkdownEditorElement().value
+                    yaml: this.getYaml(),
+                    markdown: this.getMarkdown()
                 }
-            }, document.title, '/' + this.getBaseUrlPath() + '/content/edit/' + currentPage);
+            }, document.title, window.location.pathname);
 
             this.navigateTo(page, (function (xhr, statusText, response) {
                 // update browser history

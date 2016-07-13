@@ -109,7 +109,6 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
             case 'open':
-            case 'preview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 break;
         }
