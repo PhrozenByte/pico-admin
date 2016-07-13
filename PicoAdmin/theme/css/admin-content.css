@@ -27,15 +27,15 @@
     min-height: 0;
 }
 
-aside nav ul li > * {
-    color: #444;
-    cursor: default;
-}
-aside nav ul li:hover > * { color: #2EAE9B; }
+aside nav ul li { cursor: default; }
 
 aside nav ul li > a {
     display: block;
-    cursor: pointer;
+    color: #444;
+}
+aside nav ul li > a:hover,
+aside nav ul li.active > a {
+    color: #2EAE9B;
 }
 
 aside nav ul li .fa { color: #444; }
