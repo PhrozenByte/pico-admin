@@ -9,6 +9,7 @@ function PicoContentAdmin(authToken, baseUrl) {
 
     this.navigation = null;
     this.currentPage = null;
+    this.pendingChanges = null;
     this.titleTemplate = null;
 
     this.openXhr = null;
@@ -22,6 +23,9 @@ PicoContentAdmin.prototype.open = function (page, callback) {
     this.requestOpen(page, (function (xhr, statusText, response) {
         var title = this.titleTemplate.replace('{1}', response.title);
         this.update(page, title, response.yaml, response.markdown);
+
+        this.setPendingChanges(false);
+
         if (callback) callback(xhr, statusText, response);
     }).bind(this));
 };
@@ -152,10 +156,12 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
     this.yamlEditorOptions = options;
     this.yamlEditor = new CodeMirror.fromTextArea(element, options);
 
-    // force syncing all changes
-    if (options.forceSync) {
-        this.yamlEditor.on('change', function (editor) { editor.save(); });
-    }
+    this.yamlEditor.on('change', (function (editor) {
+        this.setPendingChanges(true);
+
+        // force syncing all changes
+        if (options.forceSync) editor.save();
+    }).bind(this));
 
     return this.yamlEditor;
 };
@@ -313,6 +319,11 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         this.markdownEditor.codemirror.addKeyMap(picoKeyMap);
     }
 
+    this.setPendingChanges(false);
+    this.markdownEditor.codemirror.on('changes', (function () {
+        this.setPendingChanges(true);
+    }).bind(this));
+
     return this.markdownEditor;
 };
 
@@ -329,6 +340,32 @@ PicoContentAdmin.prototype.setMarkdown = function (value) {
         this.markdownEditor.codemirror.setValue(value);
         this.markdownEditor.codemirror.save();
     }
+};
+
+PicoContentAdmin.prototype.setPendingChanges = function (pendingChanges) {
+    var toolbar = this.getMarkdownEditor().toolbarElements;
+
+    if (pendingChanges) {
+        if (!this.pendingChanges) {
+            if (toolbar.save) {
+                toolbar.save.classList.remove('fa-floppy');
+                toolbar.save.classList.add('fa-floppy-star');
+            }
+            if (toolbar.reset) {
+                toolbar.reset.classList.remove('disabled');
+            }
+        }
+    } else if (this.pendingChanges || (this.pendingChanges === null)) {
+        if (toolbar.save) {
+            toolbar.save.classList.remove('fa-floppy-star');
+            toolbar.save.classList.add('fa-floppy');
+        }
+        if (toolbar.reset) {
+            toolbar.reset.classList.add('disabled');
+        }
+    }
+
+    this.pendingChanges = pendingChanges;
 };
 
 PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate) {

@@ -130,3 +130,15 @@ footer a:hover { color: #fff; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
 }
+
+/*** FONT AWESOME ***/
+
+.fa-floppy-star::before {
+    content: "\f0c7";
+}
+.fa-floppy-star::after {
+    content: "\f005";
+    font-size: 60%;
+    vertical-align: sub;
+    visibility: visibile;
+}

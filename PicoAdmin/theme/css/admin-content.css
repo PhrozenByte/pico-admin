@@ -22,6 +22,14 @@
     border-radius: 0;
 }
 
+.editor-toolbar a {
+    transition: all 200ms ease-in;
+}
+.editor-toolbar a.disabled {
+    color: #ccc !important;
+    cursor: not-allowed;
+}
+
 .CodeMirror,
 .CodeMirror-scroll {
     min-height: 0;
