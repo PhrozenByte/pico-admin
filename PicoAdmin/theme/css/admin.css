@@ -79,3 +79,54 @@ footer > * {
 }
 footer a { color: #ddd; }
 footer a:hover { color: #fff; }
+
+/*** LOADING ***/
+#loading {
+    position: fixed;
+    top: 0;
+
+    width: 0px;
+    height: 4px;
+    z-index: 100;
+
+    background: #2EAE9B;
+    opacity: 1;
+
+    border-bottom: 1px solid #159582;
+    border-right: 1px solid #159582;
+    border-bottom-right-radius: 2.667px;
+
+    transition: none;
+}
+#loading.wait {
+    transition: width 800ms ease-in-out;
+}
+#loading.finish {
+    display: block !important;
+    width: 100% !important;
+    opacity: 0;
+
+    transition: width 800ms ease-in-out,
+                opacity 600ms ease 300ms, width 600ms ease-in-out;
+}
+#loading .glow {
+    width: 100%;
+    height: 4px;
+
+    opacity: 0.5;
+    background: transparent;
+    box-shadow: 1px -1px 4px 2px #159582;
+}
+#loading.wait .glow {
+    animation: loading-pulse 2s ease-in-out 800ms infinite;
+}
+@-webkit-keyframes loading-pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+@keyframes loading-pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
