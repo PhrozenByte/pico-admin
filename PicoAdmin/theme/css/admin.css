@@ -57,6 +57,7 @@ aside h1 {
     padding: 1rem;
     background: #2EAE9B;
     color: #fff;
+    z-index: 110;
 }
 aside h1 a,
 aside h1 a:hover {

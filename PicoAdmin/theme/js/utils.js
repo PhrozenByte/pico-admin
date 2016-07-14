@@ -84,7 +84,7 @@ utils.ajax = function (url, options) {
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/
  *
- * Copyright 2005, 2014 jQuery Foundation, Inc. and other contributors
+ * Copyright 2005, 2015 jQuery Foundation and other contributors
  * Released under the MIT license
  * http://jquery.org/license
  */

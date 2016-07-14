@@ -252,12 +252,13 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     });
 
     // user extends/overwrites default shortcuts
-    var picoShortcutBindings = {
-        'save': this.save,
-        'save-as': this.saveAs,
-        'reset': this.reset,
-        'full-preview': this.fullPreview
-    };
+    var picoKeyMap = {},
+        picoShortcutBindings = {
+            'save': this.save,
+            'save-as': this.saveAs,
+            'reset': this.reset,
+            'full-preview': this.fullPreview
+        };
 
     options.shortcuts = utils.extend({
         'toggleBold': 'Cmd-B',
@@ -288,8 +289,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         'full-preview': 'Cmd-Alt-P'
     }, options.shortcuts || {});
 
-    var picoKeyMap = {},
-        isMac = /Mac/.test(navigator.platform);
+    var isMac = /Mac/.test(navigator.platform);
     utils.forEach(picoShortcutBindings, (function (key, callback) {
         if (options.shortcuts[key] !== null) {
             if (isMac) {
@@ -338,6 +338,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
 
         utils.forEach(options.toolbar, function (_, button) {
             if ((typeof button === 'string') && (builtInToolbarButtons[button] !== undefined)) {
+                // append binding of Pico shortcuts to title
                 var toolbarButtonTitle = builtInToolbarButtons[button].title;
                 if ((picoShortcutBindings[button] !== undefined) && (options.shortcuts[button] !== null)) {
                     toolbarButtonTitle += ' (' + options.shortcuts[button] + ')';
