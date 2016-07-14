@@ -250,7 +250,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     // restore old editor states when navigating back/forward
     // without the need of reloading the page
     window.addEventListener('popstate', (function (event) {
-        if (event.state.PicoContentAdmin !== undefined) {
+        if (event.state && event.state.PicoContentAdmin) {
             this.update(
                 event.state.PicoContentAdmin.page,
                 event.state.PicoContentAdmin.title,
@@ -259,6 +259,13 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
             );
         }
     }).bind(this));
+
+    // users shouldn't use the browser's reload button
+    window.addEventListener('beforeunload', function (event) {
+        if (window.history.state && window.history.state.PicoContentAdmin) {
+            event.preventDefault();
+        }
+    });
 
     // clickable navigation items
     utils.forEach(element.querySelectorAll('li > a'), (function (_, anchor) {
