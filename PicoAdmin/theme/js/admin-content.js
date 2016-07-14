@@ -14,6 +14,7 @@ function PicoContentAdmin(authToken, baseUrl) {
 
     this.openXhr = null;
     this.previewXhr = null;
+    this.saveXhr = null;
 }
 
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
@@ -120,6 +121,10 @@ PicoContentAdmin.prototype.save = function () {
     console.log('Save current page');
 };
 
+PicoContentAdmin.prototype.saveAs = function () {
+    console.log('Save current page as ...');
+};
+
 PicoContentAdmin.prototype.reset = function () {
     this.open(this.currentPage);
 };
@@ -214,6 +219,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     // user extends/overwrites default shortcuts
     var picoShortcutBindings = {
         'save': this.save,
+        'save-as': this.saveAs,
         'reset': this.reset,
         'full-preview': this.fullPreview
     };
@@ -242,6 +248,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         'toggleSideBySide': null,
         'toggleFullScreen': null,
         'save': 'Cmd-S',
+        'save-as': 'Cmd-Alt-S',
         'reset': null,
         'full-preview': 'Cmd-Alt-P'
     }, options.shortcuts || {});
@@ -288,6 +295,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 'undo': {            action: SimpleMDE.undo,                 className: 'fa fa-undo no-disable',                      title: 'Undo' },
                 'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' },
                 'save': {            action: this.save.bind(this),           className: 'fa fa-floppy-o',                             title: 'Save' },
+                'save-as': {         action: this.saveAs.bind(this),         className: 'fa fa-floppy-arrow',                         title: 'Save As' },
                 'reset': {           action: this.reset.bind(this),          className: 'fa fa-times-circle',                         title: 'Discard all changes' },
                 'full-preview': {    action: this.fullPreview.bind(this),    className: 'fa fa-home',                                 title: 'Open full page preview' },
                 'docs': {            action: 'http://picocms.org/docs/',     className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
