@@ -54,7 +54,7 @@ PicoContentAdmin.prototype.preview = function () {
     }
 };
 
-PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error) {
+PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error, complete) {
     if (this.previewXhr !== null) {
         this.previewXhr.abort();
     }
@@ -66,7 +66,8 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
         },
         success: success,
         error: error,
-        complete: (function () {
+        complete: (function (xhr, statusText, response) {
+            if (complete) complete(xhr, statusText, response);
             this.previewXhr = null;
         }).bind(this)
     });
@@ -194,25 +195,59 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     utils.extend(options, {
         element: element,
         previewRender: (function (plainText, preview) {
-            var yamlContent = '',
-                markdownContent = plainText;
+            var editor = this.getMarkdownEditor(),
+                previewButton = editor.toolbarElements.preview,
+                sideBySideButton = editor.toolbarElements['side-by-side'],
+                requestPreview = null;
 
-            if (this.yamlEditorOptions !== null) {
-                yamlContent = this.yamlEditorOptions.element.value;
-            }
+            if (previewButton) requestPreview = previewButton.classList.contains('active') ? 'previewButton' : false;
+            if (sideBySideButton) requestPreview = sideBySideButton.classList.contains('active') ? 'sideBySideButton' : false;
 
-            this.requestPreview(
-                yamlContent,
-                markdownContent,
-                function (xhr, statusText, response) {
-                    preview.innerHTML = response;
-                },
-                function (xhr, statusText, response) {
-                    preview.innerHTML = 'Failed!';
+            // rely on .active class of built-in buttons to determine whether preview is opened or closed
+            // if this isn't possible, assume that the preview is being opened
+            if (requestPreview || (requestPreview === null)) {
+                var yamlContent = '',
+                    markdownContent = plainText;
+
+                if (this.yamlEditorOptions !== null) {
+                    yamlContent = this.yamlEditorOptions.element.value;
                 }
-            );
 
-            return 'Loading...';
+                // keep the editor preview hidden
+                // until the content is actually loaded
+                preview.style.display = 'none';
+
+                this.requestPreview(
+                    yamlContent,
+                    markdownContent,
+                    function (xhr, statusText, response) {
+                        // show preview content
+                        preview.innerHTML = response;
+                    },
+                    (function (xhr, statusText, response) {
+                        var button = null;
+                        if (requestPreview === 'previewButton') {
+                            button = previewButton;
+                        } else if (requestPreview === 'sideBySideButton') {
+                            button = sideBySideButton;
+                        }
+
+                        // highlight button for 5 seconds
+                        if (button) {
+                            window.requestAnimationFrame(function() { button.classList.add('error'); });
+                            window.setTimeout(function () { button.classList.remove('error'); }, 5000);
+                        }
+
+                        // return to edit mode
+                        this.edit();
+                    }).bind(this),
+                    function (xhr, statusText, response) {
+                        // reset editor preview visibility
+                        // (usually makes it visible again)
+                        preview.style.display = null;
+                    }
+                );
+            }
         }).bind(this)
     });
 

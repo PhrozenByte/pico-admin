@@ -29,6 +29,9 @@
     color: #ccc !important;
     cursor: not-allowed;
 }
+.editor-toolbar a.error {
+    color: #d00 !important;
+}
 
 .CodeMirror,
 .CodeMirror-scroll {
