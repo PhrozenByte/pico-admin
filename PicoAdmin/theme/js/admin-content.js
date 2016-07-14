@@ -364,7 +364,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     }
 
     this.setPendingChanges(false);
-    this.markdownEditor.codemirror.on('changes', (function () {
+    this.markdownEditor.codemirror.on('change', (function () {
         this.setPendingChanges(true);
     }).bind(this));
 
