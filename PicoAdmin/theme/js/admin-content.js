@@ -18,7 +18,7 @@ function PicoContentAdmin(authToken, baseUrl) {
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
 PicoContentAdmin.prototype.constructor = PicoAdmin;
 
-PicoContentAdmin.prototype.navigateTo = function (page, callback) {
+PicoContentAdmin.prototype.open = function (page, callback) {
     this.requestOpen(page, (function (xhr, statusText, response) {
         var title = this.titleTemplate.replace('{1}', response.title);
         this.update(page, title, response.yaml, response.markdown);
@@ -43,6 +43,12 @@ PicoContentAdmin.prototype.requestOpen = function (page, success, error) {
     return this.openXhr;
 };
 
+PicoContentAdmin.prototype.preview = function () {
+    if (!this.markdownEditor.isPreviewActive()) {
+        this.markdownEditor.togglePreview();
+    }
+};
+
 PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error) {
     if (this.previewXhr !== null) {
         this.previewXhr.abort();
@@ -61,6 +67,57 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
     });
 
     return this.previewXhr;
+};
+
+PicoContentAdmin.prototype.edit = function () {
+    if (this.markdownEditor.isPreviewActive()) {
+        this.markdownEditor.togglePreview();
+    }
+};
+
+PicoContentAdmin.prototype.fullPreview = function () {
+    // create a hidden form with the appropiate content
+    var url = this.getUrl('content', 'fullPreview', this.currentPage),
+        form = utils.parse(
+            '<form action="' + url + '" method="POST" target="_blank" style="display: none;">' +
+            '   <textarea class="yaml" name="yaml"></textarea>' +
+            '   <textarea class="markdown" name="markdown"></textarea>' +
+            '   <input class="auth_client_token" type="hidden" name="auth_client_token" value="" />' +
+            '</form>'
+        );
+
+    form.querySelector('.yaml').value = this.getYaml();
+    form.querySelector('.markdown').value = this.getMarkdown();
+    form.querySelector('.auth_client_token').value = this.getAuthToken();
+
+    document.body.appendChild(form);
+
+    // submit the form
+    // When this method is called synchronously by a user click event
+    // (i.e. the user clicked the toolbar button), this will work just fine.
+    // However, when this isn't the case (i.e. called by a keyboard shortcut),
+    // the browser will block this as a undesirable pop-up and throw a exception.
+    try {
+        form.submit();
+    } catch(e) {
+        window.alert(
+            'Your web browser has just blocked your attempt to open the full page preview in ' +
+            'a new window or tab. Your web browser falsely thinks that a malicious website ' +
+            'just tried to open a pop-up. You can either use the matching toolbar button ' +
+            'to open the full page preview instead, or configure your web browser to ' +
+            'allow pop-ups on ' + window.location.origin + '/.'
+        );
+    }
+
+    document.body.removeChild(form);
+};
+
+PicoContentAdmin.prototype.save = function () {
+    console.log('Save current page');
+};
+
+PicoContentAdmin.prototype.reset = function () {
+    this.open(this.currentPage);
 };
 
 PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
@@ -149,6 +206,12 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     });
 
     // user extends/overwrites default shortcuts
+    var picoShortcutBindings = {
+        'save': this.save,
+        'reset': this.reset,
+        'full-preview': this.fullPreview
+    };
+
     options.shortcuts = utils.extend({
         'toggleBold': 'Cmd-B',
         'toggleItalic': 'Cmd-I',
@@ -171,8 +234,25 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         'undo': 'Cmd-Z',
         'redo': 'Shift-Cmd-Z',
         'toggleSideBySide': null,
-        'toggleFullScreen': null
+        'toggleFullScreen': null,
+        'save': 'Cmd-S',
+        'reset': null,
+        'full-preview': 'Cmd-Alt-P'
     }, options.shortcuts || {});
+
+    var picoKeyMap = {},
+        isMac = /Mac/.test(navigator.platform);
+    utils.forEach(picoShortcutBindings, (function (key, callback) {
+        if (options.shortcuts[key] !== null) {
+            if (isMac) {
+                options.shortcuts[key] = options.shortcuts[key].replace('Ctrl', 'Cmd');
+            } else {
+                options.shortcuts[key] = options.shortcuts[key].replace('Cmd', 'Ctrl');
+            }
+
+            picoKeyMap[options.shortcuts[key]] = (function () { picoShortcutBindings[key].call(this); }).bind(this);
+        }
+    }).bind(this));
 
     // allow user to configure toolbar with button identifiers
     if (options.toolbar) {
@@ -200,13 +280,22 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 'side-by-side': {    action: SimpleMDE.toggleSideBySide,     className: 'fa fa-columns no-disable no-mobile',         title: 'Toggle Side by Side' },
                 'fullscreen': {      action: SimpleMDE.toggleFullScreen,     className: 'fa fa-arrows-alt no-disable no-mobile',      title: 'Toggle Fullscreen' },
                 'undo': {            action: SimpleMDE.undo,                 className: 'fa fa-undo no-disable',                      title: 'Undo' },
-                'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' }
+                'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' },
+                'save': {            action: this.save.bind(this),           className: 'fa fa-floppy-o',                             title: 'Save' },
+                'reset': {           action: this.reset.bind(this),          className: 'fa fa-times-circle',                         title: 'Discard all changes' },
+                'full-preview': {    action: this.fullPreview.bind(this),    className: 'fa fa-home',                                 title: 'Open full page preview' },
+                'docs': {            action: 'http://picocms.org/docs/',     className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
             };
 
         utils.forEach(options.toolbar, function (_, button) {
             if ((typeof button === 'string') && (builtInToolbarButtons[button] !== undefined)) {
+                var toolbarButtonTitle = builtInToolbarButtons[button].title;
+                if ((picoShortcutBindings[button] !== undefined) && (options.shortcuts[button] !== null)) {
+                    toolbarButtonTitle += ' (' + options.shortcuts[button] + ')';
+                }
+
                 // built-in toolbar button
-                toolbarButtons.push(utils.extend({ name: button }, builtInToolbarButtons[button]));
+                toolbarButtons.push(utils.extend(builtInToolbarButtons[button], { name: button, title: toolbarButtonTitle }));
             } else {
                 // new toolbar button or a separator
                 toolbarButtons.push(button);
@@ -219,6 +308,10 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     // init SimpleMDE
     this.markdownEditorOptions = options;
     this.markdownEditor = new SimpleMDE(options);
+
+    if (Object.keys(picoKeyMap).length !== 0) {
+        this.markdownEditor.codemirror.addKeyMap(picoKeyMap);
+    }
 
     return this.markdownEditor;
 };
@@ -286,7 +379,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
                 }
             }, document.title, window.location.pathname);
 
-            this.navigateTo(page, (function (xhr, statusText, response) {
+            this.open(page, (function (xhr, statusText, response) {
                 // update browser history
                 window.history.pushState({
                     PicoContentAdmin: {

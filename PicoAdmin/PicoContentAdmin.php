@@ -37,11 +37,12 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 'tabSize' => 4,
                 'spellChecker' => false,
                 'toolbar' => array(
-                    'bold', 'italic', 'heading',
+                    'save', 'preview', 'full-preview',
+                    '|', 'bold', 'italic', 'heading',
                     '|', 'code', 'quote', 'unordered-list', 'ordered-list',
                     '|', 'link', 'image', 'table', 'horizontal-rule',
-                    '|', 'undo', 'redo',
-                    '|', 'preview'
+                    '|', 'reset', 'undo', 'redo',
+                    '|', 'docs'
                 )
             )
         );
@@ -83,6 +84,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
             switch ($this->action) {
                 case 'preview':
+                case 'fullPreview':
                     $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
                     $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
                     break;
@@ -109,6 +111,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
             case 'open':
+            case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 break;
         }
@@ -129,6 +132,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 break;
 
             case 'preview':
+            case 'fullPreview':
                 $rawContent = '';
                 if (!empty($this->yamlContent)) {
                     $rawContent .= "---\n" . $this->yamlContent . "\n---\n\n";
