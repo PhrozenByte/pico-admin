@@ -218,10 +218,15 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 this.requestPreview(
                     yamlContent,
                     markdownContent,
-                    function (xhr, statusText, response) {
+                    (function (xhr, statusText, response) {
                         // show preview content
                         preview.innerHTML = response;
-                    },
+
+                        // hide YAML editor
+                        if (requestPreview !== null) {
+                            this.yamlEditor.getWrapperElement().style.display = 'none';
+                        }
+                    }).bind(this),
                     (function (xhr, statusText, response) {
                         var button = null;
                         if (requestPreview === 'previewButton') {
@@ -245,6 +250,9 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                         preview.style.display = null;
                     }
                 );
+            } else if (requestPreview !== null) {
+                // reset YAML editor visibility
+                this.yamlEditor.getWrapperElement().style.display = null;
             }
         }).bind(this)
     });
