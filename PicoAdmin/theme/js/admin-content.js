@@ -22,10 +22,12 @@ PicoContentAdmin.prototype.constructor = PicoAdmin;
 
 PicoContentAdmin.prototype.open = function (page, callback) {
     this.requestOpen(page, (function (xhr, statusText, response) {
-        var title = this.titleTemplate.replace('{1}', response.title);
-        this.update(page, title, response.yaml, response.markdown);
+        if (response) {
+            var title = this.titleTemplate.replace('{1}', response.title);
+            this.update(page, title, response.yaml, response.markdown);
 
-        this.setPendingChanges(false);
+            this.setPendingChanges(false);
+        }
 
         if (callback) callback(xhr, statusText, response);
     }).bind(this));
@@ -206,12 +208,8 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
             // rely on .active class of built-in buttons to determine whether preview is opened or closed
             // if this isn't possible, assume that the preview is being opened
             if (requestPreview || (requestPreview === null)) {
-                var yamlContent = '',
-                    markdownContent = plainText;
-
-                if (this.yamlEditorOptions !== null) {
-                    yamlContent = this.yamlEditorOptions.element.value;
-                }
+                var markdownContent = plainText,
+                    yamlContent = this.getYaml();
 
                 // keep the editor preview hidden
                 // until the content is actually loaded
@@ -330,7 +328,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 'undo': {            action: SimpleMDE.undo,                 className: 'fa fa-undo no-disable',                      title: 'Undo' },
                 'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' },
                 'save': {            action: this.save.bind(this),           className: 'fa fa-floppy-o',                             title: 'Save' },
-                'save-as': {         action: this.saveAs.bind(this),         className: 'fa fa-floppy-arrow',                         title: 'Save As' },
+                'save-as': {         action: this.saveAs.bind(this),         className: 'fa fa-floppy-o fa-sub-arrow',                title: 'Save As' },
                 'reset': {           action: this.reset.bind(this),          className: 'fa fa-times-circle',                         title: 'Discard all changes' },
                 'full-preview': {    action: this.fullPreview.bind(this),    className: 'fa fa-home',                                 title: 'Open full page preview' },
                 'docs': {            action: 'http://picocms.org/docs/',     className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
@@ -391,25 +389,19 @@ PicoContentAdmin.prototype.setPendingChanges = function (pendingChanges) {
 
     if (pendingChanges) {
         if (!this.pendingChanges) {
-            if (toolbar.save) {
-                toolbar.save.classList.remove('fa-floppy');
-                toolbar.save.classList.add('fa-floppy-star');
-            }
-            if (toolbar.reset) {
-                toolbar.reset.classList.remove('disabled');
-            }
+            if (toolbar.save) toolbar.save.classList.add('fa-sub-star');
+            if (toolbar.reset) toolbar.reset.classList.remove('disabled');
         }
     } else if (this.pendingChanges || (this.pendingChanges === null)) {
-        if (toolbar.save) {
-            toolbar.save.classList.remove('fa-floppy-star');
-            toolbar.save.classList.add('fa-floppy');
-        }
-        if (toolbar.reset) {
-            toolbar.reset.classList.add('disabled');
-        }
+        if (toolbar.save) toolbar.save.classList.remove('fa-sub-star');
+        if (toolbar.reset) toolbar.reset.classList.add('disabled');
     }
 
     this.pendingChanges = pendingChanges;
+};
+
+PicoContentAdmin.prototype.getPendingChanges = function () {
+    return this.pendingChanges;
 };
 
 PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate) {
@@ -431,6 +423,8 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
                 event.state.PicoContentAdmin.yaml,
                 event.state.PicoContentAdmin.markdown
             );
+
+            this.setPendingChanges(event.state.PicoContentAdmin.pendingChanges);
         }
     }).bind(this));
 
@@ -456,20 +450,24 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
                     page: this.currentPage,
                     title: document.title,
                     yaml: this.getYaml(),
-                    markdown: this.getMarkdown()
+                    markdown: this.getMarkdown(),
+                    pendingChanges: this.pendingChanges
                 }
             }, document.title, window.location.pathname);
 
             this.open(page, (function (xhr, statusText, response) {
                 // update browser history
-                window.history.pushState({
-                    PicoContentAdmin: {
-                        page: page,
-                        title: document.title,
-                        yaml: response.yaml,
-                        markdown: response.markdown
-                    }
-                }, document.title, path);
+                if (response) {
+                    window.history.pushState({
+                        PicoContentAdmin: {
+                            page: page,
+                            title: document.title,
+                            yaml: response.yaml,
+                            markdown: response.markdown,
+                            pendingChanges: false
+                        }
+                    }, document.title, path);
+                }
             }).bind(this));
         }).bind(this));
     }).bind(this));

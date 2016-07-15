@@ -127,7 +127,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
                 if (preg_match($pattern, $rawContent, $rawMetaMatches)) {
                     $this->yamlContent = isset($rawMetaMatches[3]) ? $rawMetaMatches[3] : '';
-                    $this->markdownContent = isset($rawMetaMatches[5]) ? $rawMetaMatches[5] : (isset($rawMetaMatches[4]) ? $rawMetaMatches[4] : '');
+
+                    if (isset($rawMetaMatches[5])) {
+                        $this->markdownContent = $rawMetaMatches[5];
+                    } elseif (isset($rawMetaMatches[4])) {
+                        $this->markdownContent = $rawMetaMatches[4];
+                    } else {
+                        $this->markdownContent = '';
+                    }
                 }
                 break;
 

@@ -134,22 +134,14 @@ footer a:hover { color: #fff; }
 
 /*** FONT AWESOME ***/
 
-.fa-floppy-arrow::before {
-    content: "\f0c7";
-}
-.fa-floppy-arrow::after {
+.fa-sub-arrow::after {
     content: "\f063";
     font-size: 60%;
     vertical-align: sub;
-    visibility: visibile;
 }
 
-.fa-floppy-star::before {
-    content: "\f0c7";
-}
-.fa-floppy-star::after {
+.fa-sub-star::after {
     content: "\f005";
     font-size: 60%;
     vertical-align: sub;
-    visibility: visibile;
 }
