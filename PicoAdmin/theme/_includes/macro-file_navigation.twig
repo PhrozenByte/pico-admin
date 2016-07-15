@@ -29,7 +29,7 @@
 {% endmacro %}
 
 {% macro _file_navigation_anchor_args(file, base_url) -%}
-    href="{{ base_url }}/{{ files.index.id|escape('html_attr') }}"
+    href="{{ base_url }}/{{ file.id|escape('html_attr') }}"
     {% if file.error %}
         title="{{ file.error|escape("html_attr") }}"
     {% else %}

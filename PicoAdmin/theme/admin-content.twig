@@ -3,7 +3,7 @@
 {% extends "admin.twig" %}
 {% from "_includes/macro-file_navigation.twig" import file_navigation %}
 
-{% block title %}Edit {{ current_page.id }}{% if meta.title %} ({{ meta.title }}){% endif %} | Pico Admin Panel | {{ site_title }}{% endblock %}
+{% block title %}Edit {{ title }} | Pico Admin Panel | {{ site_title }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}

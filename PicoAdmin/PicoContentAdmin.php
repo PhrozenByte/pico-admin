@@ -117,6 +117,17 @@ class PicoContentAdmin extends AbstractPicoPlugin
         }
     }
 
+    public function on404ContentLoaded(&$rawContent)
+    {
+        switch ($this->action) {
+            case 'edit':
+            case 'open':
+                // reset content of non-existing files
+                $rawContent = '';
+                break;
+        }
+    }
+
     public function onContentLoaded(&$rawContent)
     {
         switch ($this->action) {
@@ -158,11 +169,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
         $twig->getLoader()->addPath(__DIR__ . '/theme');
         switch ($this->action) {
             case 'edit':
+                $meta = $this->getFileMeta();
+
                 $templateName = 'admin-content.twig';
 
                 $twigVariables['yaml_content'] = $this->yamlContent;
                 $twigVariables['markdown_content'] = $this->markdownContent;
                 $twigVariables['file_navigation'] = $this->getFileNavigation();
+                $twigVariables['title'] = $this->page . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '');
                 break;
 
             case 'open':
@@ -174,7 +188,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $twigVariables['json'] = array(
                     'yaml' => $this->yamlContent,
                     'markdown' => $this->markdownContent,
-                    'title' => $this->page . (isset($meta['title']) ? ' (' . $meta['title'] . ')' : '')
+                    'title' => $this->page . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '')
                 );
                 break;
 
