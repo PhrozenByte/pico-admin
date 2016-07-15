@@ -145,3 +145,14 @@ footer a:hover { color: #fff; }
     font-size: 60%;
     vertical-align: sub;
 }
+
+.fa-stack-exclamation::before {
+    margin-left: 0.24em;
+}
+.fa-stack-exclamation::after {
+    content: "\f12a";
+    font-size: 60%;
+    position: relative;
+    top: -0.2em;
+    left: -0.95em;
+}

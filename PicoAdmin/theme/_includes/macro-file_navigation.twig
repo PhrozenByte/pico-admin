@@ -1,9 +1,9 @@
 {% macro file_navigation(files, base_url, ext) %}
-    {% from _self import file_navigation %}
+    {% from _self import file_navigation, _file_navigation_anchor_args as anchor_args, _file_navigation_icon as icon %}
     {% if files.index is defined %}
         <li data-id="{{ files.index.id }}" data-file-name="index">
-            <a href="{{ base_url }}/{{ files.index.id|escape('html_attr') }}"{% if files.index.title %} title="{{ files.index.title|escape('html_attr') }}"{% endif %}>
-                <span class="fa fa-file{% if files.index.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
+            <a {{ anchor_args(files.index, base_url) }}>
+                {{ icon(files.index) }}
                 {% if files.index.path != '.' %}{{ files.index.path }}/{% endif %}<strong>index</strong>{{ ext }}
             </a>
         </li>
@@ -11,16 +11,12 @@
     {% for file in files if file.fileName != 'index' %}
         <li data-id="{{ file.id }}" data-file-name="{{ file.fileName }}">
             {% if file.id %}
-                <a href="{{ base_url }}/{{ file.id|escape('html_attr') }}"{% if file.title %} title="{{ file.title|escape('html_attr') }}"{% endif %}>
-                    {% if file.fileName == '404' %}
-                        <span class="fa fa-file-o fa-li" aria-hidden="true"></span>
-                    {% else %}
-                        <span class="fa fa-file{% if file.title %}-text{% endif %}-o fa-li" aria-hidden="true"></span>
-                    {% endif %}
+                <a {{ anchor_args(file, base_url) }}>
+                    {{ icon(file) }}
                     {% if file.path != '.' %}{{ file.path }}/{% endif %}<strong>{{ file.fileName }}</strong>{{ ext }}
                 </a>
             {% else %}
-                <span class="fa fa-folder-o fa-li" aria-hidden="true"></span>
+                {{ icon(file) }}
                 <span>{{ file.fileName }}/</span>
             {% endif %}
             {% if file.children %}
@@ -30,4 +26,35 @@
             {% endif %}
         </li>
     {% endfor %}
+{% endmacro %}
+
+{% macro _file_navigation_anchor_args(file, base_url) -%}
+    href="{{ base_url }}/{{ files.index.id|escape('html_attr') }}"
+    {% if file.error %}
+        title="{{ file.error|escape("html_attr") }}"
+    {% else %}
+        title="{{ file.title|escape("html_attr") }}"
+    {% endif %}
+{%- endmacro %}
+
+{% macro _file_navigation_icon(file) %}
+    {% set classNames = "fa fa-li" %}
+    {% if file.id %}
+        {% if file.error %}
+            {% set classNames = classNames ~ " fa-file-o fa-stack-exclamation" %}
+        {% elseif file.fileName == '404' %}
+            {% set classNames = classNames ~ " fa-file-o" %}
+        {% elseif file.title %}
+            {% set classNames = classNames ~ " fa-file-text-o" %}
+        {% else %}
+            {% set classNames = classNames ~ " fa-file-o" %}
+        {% endif %}
+    {% else %}
+        {% set classNames = classNames ~ " fa-folder-o" %}
+        {% if file.error %}
+            {% set classNames = classNames ~ " fa-stack-exclamation" %}
+        {% endif %}
+    {% endif %}
+
+    <span class="{{ classNames }}" aria-hidden="true"></span>
 {% endmacro %}

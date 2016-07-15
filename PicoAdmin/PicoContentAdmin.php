@@ -197,19 +197,23 @@ class PicoContentAdmin extends AbstractPicoPlugin
         $rawFiles = $this->getFiles($contentDir, $contentExt);
         foreach ($rawFiles as $file) {
             $id = substr($file, $contentDirLength, -$contentExtLength);
+            $pageData = isset($pages[$id]) ? $pages[$id] : array();
 
             if (!isset($files[$id])) {
                 $files[$id] = array(
-                    'id' => $id,
                     'path' => dirname($id),
                     'fileName' => basename($id),
-                    'title' => isset($pages[$id]) ? $pages[$id]['title'] : null,
                     'children' => array()
                 );
-            } else {
-                // conflicting "sub.md" although "sub/index.md" exists
-                $files[$id]['id'] = $id;
-                $files[$id]['title'] = isset($pages[$id]) ? $pages[$id]['title'] : null;
+            }
+
+            $files[$id]['id'] = $id;
+
+            if (isset($pageData['title'])) {
+                $files[$id]['title'] = $pageData['title'];
+            }
+            if (isset($pageData['meta']['YAML_ParseError'])) {
+                $files[$id]['error'] = 'YAML Parse Error: ' . $pageData['meta']['YAML_ParseError'];
             }
 
             do {

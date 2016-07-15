@@ -51,7 +51,8 @@ aside nav ul li.active > a {
 
 aside nav ul li .fa { color: #444; }
 aside nav ul li[data-file-name="index"] .fa { color: #009; }
-aside nav ul li[data-file-name="404"] .fa { color: #900; }
+aside nav ul li[data-file-name="404"] .fa { color: #990; }
+aside nav ul li .fa-stack-exclamation { color: #900; }
 
 footer .editor-statusbar {
     float: right;
