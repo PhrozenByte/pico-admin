@@ -29,6 +29,11 @@
     color: #ccc !important;
     cursor: not-allowed;
 }
+.editor-toolbar a.disabled[class*="fa-super-"]::after,
+.editor-toolbar a.disabled[class*="fa-stack-"]::after,
+.editor-toolbar a.disabled[class*="fa-sub-"]::after {
+    display: none;
+}
 .editor-toolbar a.error {
     color: #d00 !important;
 }

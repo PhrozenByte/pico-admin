@@ -3,7 +3,10 @@
 {% extends "admin.twig" %}
 {% from "_includes/macro-file_navigation.twig" import file_navigation %}
 
-{% block title %}Edit {{ title }} | Pico Admin Panel | {{ site_title }}{% endblock %}
+{% block title %}
+    {% if admin_request.action == "create" %}Create New Page{% else %}Edit {{ title }}{% endif %}
+    | Pico Admin Panel | {{ site_title }}
+{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -56,8 +59,8 @@
         window.requestAnimationFrame(function () {
             picoContentAdmin.initNavigation(
                 document.getElementById('picoContentAdminNav'),
-                '{{ current_page.id|escape("js") }}',
-                'Edit {1} | Pico Admin Panel | {{ site_title }}'
+                {% if current_page %}'{{ current_page.id|escape("js") }}'{% else %}null{% endif %},
+                '{1} | Pico Admin Panel | {{ site_title }}'
             );
         });
     </script>

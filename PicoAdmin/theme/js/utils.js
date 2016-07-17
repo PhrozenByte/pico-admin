@@ -39,21 +39,26 @@ utils.ajax = function (url, options) {
 
     xhr.onreadystatechange = function() {
         if (xhr.readyState > 3) {
+            var isSuccessful = null;
             if ((xhr.status >= 200) && (xhr.status < 300)) {
-                if (options.success) {
-                    options.success(xhr, xhr.statusText, xhr.response);
-                }
+                isSuccessful = true;
             } else if ((xhr.status >= 400) && (xhr.status <= 600)) {
-                if (options.error) {
-                    options.error(xhr, xhr.statusText, xhr.response);
-                }
-            } else if (xhr.status !== 0) {
+                isSuccessful = false;
+            } else {
                 console.error('Invalid XMLHttpRequest status', xhr.status);
                 return;
             }
 
+            if (isSuccessful && options.success) {
+                var callbackResult = options.success(xhr, xhr.statusText, xhr.response);
+                isSuccessful = (callbackResult || (callbackResult === undefined) || (callbackResult === null));
+            }
+            if (!isSuccessful && options.error) {
+                options.error(xhr, xhr.statusText, xhr.response);
+            }
+
             if (options.complete) {
-                options.complete(xhr, xhr.statusText, xhr.response);
+                options.complete(xhr, xhr.statusText, xhr.response, isSuccessful);
             }
         }
     };

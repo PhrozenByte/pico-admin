@@ -12,7 +12,7 @@ function PicoContentAdmin(authToken, baseUrl) {
     this.pendingChanges = null;
     this.titleTemplate = null;
 
-    this.openXhr = null;
+    this.loadXhr = null;
     this.previewXhr = null;
     this.saveXhr = null;
 }
@@ -20,34 +20,71 @@ function PicoContentAdmin(authToken, baseUrl) {
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
 PicoContentAdmin.prototype.constructor = PicoAdmin;
 
-PicoContentAdmin.prototype.open = function (page, callback) {
-    this.requestOpen(page, (function (xhr, statusText, response) {
-        if (response) {
-            var title = this.titleTemplate.replace('{1}', response.title);
-            this.update(page, title, response.yaml, response.markdown);
+PicoContentAdmin.prototype.create = function () {
+    this.updateHistory();
 
-            this.setPendingChanges(false);
-        }
+    this.setYaml('');
+    this.setMarkdown('');
+    this.setPendingChanges(false);
 
-        if (callback) callback(xhr, statusText, response);
+    var title = this.titleTemplate.replace('{1}', 'Create New Page');
+    this.updateNavigation(null, title);
+
+    this.pushHistory(this.getUrl('content', 'create'));
+};
+
+PicoContentAdmin.prototype.open = function (page) {
+    this.updateHistory();
+
+    this.load(page, (function (yaml, markdown, title) {
+        this.setYaml(yaml);
+        this.setMarkdown(markdown);
+        this.setPendingChanges(false);
+
+        title = this.titleTemplate.replace('{1}', 'Edit ' + title);
+        this.updateNavigation(page, title);
+
+        this.pushHistory(this.getUrl('content', 'edit', page));
     }).bind(this));
 };
 
-PicoContentAdmin.prototype.requestOpen = function (page, success, error) {
-    if (this.openXhr !== null) {
-        this.openXhr.abort();
+PicoContentAdmin.prototype.save = function (page) {
+    console.log('Save current page');
+
+    page = page ? page : this.currentPage;
+    if (page) {
+        // can't save a file without a path specified
+        return false;
     }
+};
 
-    this.openXhr = this.ajax('content', 'open', page, {
-        responseType: 'json',
-        success: success,
-        error: error,
-        complete: (function () {
-            this.openXhr = null;
-        }).bind(this)
-    });
+PicoContentAdmin.prototype.saveAs = function () {
+    console.log('Save current page as ...');
 
-    return this.openXhr;
+    //var page = /* ask user */;
+    //this.save(page);
+};
+
+PicoContentAdmin.prototype.reset = function () {
+    if (this.currentPage !== null) {
+        this.updateHistory();
+
+        this.load(this.currentPage, (function (yaml, markdown, title) {
+            this.setYaml(yaml);
+            this.setMarkdown(markdown);
+            this.setPendingChanges(false);
+
+            this.pushHistory(window.location.pathname);
+        }).bind(this));
+    } else {
+        this.create();
+    }
+};
+
+PicoContentAdmin.prototype.edit = function () {
+    if (this.markdownEditor.isPreviewActive()) {
+        this.markdownEditor.togglePreview();
+    }
 };
 
 PicoContentAdmin.prototype.preview = function () {
@@ -66,6 +103,7 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
             yaml: yaml,
             markdown: markdown
         },
+        responseType: 'json',
         success: success,
         error: error,
         complete: (function (xhr, statusText, response) {
@@ -75,12 +113,6 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
     });
 
     return this.previewXhr;
-};
-
-PicoContentAdmin.prototype.edit = function () {
-    if (this.markdownEditor.isPreviewActive()) {
-        this.markdownEditor.togglePreview();
-    }
 };
 
 PicoContentAdmin.prototype.fullPreview = function () {
@@ -120,16 +152,37 @@ PicoContentAdmin.prototype.fullPreview = function () {
     document.body.removeChild(form);
 };
 
-PicoContentAdmin.prototype.save = function () {
-    console.log('Save current page');
+PicoContentAdmin.prototype.load = function (page, callback) {
+    this.requestLoad(page, (function (xhr, statusText, response) {
+        if (
+            !response
+            || (response.yaml === undefined) || (response.yaml === null)
+            || (response.markdown === undefined) || (response.markdown === null)
+            || (response.title === undefined) || (response.title === null)
+        ) {
+            return false;
+        }
+
+        callback(response.yaml, response.markdown, response.title);
+    }).bind(this));
 };
 
-PicoContentAdmin.prototype.saveAs = function () {
-    console.log('Save current page as ...');
-};
+PicoContentAdmin.prototype.requestLoad = function (page, success, error, complete) {
+    if (this.loadXhr !== null) {
+        this.loadXhr.abort();
+    }
 
-PicoContentAdmin.prototype.reset = function () {
-    this.open(this.currentPage);
+    this.loadXhr = this.ajax('content', 'load', page, {
+        responseType: 'json',
+        success: success,
+        error: error,
+        complete: (function (xhr, statusText, response) {
+            if (complete) complete(xhr, statusText, response);
+            this.loadXhr = null;
+        }).bind(this)
+    });
+
+    return this.loadXhr;
 };
 
 PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
@@ -219,8 +272,12 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                     yamlContent,
                     markdownContent,
                     (function (xhr, statusText, response) {
+                        if (!response || (response.preview === undefined) || (response.preview === null)) {
+                            return false;
+                        }
+
                         // show preview content
-                        preview.innerHTML = response;
+                        preview.innerHTML = response.preview;
 
                         // hide YAML editor
                         if (requestPreview !== null) {
@@ -244,7 +301,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                         // return to edit mode
                         this.edit();
                     }).bind(this),
-                    function (xhr, statusText, response) {
+                    function (xhr, statusText, response, wasSuccesful) {
                         // reset editor preview visibility
                         // (usually makes it visible again)
                         preview.style.display = null;
@@ -260,10 +317,11 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     // user extends/overwrites default shortcuts
     var picoKeyMap = {},
         picoShortcutBindings = {
-            'save': this.save,
-            'save-as': this.saveAs,
-            'reset': this.reset,
-            'full-preview': this.fullPreview
+            'create': this.create.bind(this),
+            'save': this.save.bind(this),
+            'save-as': this.saveAs.bind(this),
+            'reset': this.reset.bind(this),
+            'full-preview': this.fullPreview.bind(this)
         };
 
     options.shortcuts = utils.extend({
@@ -289,6 +347,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
         'redo': 'Shift-Cmd-Z',
         'toggleSideBySide': null,
         'toggleFullScreen': null,
+        'create': 'Cmd-N',
         'save': 'Cmd-S',
         'save-as': 'Cmd-Alt-S',
         'reset': null,
@@ -304,7 +363,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 options.shortcuts[key] = options.shortcuts[key].replace('Cmd', 'Ctrl');
             }
 
-            picoKeyMap[options.shortcuts[key]] = (function () { picoShortcutBindings[key].call(this); }).bind(this);
+            picoKeyMap[options.shortcuts[key]] = function () { picoShortcutBindings[key](); };
         }
     }).bind(this));
 
@@ -335,6 +394,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
                 'fullscreen': {      action: SimpleMDE.toggleFullScreen,     className: 'fa fa-arrows-alt no-disable no-mobile',      title: 'Toggle Fullscreen' },
                 'undo': {            action: SimpleMDE.undo,                 className: 'fa fa-undo no-disable',                      title: 'Undo' },
                 'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' },
+                'create': {          action: this.create.bind(this),         className: 'fa fa-file-o',                               title: 'Create New Page' },
                 'save': {            action: this.save.bind(this),           className: 'fa fa-floppy-o',                             title: 'Save' },
                 'save-as': {         action: this.saveAs.bind(this),         className: 'fa fa-floppy-o fa-sub-arrow',                title: 'Save As' },
                 'reset': {           action: this.reset.bind(this),          className: 'fa fa-times-circle',                         title: 'Discard all changes' },
@@ -418,21 +478,17 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     this.titleTemplate = titleTemplate;
 
     // update navigation
-    var navigationItem = element.querySelector('li[data-id="' + currentPage + '"]');
-    if (navigationItem) navigationItem.classList.add('active');
+    this.updateNavigation(currentPage);
 
     // restore old editor states when navigating back/forward
     // without the need of reloading the page
     window.addEventListener('popstate', (function (event) {
         if (event.state && event.state.PicoContentAdmin) {
-            this.update(
-                event.state.PicoContentAdmin.page,
-                event.state.PicoContentAdmin.title,
-                event.state.PicoContentAdmin.yaml,
-                event.state.PicoContentAdmin.markdown
-            );
-
+            this.setYaml(event.state.PicoContentAdmin.yaml);
+            this.setMarkdown(event.state.PicoContentAdmin.markdown);
             this.setPendingChanges(event.state.PicoContentAdmin.pendingChanges);
+
+            this.updateNavigation(event.state.PicoContentAdmin.page, event.state.PicoContentAdmin.title);
         }
     }).bind(this));
 
@@ -451,34 +507,62 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
         anchor.addEventListener('click', (function (event) {
             event.preventDefault();
 
-            // before navigating to the new page,
-            // store the current page data to allow fast back navigation
-            window.history.replaceState({
-                PicoContentAdmin: {
-                    page: this.currentPage,
-                    title: document.title,
-                    yaml: this.getYaml(),
-                    markdown: this.getMarkdown(),
-                    pendingChanges: this.pendingChanges
-                }
-            }, document.title, window.location.pathname);
-
-            this.open(page, (function (xhr, statusText, response) {
-                // update browser history
-                if (response) {
-                    window.history.pushState({
-                        PicoContentAdmin: {
-                            page: page,
-                            title: document.title,
-                            yaml: response.yaml,
-                            markdown: response.markdown,
-                            pendingChanges: false
-                        }
-                    }, document.title, path);
-                }
-            }).bind(this));
+            this.open(page);
         }).bind(this));
     }).bind(this));
+};
+
+PicoContentAdmin.prototype.updateNavigation = function (page, title) {
+    // update page title
+    if (title) document.title = title;
+
+    // update navigation
+    var activeNavigationItem = this.getNavigation().querySelector('li.active');
+    if (activeNavigationItem) activeNavigationItem.classList.remove('active');
+
+    if (page) {
+        var navigationItem = this.getNavigation().querySelector('li[data-id="' + page + '"]');
+        if (navigationItem) navigationItem.classList.add('active');
+    }
+
+    // update toolbar
+    var toolbar = this.getMarkdownEditor().toolbarElements;
+    if (page) {
+        if (toolbar.save) toolbar.save.classList.remove('disabled');
+    } else {
+        if (toolbar.save) toolbar.save.classList.add('disabled');
+    }
+
+    // update current page
+    this.currentPage = page;
+};
+
+PicoContentAdmin.prototype.updateHistory = function () {
+    var historyObject = this.getHistoryObject();
+    window.history.replaceState(
+        { PicoContentAdmin: historyObject },
+        historyObject.title,
+        window.location.pathname
+    );
+};
+
+PicoContentAdmin.prototype.pushHistory = function (urlPath) {
+    var historyObject = this.getHistoryObject();
+    window.history.pushState(
+        { PicoContentAdmin: historyObject },
+        historyObject.title,
+        urlPath
+    );
+};
+
+PicoContentAdmin.prototype.getHistoryObject = function () {
+    return {
+        page: this.currentPage,
+        title: document.title,
+        yaml: this.getYaml(),
+        markdown: this.getMarkdown(),
+        pendingChanges: this.pendingChanges
+    };
 };
 
 PicoContentAdmin.prototype.getNavigation = function () {

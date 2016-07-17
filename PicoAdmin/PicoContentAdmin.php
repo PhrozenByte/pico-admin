@@ -37,7 +37,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 'tabSize' => 4,
                 'spellChecker' => false,
                 'toolbar' => array(
-                    'save', 'save-as', 'preview', 'full-preview',
+                    'create', 'save', 'save-as', 'preview', 'full-preview',
                     '|', 'bold', 'italic', 'heading',
                     '|', 'code', 'quote', 'unordered-list', 'ordered-list',
                     '|', 'link', 'image', 'table', 'horizontal-rule',
@@ -110,7 +110,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
-            case 'open':
+            case 'load':
             case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 break;
@@ -121,9 +121,11 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
-            case 'open':
+            case 'load':
                 // reset content of non-existing files
-                $rawContent = '';
+                if (basename($this->page) !== '404') {
+                    $rawContent = '';
+                }
                 break;
         }
     }
@@ -131,8 +133,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onContentLoaded(&$rawContent)
     {
         switch ($this->action) {
+            case 'create':
+                $rawContent = '';
+                $this->yamlContent = '';
+                $this->markdownContent = '';
+                break;
+
             case 'edit':
-            case 'open':
+            case 'load':
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
                     . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
@@ -170,16 +178,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
                 $meta = $this->getFileMeta();
+                $twigVariables['title'] = $this->page . $this->getConfig('content_ext')
+                    . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '');
+                // intentional fallthrough
 
+            case 'create':
                 $templateName = 'admin-content.twig';
 
                 $twigVariables['yaml_content'] = $this->yamlContent;
                 $twigVariables['markdown_content'] = $this->markdownContent;
                 $twigVariables['file_navigation'] = $this->getFileNavigation();
-                $twigVariables['title'] = $this->page . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '');
                 break;
 
-            case 'open':
+            case 'load':
                 $meta = $this->getFileMeta();
 
                 header('Content-Type: application/json; charset=UTF-8');
@@ -188,12 +199,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $twigVariables['json'] = array(
                     'yaml' => $this->yamlContent,
                     'markdown' => $this->markdownContent,
-                    'title' => $this->page . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '')
+                    'title' => $this->page . $this->getConfig('content_ext')
+                        . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '')
                 );
                 break;
 
             case 'preview':
-                $templateName = 'admin-content-preview.twig';
+                header('Content-Type: application/json; charset=UTF-8');
+                $templateName = 'admin-ajax.twig';
+                $twigVariables['json'] = array('preview' => $twigVariables['content']);
                 break;
         }
     }
