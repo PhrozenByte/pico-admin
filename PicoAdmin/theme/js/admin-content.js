@@ -1,4 +1,5 @@
-function PicoContentAdmin(authToken, baseUrl) {
+function PicoContentAdmin(authToken, baseUrl)
+{
     PicoAdmin.call(this, authToken, baseUrl);
 
     this.yamlEditorOptions = null;
@@ -20,7 +21,8 @@ function PicoContentAdmin(authToken, baseUrl) {
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
 PicoContentAdmin.prototype.constructor = PicoAdmin;
 
-PicoContentAdmin.prototype.create = function () {
+PicoContentAdmin.prototype.create = function ()
+{
     this.updateHistory();
 
     this.setYaml('');
@@ -33,7 +35,8 @@ PicoContentAdmin.prototype.create = function () {
     this.pushHistory(this.getUrl('content', 'create'));
 };
 
-PicoContentAdmin.prototype.open = function (page) {
+PicoContentAdmin.prototype.open = function (page)
+{
     this.updateHistory();
 
     this.load(page, (function (yaml, markdown, title) {
@@ -48,7 +51,8 @@ PicoContentAdmin.prototype.open = function (page) {
     }).bind(this));
 };
 
-PicoContentAdmin.prototype.save = function (page) {
+PicoContentAdmin.prototype.save = function (page)
+{
     console.log('Save current page');
 
     page = page ? page : this.currentPage;
@@ -58,14 +62,16 @@ PicoContentAdmin.prototype.save = function (page) {
     }
 };
 
-PicoContentAdmin.prototype.saveAs = function () {
+PicoContentAdmin.prototype.saveAs = function ()
+{
     console.log('Save current page as ...');
 
     //var page = /* ask user */;
     //this.save(page);
 };
 
-PicoContentAdmin.prototype.reset = function () {
+PicoContentAdmin.prototype.reset = function ()
+{
     if (this.currentPage !== null) {
         this.updateHistory();
 
@@ -81,19 +87,22 @@ PicoContentAdmin.prototype.reset = function () {
     }
 };
 
-PicoContentAdmin.prototype.edit = function () {
+PicoContentAdmin.prototype.edit = function ()
+{
     if (this.markdownEditor.isPreviewActive()) {
         this.markdownEditor.togglePreview();
     }
 };
 
-PicoContentAdmin.prototype.preview = function () {
+PicoContentAdmin.prototype.preview = function ()
+{
     if (!this.markdownEditor.isPreviewActive()) {
         this.markdownEditor.togglePreview();
     }
 };
 
-PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error, complete) {
+PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, error, complete)
+{
     if (this.previewXhr !== null) {
         this.previewXhr.abort();
     }
@@ -115,7 +124,8 @@ PicoContentAdmin.prototype.requestPreview = function (yaml, markdown, success, e
     return this.previewXhr;
 };
 
-PicoContentAdmin.prototype.fullPreview = function () {
+PicoContentAdmin.prototype.fullPreview = function ()
+{
     // create a hidden form with the appropiate content
     var url = this.getUrl('content', 'fullPreview', this.currentPage),
         form = utils.parse(
@@ -152,7 +162,8 @@ PicoContentAdmin.prototype.fullPreview = function () {
     document.body.removeChild(form);
 };
 
-PicoContentAdmin.prototype.load = function (page, callback) {
+PicoContentAdmin.prototype.load = function (page, callback)
+{
     this.requestLoad(page, (function (xhr, statusText, response) {
         if (
             !response
@@ -167,7 +178,8 @@ PicoContentAdmin.prototype.load = function (page, callback) {
     }).bind(this));
 };
 
-PicoContentAdmin.prototype.requestLoad = function (page, success, error, complete) {
+PicoContentAdmin.prototype.requestLoad = function (page, success, error, complete)
+{
     if (this.loadXhr !== null) {
         this.loadXhr.abort();
     }
@@ -185,7 +197,8 @@ PicoContentAdmin.prototype.requestLoad = function (page, success, error, complet
     return this.loadXhr;
 };
 
-PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
+PicoContentAdmin.prototype.update = function (page, title, yaml, markdown)
+{
     this.currentPage = page;
 
     // update page title
@@ -203,7 +216,8 @@ PicoContentAdmin.prototype.update = function (page, title, yaml, markdown) {
     this.setMarkdown(markdown);
 };
 
-PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
+PicoContentAdmin.prototype.initYamlEditor = function (element, options)
+{
     if (typeof element === 'string') element = document.querySelector(element);
     if (!utils.isPlainObject(options)) options = {};
 
@@ -227,22 +241,26 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options) {
     return this.yamlEditor;
 };
 
-PicoContentAdmin.prototype.getYamlEditor = function () {
+PicoContentAdmin.prototype.getYamlEditor = function ()
+{
     return this.yamlEditor;
 };
 
-PicoContentAdmin.prototype.getYaml = function () {
+PicoContentAdmin.prototype.getYaml = function ()
+{
     return (this.yamlEditor !== null) ? this.yamlEditor.getValue() : null;
 };
 
-PicoContentAdmin.prototype.setYaml = function (value) {
+PicoContentAdmin.prototype.setYaml = function (value)
+{
     if (this.yamlEditor !== null) {
         this.yamlEditor.setValue(value);
         this.yamlEditor.save();
     }
 };
 
-PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
+PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
+{
     if (typeof element === 'string') element = document.querySelector(element);
     if (!utils.isPlainObject(options)) options = {};
 
@@ -437,22 +455,26 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options) {
     return this.markdownEditor;
 };
 
-PicoContentAdmin.prototype.getMarkdownEditor = function () {
+PicoContentAdmin.prototype.getMarkdownEditor = function ()
+{
     return this.markdownEditor;
 };
 
-PicoContentAdmin.prototype.getMarkdown = function () {
+PicoContentAdmin.prototype.getMarkdown = function ()
+{
     return (this.markdownEditor !== null) ? this.markdownEditor.codemirror.getValue() : null;
 };
 
-PicoContentAdmin.prototype.setMarkdown = function (value) {
+PicoContentAdmin.prototype.setMarkdown = function (value)
+{
     if (this.markdownEditor !== null) {
         this.markdownEditor.codemirror.setValue(value);
         this.markdownEditor.codemirror.save();
     }
 };
 
-PicoContentAdmin.prototype.setPendingChanges = function (pendingChanges) {
+PicoContentAdmin.prototype.setPendingChanges = function (pendingChanges)
+{
     var toolbar = this.getMarkdownEditor().toolbarElements;
 
     if (pendingChanges) {
@@ -468,11 +490,13 @@ PicoContentAdmin.prototype.setPendingChanges = function (pendingChanges) {
     this.pendingChanges = pendingChanges;
 };
 
-PicoContentAdmin.prototype.getPendingChanges = function () {
+PicoContentAdmin.prototype.getPendingChanges = function ()
+{
     return this.pendingChanges;
 };
 
-PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate) {
+PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate)
+{
     this.navigation = element;
     this.currentPage = currentPage;
     this.titleTemplate = titleTemplate;
@@ -512,7 +536,8 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     }).bind(this));
 };
 
-PicoContentAdmin.prototype.updateNavigation = function (page, title) {
+PicoContentAdmin.prototype.updateNavigation = function (page, title)
+{
     // update page title
     if (title) document.title = title;
 
@@ -537,7 +562,8 @@ PicoContentAdmin.prototype.updateNavigation = function (page, title) {
     this.currentPage = page;
 };
 
-PicoContentAdmin.prototype.updateHistory = function () {
+PicoContentAdmin.prototype.updateHistory = function ()
+{
     var historyObject = this.getHistoryObject();
     window.history.replaceState(
         { PicoContentAdmin: historyObject },
@@ -546,7 +572,8 @@ PicoContentAdmin.prototype.updateHistory = function () {
     );
 };
 
-PicoContentAdmin.prototype.pushHistory = function (urlPath) {
+PicoContentAdmin.prototype.pushHistory = function (urlPath)
+{
     var historyObject = this.getHistoryObject();
     window.history.pushState(
         { PicoContentAdmin: historyObject },
@@ -555,7 +582,8 @@ PicoContentAdmin.prototype.pushHistory = function (urlPath) {
     );
 };
 
-PicoContentAdmin.prototype.getHistoryObject = function () {
+PicoContentAdmin.prototype.getHistoryObject = function ()
+{
     return {
         page: this.currentPage,
         title: document.title,
@@ -565,10 +593,12 @@ PicoContentAdmin.prototype.getHistoryObject = function () {
     };
 };
 
-PicoContentAdmin.prototype.getNavigation = function () {
+PicoContentAdmin.prototype.getNavigation = function ()
+{
     return this.navigation;
 };
 
-PicoContentAdmin.prototype.getCurrentPage = function () {
+PicoContentAdmin.prototype.getCurrentPage = function ()
+{
     return this.currentPage;
 };

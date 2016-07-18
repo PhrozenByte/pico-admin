@@ -82,6 +82,7 @@ footer a { color: #ddd; }
 footer a:hover { color: #fff; }
 
 /*** LOADING ***/
+
 #loading {
     position: fixed;
     top: 0;
@@ -110,6 +111,7 @@ footer a:hover { color: #fff; }
     transition: width 800ms ease-in-out,
                 opacity 600ms ease 300ms, width 600ms ease-in-out;
 }
+
 #loading .glow {
     width: 100%;
     height: 4px;
@@ -121,6 +123,7 @@ footer a:hover { color: #fff; }
 #loading.wait .glow {
     animation: loading-pulse 2s ease-in-out 800ms infinite;
 }
+
 @-webkit-keyframes loading-pulse {
     0% { opacity: 0.5; }
     50% { opacity: 1; }

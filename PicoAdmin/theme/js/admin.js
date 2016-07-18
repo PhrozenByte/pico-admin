@@ -1,9 +1,11 @@
-function PicoAdmin(authToken, baseUrl) {
+function PicoAdmin(authToken, baseUrl)
+{
     this.authToken = authToken;
     this.baseUrl = baseUrl;
 }
 
-PicoAdmin.prototype.ajax = function (module, action, payload, options) {
+PicoAdmin.prototype.ajax = function (module, action, payload, options)
+{
     if (options.postData === undefined) {
         options.postData = { auth_client_token: this.authToken };
     } else if (options.postData.auth_client_token === undefined) {
@@ -28,7 +30,8 @@ PicoAdmin.prototype.ajax = function (module, action, payload, options) {
     return utils.ajax(this.getUrl(module, action, payload), options);
 };
 
-PicoAdmin.prototype.getUrl = function (module, action, payload) {
+PicoAdmin.prototype.getUrl = function (module, action, payload)
+{
     var url = this.baseUrl;
     if (module) {
         url += '/' + module;
@@ -43,7 +46,8 @@ PicoAdmin.prototype.getUrl = function (module, action, payload) {
     return url;
 };
 
-PicoAdmin.prototype.showLoading = function () {
+PicoAdmin.prototype.showLoading = function ()
+{
     var loading = document.getElementById('loading'),
         animateProgress = function () { loading.style.width = (50 + Math.random() * 30) + '%'; };
 
@@ -73,7 +77,8 @@ PicoAdmin.prototype.showLoading = function () {
     }
 };
 
-PicoAdmin.prototype.hideLoading = function () {
+PicoAdmin.prototype.hideLoading = function ()
+{
     var loading = document.getElementById('loading');
     if (loading) {
         var requestCount = parseInt(loading.dataset.requests);
@@ -96,10 +101,12 @@ PicoAdmin.prototype.hideLoading = function () {
     return false;
 };
 
-PicoAdmin.prototype.getAuthToken = function () {
+PicoAdmin.prototype.getAuthToken = function ()
+{
     return this.authToken;
 };
 
-PicoAdmin.prototype.getBaseUrl = function () {
+PicoAdmin.prototype.getBaseUrl = function ()
+{
     return this.baseUrl;
 };
