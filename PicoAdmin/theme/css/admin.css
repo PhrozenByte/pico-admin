@@ -98,7 +98,8 @@ footer a:hover { color: #fff; }
     width: 100%;
     display: flex;
     align-items: center;
-    border: 1px solid;
+    background: #ccc;
+    border: 1px solid #999;
     border-top: 0 none;
 }
 #notification .alert:last-child {
@@ -115,11 +116,12 @@ footer a:hover { color: #fff; }
     margin: 1rem;
 }
 #notification .alert h1 {
+    flex: 1 0 auto;
     font-size: 1.2rem;
     white-space: nowrap;
     font-weight: bold;
 }
-#notification .alert p { flex: 1 1 auto; }
+#notification .alert p { flex: 1000000 1 auto; }
 
 #notification .close,
 #notification .timer {

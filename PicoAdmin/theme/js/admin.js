@@ -51,22 +51,27 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
     if (timeout === undefined) timeout = 5;
     if (closeable === undefined) closeable = true;
 
-    var className = 'alert-info',
-        iconName = 'fa-info';
+    var className = '',
+        iconName = '';
     switch (type) {
         case 'success':
-            className = 'alert-success';
-            iconName = 'fa-check';
+            className = ' alert-success';
+            iconName = ' fa-check';
+            break;
+
+        case 'info':
+            className = ' alert-info';
+            iconName = ' fa-info';
             break;
 
         case 'warning':
-            className = 'alert-warning';
-            iconName = 'fa-exclamation-triangle';
+            className = ' alert-warning';
+            iconName = ' fa-exclamation-triangle';
             break;
 
         case 'error':
-            className = 'alert-error';
-            iconName = 'fa-ban';
+            className = ' alert-error';
+            iconName = ' fa-ban';
             break;
     }
 
@@ -76,11 +81,11 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
         document.body.appendChild(notification);
     }
 
-    var alert = utils.parse('<div class="alert ' + className + ' hidden" role="alert"/>');
+    var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"/>');
     notification.appendChild(alert);
 
     if ((title !== undefined) && (title !== null)) {
-        var titleElement = utils.parse('<h1><span class="fa ' + iconName + ' fa-fw"></span> ' + title + '</h1>');
+        var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
         alert.appendChild(titleElement);
     }
 
