@@ -84,6 +84,62 @@ utils.ajax = function (url, options) {
     return xhr;
 };
 
+utils.slideUp = function (element, finishCallback, startCallback) {
+    element.style.height = element.offsetHeight + 'px';
+
+    window.requestAnimationFrame(function () {
+        element.classList.add('slide');
+
+        window.requestAnimationFrame(function () {
+            element.classList.add('up');
+
+            if ((startCallback !== undefined) && (startCallback !== null)) {
+                startCallback();
+            }
+
+            window.setTimeout(function () {
+                element.classList.add('hidden');
+                element.classList.remove('slide');
+                element.classList.remove('up');
+                element.style.height = '';
+
+                if ((finishCallback !== undefined) && (finishCallback !== null)) {
+                    window.requestAnimationFrame(finishCallback);
+                }
+            }, 500);
+        });
+    });
+};
+
+utils.slideDown = function (element, finishCallback, startCallback) {
+    element.classList.remove('hidden');
+    var elementHeight = element.offsetHeight + 'px';
+
+    element.classList.add('slide');
+    element.classList.add('up');
+
+    window.requestAnimationFrame(function () {
+        element.style.height = elementHeight;
+
+        window.requestAnimationFrame(function () {
+            element.classList.remove('up');
+
+            if ((startCallback !== undefined) && (startCallback !== null)) {
+                startCallback();
+            }
+
+            window.setTimeout(function () {
+                element.classList.remove('slide');
+                element.style.height = '';
+
+                if ((finishCallback !== undefined) && (finishCallback !== null)) {
+                    window.requestAnimationFrame(finishCallback);
+                }
+            }, 500);
+        });
+    });
+};
+
 /**
  * Create a HTML element from a string
  *

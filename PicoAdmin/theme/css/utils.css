@@ -2,6 +2,15 @@
     display: none !important;
 }
 
+.slide {
+    overflow: hidden !important;
+    -webkit-transition: height .5s ease-in;
+            transition: height .5s ease-in;
+}
+.slide.up {
+    height: 0 !important;
+}
+
 .smooth {
     -webkit-transition: all .2s ease-in;
             transition: all .2s ease-in;
