@@ -129,7 +129,7 @@ PicoContentAdmin.prototype.fullPreview = function ()
     // create a hidden form with the appropiate content
     var url = this.getUrl('content', 'fullPreview', this.currentPage),
         form = utils.parse(
-            '<form action="' + url + '" method="POST" target="_blank" style="display: none;">' +
+            '<form action="' + url + '" method="POST" target="_blank" class="hidden">' +
             '   <textarea class="yaml" name="yaml"></textarea>' +
             '   <textarea class="markdown" name="markdown"></textarea>' +
             '   <input class="auth_client_token" type="hidden" name="auth_client_token" value="" />' +
@@ -269,6 +269,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
         element: element,
         previewRender: (function (plainText, preview) {
             var editor = this.getMarkdownEditor(),
+                yamlWrapper = this.yamlEditor.getWrapperElement(),
                 previewButton = editor.toolbarElements.preview,
                 sideBySideButton = editor.toolbarElements['side-by-side'],
                 requestPreview = null;
@@ -284,7 +285,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
 
                 // keep the editor preview hidden
                 // until the content is actually loaded
-                preview.style.display = 'none';
+                preview.classList.add('hidden');
 
                 this.requestPreview(
                     yamlContent,
@@ -299,7 +300,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
 
                         // hide YAML editor
                         if (requestPreview !== null) {
-                            this.yamlEditor.getWrapperElement().style.display = 'none';
+                            yamlWrapper.classList.add('hidden');
                         }
                     }).bind(this),
                     (function (xhr, statusText, response) {
@@ -322,12 +323,12 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                     function (xhr, statusText, response, wasSuccesful) {
                         // reset editor preview visibility
                         // (usually makes it visible again)
-                        preview.style.display = null;
+                        preview.classList.remove('hidden');
                     }
                 );
             } else if (requestPreview !== null) {
                 // reset YAML editor visibility
-                this.yamlEditor.getWrapperElement().style.display = null;
+                yamlWrapper.classList.remove('hidden');
             }
         }).bind(this)
     });

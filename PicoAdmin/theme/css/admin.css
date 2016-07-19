@@ -57,7 +57,6 @@ aside h1 {
     padding: 1rem;
     background: #2EAE9B;
     color: #fff;
-    z-index: 110;
 }
 aside h1 a,
 aside h1 a:hover {
@@ -98,18 +97,24 @@ footer a:hover { color: #fff; }
     border-right: 1px solid #159582;
     border-bottom-right-radius: 2.667px;
 
-    transition: none;
+    -webkit-transition: none;
+            transition: none;
 }
 #loading.wait {
-    transition: width 800ms ease-in-out;
+    -webkit-transition: width .8s ease-in-out;
+            transition: width .8s ease-in-out;
 }
 #loading.finish {
     display: block !important;
     width: 100% !important;
     opacity: 0;
 
-    transition: width 800ms ease-in-out,
-                opacity 600ms ease 300ms, width 600ms ease-in-out;
+    -webkit-transition: width .8s ease-in-out,
+                        opacity .6s ease .3s,
+                        width .6s ease-in-out;
+            transition: width .8s ease-in-out,
+                        opacity .6s ease .3s,
+                        width .6s ease-in-out;
 }
 
 #loading .glow {
@@ -121,7 +126,8 @@ footer a:hover { color: #fff; }
     box-shadow: 1px -1px 4px 2px #159582;
 }
 #loading.wait .glow {
-    animation: loading-pulse 2s ease-in-out 800ms infinite;
+    -webkit-animation: loading-pulse 2s ease-in-out 800ms infinite;
+            animation: loading-pulse 2s ease-in-out 800ms infinite;
 }
 
 @-webkit-keyframes loading-pulse {

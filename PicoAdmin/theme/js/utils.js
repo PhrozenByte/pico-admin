@@ -42,9 +42,13 @@ utils.ajax = function (url, options) {
             var isSuccessful = null;
             if ((xhr.status >= 200) && (xhr.status < 300)) {
                 isSuccessful = true;
-            } else if ((xhr.status >= 400) && (xhr.status <= 600)) {
+            } else if ((xhr.status === 0) || ((xhr.status >= 400) && (xhr.status <= 600))) {
                 isSuccessful = false;
             } else {
+                if (options.complete) {
+                    options.complete(xhr, xhr.statusText, xhr.response, null);
+                }
+
                 console.error('Invalid XMLHttpRequest status', xhr.status);
                 return;
             }

@@ -23,7 +23,8 @@
 }
 
 .editor-toolbar a {
-    transition: all 200ms ease-in;
+    -webkit-transition: all .2s ease-in;
+            transition: all .2s ease-in;
 }
 .editor-toolbar a.disabled {
     color: #ccc !important;
