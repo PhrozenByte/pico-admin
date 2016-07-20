@@ -53,26 +53,31 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
 
     var className = '',
         iconName = '';
-    switch (type) {
-        case 'success':
-            className = ' alert-success';
-            iconName = ' fa-check';
-            break;
+    if (typeof(type) === 'object') {
+        if (type.className) className = ' ' + type.className;
+        if (type.iconName) iconName = ' ' + type.iconName;
+    } else {
+        switch (type) {
+            case 'success':
+                className = ' alert-success';
+                iconName = ' fa-check';
+                break;
 
-        case 'info':
-            className = ' alert-info';
-            iconName = ' fa-info';
-            break;
+            case 'info':
+                className = ' alert-info';
+                iconName = ' fa-info';
+                break;
 
-        case 'warning':
-            className = ' alert-warning';
-            iconName = ' fa-exclamation-triangle';
-            break;
+            case 'warning':
+                className = ' alert-warning';
+                iconName = ' fa-exclamation-triangle';
+                break;
 
-        case 'error':
-            className = ' alert-error';
-            iconName = ' fa-ban';
-            break;
+            case 'error':
+                className = ' alert-error';
+                iconName = ' fa-ban';
+                break;
+        }
     }
 
     var notification = document.getElementById('notification');
@@ -90,41 +95,49 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
     }
 
     if ((message !== undefined) && (message !== null)) {
-        var messageElement = utils.parse('<p>' + message + '</p>');
+        var messageElement;
+        if (typeof message === 'string') {
+            messageElement = utils.parse('<p>' + message + '</p>');
+        } else {
+            messageElement = document.createElement('p');
+            messageElement.appendChild(message);
+        }
         alert.appendChild(messageElement);
     }
 
-    var closeCallback = function () {
-        utils.slideUp(alert, function() {
-            notification.removeChild(alert);
-        });
-    };
+    var addCloseButton = closeable,
+        closeCallback = function () {
+            utils.slideUp(alert, function() {
+                notification.removeChild(alert);
+            });
+        };
 
     if (timeout > 0) {
         if (timeout >= 100) {
             setTimeout(closeCallback, (timeout * 1000));
         } else {
-            var alertTimer = utils.parse(
-                '<a href="" class="timer" role="button">' +
-                '    <span class="timer-value" aria-hidden="true">' + timeout + '</span>' +
-                '    <span class="sr-only">Close</span>' +
-                '</a>'
-            );
-
+            var dismiss;
             if (closeable) {
-                alertTimer.classList.add('closeable');
-                alertTimer.insertBefore(
-                    utils.parse('<span class="timer-close" aria-hidden="true">&times;</span>'),
-                    alertTimer.firstChild
+                dismiss = utils.parse(
+                    '<a href="" class="dismiss countdown closeable" role="button">' +
+                    '    <span class="close" aria-hidden="true">&times;</span>' +
+                    '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                    '    <span class="sr-only">Close</span>' +
+                    '</a>'
                 );
             } else {
-                alertTimer.addEventListener('click', function (e) { e.preventDefault(); });
+                dismiss = utils.parse(
+                    '<span class="dismiss countdown">' +
+                    '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                    '</span>'
+                );
             }
 
-            alert.appendChild(alertTimer);
+            alert.appendChild(dismiss);
+            addCloseButton = false;
 
             var alertTimerInterval = setInterval(function() {
-                var valueElement = alertTimer.querySelector('.timer-value'),
+                var valueElement = dismiss.querySelector('.timer'),
                     value = parseInt(valueElement.textContent);
 
                 if (value > 0) {
@@ -135,26 +148,31 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
                     closeCallback();
                 }
             }, 1000);
+
+            if (closeable) {
+                dismiss.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    clearInterval(alertTimerInterval);
+                    closeCallback();
+                });
+            }
         }
     }
 
-    if (closeable) {
-        if (!(timeout > 0) || (timeout >= 100)) {
-            alert.appendChild(utils.parse(
-                '<a href="" class="close" role="button">' +
-                '    <span aria-hidden="true">&times;</span>' +
-                '    <span class="sr-only">Close</span>' +
-                '</a>'
-            ));
-        }
+    if (addCloseButton) {
+        var closeButton = utils.parse(
+            '<a href="" class="dismiss closeable" role="button">' +
+            '    <span class="close" aria-hidden="true">&times;</span>' +
+            '    <span class="sr-only">Close</span>' +
+            '</a>'
+        );
 
-        var closeButton = alert.querySelector('.timer, .close');
-        if (closeButton) {
-            closeButton.addEventListener('click', function (e) {
-                e.preventDefault();
-                closeCallback();
-            });
-        }
+        closeButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeCallback();
+        });
+
+        alert.appendChild(closeButton);
     }
 
     utils.slideDown(alert);

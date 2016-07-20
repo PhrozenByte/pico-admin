@@ -91,71 +91,70 @@ footer a:hover { color: #fff; }
     max-width: 100%;
     margin: 0 auto;
     z-index: 200;
-    opacity: 0.90;
+    opacity: 0.95;
+}
+#notification .alert { border-top: 0 none; }
+#notification .alert:last-child {
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
 }
 
-#notification .alert {
+/*** ALERTS ***/
+
+.alert {
     width: 100%;
     display: flex;
     align-items: center;
     background: #ccc;
     border: 1px solid #999;
-    border-top: 0 none;
 }
-#notification .alert:last-child {
-    border-bottom-left-radius: 0.3rem;
-    border-bottom-right-radius: 0.3rem;
-}
-#notification .alert.alert-info {    background: #6cc; border-color: #399; }
-#notification .alert.alert-success { background: #6c9; border-color: #396; }
-#notification .alert.alert-warning { background: #fc9; border-color: #c96; }
-#notification .alert.alert-error {   background: #f66; border-color: #c33; }
+.alert.alert-info {    background: #6cc; border-color: #399; }
+.alert.alert-success { background: #6c9; border-color: #396; }
+.alert.alert-warning { background: #fc9; border-color: #c96; }
+.alert.alert-error {   background: #f66; border-color: #c33; }
 
-#notification .alert h1,
-#notification .alert p {
+.alert h1,
+.alert p {
     margin: 1rem;
 }
-#notification .alert h1 {
+.alert h1 {
     flex: 1 0 auto;
     font-size: 1.2rem;
     white-space: nowrap;
     font-weight: bold;
 }
-#notification .alert p { flex: 1000000 1 auto; }
+.alert p { flex: 1000000 1 auto; }
 
-#notification .close,
-#notification .timer {
+.alert .dismiss {
     align-self: flex-start;
-    margin: 1rem;
-    font-weight: bold;
-}
-
-#notification .close {
-    font-size: 1.2rem;
-    line-height: 1;
-    color: rgba(0, 0, 0, 0.2);
-}
-#notification .close:hover { color: rgba(0, 0, 0, 0.4); }
-
-#notification .timer {
     width: 2em;
     height: 2em;
+    margin: 1rem;
     line-height: 2em;
     font-size: 0.7rem;
     text-align: center;
+    font-weight: bold;
     color: rgba(0, 0, 0, 0.4);
     background: rgba(0, 0, 0, 0.15);
     border-radius: 0.3rem;
+    cursor: default;
 }
-#notification .timer:not(.closeable) { cursor: default; }
-#notification .timer.closeable:hover { background: rgba(0, 0, 0, 0.3); }
+.alert .dismiss.closeable:hover {
+    background: rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
 
-#notification .timer .timer-close {
-    display: none;
+.alert .dismiss .close {
     font-size: 1.2rem;
 }
-#notification .timer:hover .timer-close + .timer-value { display: none; }
-#notification .timer:hover .timer-close { display: inline; }
+
+.alert .dismiss.countdown.closeable .close,
+.alert .dismiss.countdown.closeable:hover .timer {
+    display: none;
+}
+.alert .dismiss.countdown.closeable:hover .close {
+    display: inline;
+}
 
 /*** LOADING ***/
 
