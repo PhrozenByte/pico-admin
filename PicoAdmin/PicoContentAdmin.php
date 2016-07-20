@@ -71,15 +71,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
         if ($module === 'content') {
             if (empty($action)) {
-                $this->action = 'edit';
-                $this->page = !empty($payload) ? $payload : 'index';
-
                 header('307 Temporary Redirect');
-                header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
+                header('Location: ' . $this->admin->getAdminPageUrl('content/edit/index'));
                 die();
             } else {
                 $this->action = $action;
-                $this->page = $payload;
+
+                $contentDirLength = strlen($this->getConfig('content_dir'));
+                $contentExtLength = strlen($this->getConfig('content_ext'));
+                $this->page = substr($this->resolveFilePath($payload), $contentDirLength, -$contentExtLength);
             }
 
             switch ($this->action) {
