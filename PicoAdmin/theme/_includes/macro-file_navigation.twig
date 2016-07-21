@@ -1,10 +1,13 @@
 {% macro file_navigation(files, base_url, ext) %}
-    {% from _self import file_navigation, _file_navigation_anchor_args as anchor_args, _file_navigation_icon as icon %}
+    {% from _self import file_navigation,
+        _file_navigation_anchor_args as anchor_args,
+        _file_navigation_icon as icon,
+        _file_navigation_path as path %}
     {% if files.index is defined %}
         <li data-id="{{ files.index.id }}" data-file-name="index">
             <a {{ anchor_args(files.index, base_url) }}>
                 {{ icon(files.index) }}
-                {% if files.index.path != '.' %}{{ files.index.path }}/{% endif %}<strong>index</strong>{{ ext }}
+                {{ path(files.index.path) }}<strong>index</strong>{{ ext }}
             </a>
         </li>
     {% endif %}
@@ -13,11 +16,13 @@
             {% if file.id %}
                 <a {{ anchor_args(file, base_url) }}>
                     {{ icon(file) }}
-                    {% if file.path != '.' %}{{ file.path }}/{% endif %}<strong>{{ file.fileName }}</strong>{{ ext }}
+                    {{ path(file.path) }}<strong>{{ file.fileName }}</strong>{{ ext }}
                 </a>
             {% else %}
-                {{ icon(file) }}
-                <span>{{ file.fileName }}/</span>
+                <span>
+                    {{ icon(file) }}
+                    {{ path(file.path) }}{{ file.fileName }}/
+                </span>
             {% endif %}
             {% if file.children %}
                 <ul class="fa-ul">
@@ -57,4 +62,15 @@
     {% endif %}
 
     <span class="{{ classNames }}" aria-hidden="true"></span>
+{% endmacro %}
+
+{% macro _file_navigation_path(path) %}
+    {% if path != '.' %}
+        {% set pathParts = path|split('/') %}
+        {% if pathParts|length > 2 -%}
+            …/{{ pathParts|slice(-2)|join('/') }}/
+        {%- else -%}
+            {{ path }}/
+        {%- endif -%}
+    {% endif %}
 {% endmacro %}
