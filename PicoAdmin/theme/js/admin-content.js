@@ -200,6 +200,35 @@ PicoContentAdmin.prototype.requestLoad = function (page, success, error, complet
     return this.loadXhr;
 };
 
+PicoContentAdmin.prototype.delete = function (page)
+{
+    var currentHistoryObject = window.history.state ? window.history.state.PicoContentAdmin : null,
+        currentPath = window.location.pathname;
+
+    this.load(page, (function (yaml, markdown, title) {
+        this.updateHistory({
+            page: page,
+            title: this.titleTemplate.replace('{1}', 'Recover deleted ' + title),
+            yaml: yaml,
+            markdown: markdown,
+            pendingChanges: false
+        });
+
+        this.pushHistory(currentPath, currentHistoryObject);
+
+        this.requestDelete(page);
+    }).bind(this));
+};
+
+PicoContentAdmin.prototype.requestDelete = function (page, success, error, complete)
+{
+    return this.ajax('content', 'delete', page, {
+        success: success,
+        error: error,
+        complete: complete
+    });
+};
+
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
 {
     if (typeof element === 'string') element = document.querySelector(element);
@@ -532,6 +561,15 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
         anchor.addEventListener('click', (function (event) {
             event.preventDefault();
             this.open(page);
+        }).bind(this));
+    }).bind(this));
+
+    // clickable action icons
+    utils.forEach(element.querySelectorAll('.item .actions .delete'), (function (_, icon) {
+        var page = utils.closest(icon, 'li').dataset.id;
+        icon.addEventListener('click', (function (event) {
+            event.preventDefault();
+            this.delete(page);
         }).bind(this));
     }).bind(this));
 };
