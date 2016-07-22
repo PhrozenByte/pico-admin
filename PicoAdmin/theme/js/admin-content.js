@@ -13,9 +13,9 @@ function PicoContentAdmin(authToken, baseUrl)
     this.pendingChanges = null;
     this.titleTemplate = null;
 
-    this.loadXhr = null;
-    this.previewXhr = null;
     this.saveXhr = null;
+    this.previewXhr = null;
+    this.loadXhr = null;
 }
 
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
@@ -195,25 +195,6 @@ PicoContentAdmin.prototype.requestLoad = function (page, success, error, complet
     });
 
     return this.loadXhr;
-};
-
-PicoContentAdmin.prototype.update = function (page, title, yaml, markdown)
-{
-    this.currentPage = page;
-
-    // update page title
-    document.title = title;
-
-    // update navigation
-    var activeNavigationItem = this.getNavigation().querySelector('li.active');
-    if (activeNavigationItem) activeNavigationItem.classList.remove('active');
-
-    var navigationItem = this.getNavigation().querySelector('li[data-id="' + page + '"]');
-    if (navigationItem) navigationItem.classList.add('active');
-
-    // update content
-    this.setYaml(yaml);
-    this.setMarkdown(markdown);
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
