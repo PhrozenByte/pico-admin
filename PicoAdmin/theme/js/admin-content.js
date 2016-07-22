@@ -83,7 +83,7 @@ PicoContentAdmin.prototype.reset = function ()
             this.setMarkdown(markdown);
             this.setPendingChanges(false);
 
-            this.pushHistory(window.location.pathname);
+            this.pushHistory(window.location.href);
         }).bind(this));
     } else {
         this.create();
@@ -165,6 +165,35 @@ PicoContentAdmin.prototype.fullPreview = function ()
     document.body.removeChild(form);
 };
 
+PicoContentAdmin.prototype.delete = function (page)
+{
+    var currentHistoryObject = this.getHistoryObject(this.currentState);
+
+    this.load(page, (function (yaml, markdown, title) {
+        this.updateHistory({
+            page: page,
+            title: this.titleTemplate.replace('{1}', 'Recover deleted ' + title),
+            yaml: yaml,
+            markdown: markdown,
+            pendingChanges: false,
+            url: this.getUrl('content', 'edit', page)
+        });
+
+        this.pushHistory(currentHistoryObject);
+
+        this.requestDelete(page);
+    }).bind(this));
+};
+
+PicoContentAdmin.prototype.requestDelete = function (page, success, error, complete)
+{
+    return this.ajax('content', 'delete', page, {
+        success: success,
+        error: error,
+        complete: complete
+    });
+};
+
 PicoContentAdmin.prototype.load = function (page, callback)
 {
     this.requestLoad(page, (function (xhr, statusText, response) {
@@ -198,35 +227,6 @@ PicoContentAdmin.prototype.requestLoad = function (page, success, error, complet
     });
 
     return this.loadXhr;
-};
-
-PicoContentAdmin.prototype.delete = function (page)
-{
-    var currentHistoryObject = window.history.state ? window.history.state.PicoContentAdmin : null,
-        currentPath = window.location.pathname;
-
-    this.load(page, (function (yaml, markdown, title) {
-        this.updateHistory({
-            page: page,
-            title: this.titleTemplate.replace('{1}', 'Recover deleted ' + title),
-            yaml: yaml,
-            markdown: markdown,
-            pendingChanges: false
-        });
-
-        this.pushHistory(currentPath, currentHistoryObject);
-
-        this.requestDelete(page);
-    }).bind(this));
-};
-
-PicoContentAdmin.prototype.requestDelete = function (page, success, error, complete)
-{
-    return this.ajax('content', 'delete', page, {
-        success: success,
-        error: error,
-        complete: complete
-    });
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
@@ -521,39 +521,52 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     // restore old editor states when navigating back/forward
     // without the need of reloading the page
     window.addEventListener('popstate', (function (event) {
-        var latestState = this.latestState.currentState;
-        if (this.currentState == latestState) {
-            this.latestState = this.getHistoryObject();
-            utils.extend(this.latestState, { currentState: latestState });
+        if (this.currentState === this.latestState) {
+            // navigating away from latest page; update history object
+            // TODO: open question: is this (explicitly added) limitation really favored?
+            this.updateHistory({ url: this.getHistoryObject(this.currentState).url });
         }
 
         if (event.state && event.state.PicoContentAdmin) {
-            var historyObject = event.state.PicoContentAdmin;
-            if (historyObject.currentState == latestState) {
-                historyObject = this.latestState;
-            }
+            this.currentState = event.state.PicoContentAdmin;
+            var historyObject = this.getHistoryObject(this.currentState);
 
             this.setYaml(historyObject.yaml);
             this.setMarkdown(historyObject.markdown);
             this.setPendingChanges(historyObject.pendingChanges);
 
             this.updateNavigation(historyObject.page, historyObject.title);
-
-            this.currentState = historyObject.currentState;
         }
     }).bind(this));
 
-    // set initial state
-    this.currentState = 1;
-    this.latestState = this.getHistoryObject();
-    utils.extend(this.latestState, { currentState: this.currentState });
+    // restore history objects of a previous session
+    this.latestState = parseInt(sessionStorage.getItem('picoContentAdminHistory')) || null;
+    if (!this.latestState) {
+        this.currentState = this.latestState = 1;
+        this.updateHistory();
+    } else {
+        var currentHistoryObject = this.getHistoryObject();
+
+        this.currentState++;
+        for (var historyObject; this.currentState <= this.latestState; this.currentState++) {
+            historyObject = this.getHistoryObject(this.currentState);
+            if (!historyObject.isLost) {
+                window.history.pushState(
+                    { PicoContentAdmin: this.currentState },
+                    historyObject.title,
+                    '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
+                );
+            }
+        }
+
+        this.pushHistory(currentHistoryObject);
+    }
 
     // users shouldn't use the browser's reload button
-    window.addEventListener('beforeunload', function (event) {
-        if (window.history.state && window.history.state.PicoContentAdmin) {
-            event.preventDefault();
-        }
-    });
+    window.addEventListener('beforeunload', (function (event) {
+        event.preventDefault();
+        this.updateHistory();
+    }).bind(this));
 
     // clickable navigation items
     utils.forEach(element.querySelectorAll('.item a'), (function (_, anchor) {
@@ -602,38 +615,80 @@ PicoContentAdmin.prototype.updateNavigation = function (page, title)
 
 PicoContentAdmin.prototype.updateHistory = function (historyObject)
 {
-    if (historyObject === undefined) historyObject = this.getHistoryObject();
-    utils.extend(historyObject, { currentState: this.currentState });
-
-    window.history.replaceState(
-        { PicoContentAdmin: historyObject },
-        historyObject.title,
-        window.location.pathname
+    historyObject = utils.extend(
+        { lastUpdate: (new Date()).getTime() },
+        this.getHistoryObject(),
+        historyObject || {}
     );
+
+    var oldHistoryObject = this.getHistoryObject(this.currentState);
+    this.setHistoryObject(this.currentState, historyObject);
+
+    if (!oldHistoryObject || (historyObject.title !== oldHistoryObject.title) || (historyObject.url !== oldHistoryObject.url)) {
+        window.history.replaceState(
+            { PicoContentAdmin: this.currentState },
+            historyObject.title,
+            '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
+        );
+    }
 };
 
-PicoContentAdmin.prototype.pushHistory = function (urlPath, historyObject)
+PicoContentAdmin.prototype.pushHistory = function (url, historyObject)
 {
-    if (historyObject === undefined) historyObject = this.getHistoryObject();
-    utils.extend(historyObject, { currentState: ++this.latestState.currentState });
-    this.currentState = this.latestState.currentState;
+    if (!historyObject) {
+        historyObject = utils.isPlainObject(url) ? url : { url: url };
+    } else if (url) {
+        utils.extend(historyObject, { url: url });
+    }
+
+    // mark unreachable history states as lost
+    if (this.currentState < this.latestState) {
+        for (var lostState = (this.currentState + 1); lostState <= this.latestState; lostState++) {
+            var lostStateObject = this.getHistoryObject(lostState);
+            utils.extend(lostStateObject, { isLost: true });
+            this.setHistoryObject(lostState, lostStateObject);
+        }
+    }
+
+    // push new history state
+    historyObject = utils.extend(
+        { lastUpdate: (new Date()).getTime() },
+        this.getHistoryObject(),
+        historyObject
+    );
+
+    this.setHistoryObject(++this.latestState, historyObject);
+    this.currentState = this.latestState;
 
     window.history.pushState(
-        { PicoContentAdmin: historyObject },
+        { PicoContentAdmin: this.currentState },
         historyObject.title,
-        urlPath
+        '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
     );
+
+    // update number of history states
+    sessionStorage.setItem('picoContentAdminHistory', this.latestState);
 };
 
-PicoContentAdmin.prototype.getHistoryObject = function ()
+PicoContentAdmin.prototype.setHistoryObject = function (state, historyObject)
 {
-    return {
-        page: this.currentPage,
-        title: document.title,
-        yaml: this.getYaml(),
-        markdown: this.getMarkdown(),
-        pendingChanges: this.pendingChanges
-    };
+    sessionStorage.setItem('picoContentAdminHistory' + state, JSON.stringify(historyObject));
+};
+
+PicoContentAdmin.prototype.getHistoryObject = function (state)
+{
+    if (state === undefined) {
+        return {
+            page: this.currentPage,
+            title: document.title,
+            yaml: this.getYaml(),
+            markdown: this.getMarkdown(),
+            pendingChanges: this.pendingChanges,
+            url: window.location.href
+        };
+    }
+
+    return JSON.parse(sessionStorage.getItem('picoContentAdminHistory' + state) || 'null');
 };
 
 PicoContentAdmin.prototype.getNavigation = function ()
