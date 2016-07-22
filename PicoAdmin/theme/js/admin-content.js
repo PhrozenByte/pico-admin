@@ -13,6 +13,9 @@ function PicoContentAdmin(authToken, baseUrl)
     this.pendingChanges = null;
     this.titleTemplate = null;
 
+    this.currentState = null;
+    this.latestState = null;
+
     this.saveXhr = null;
     this.previewXhr = null;
     this.loadXhr = null;
@@ -489,14 +492,32 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     // restore old editor states when navigating back/forward
     // without the need of reloading the page
     window.addEventListener('popstate', (function (event) {
-        if (event.state && event.state.PicoContentAdmin) {
-            this.setYaml(event.state.PicoContentAdmin.yaml);
-            this.setMarkdown(event.state.PicoContentAdmin.markdown);
-            this.setPendingChanges(event.state.PicoContentAdmin.pendingChanges);
+        var latestState = this.latestState.currentState;
+        if (this.currentState == latestState) {
+            this.latestState = this.getHistoryObject();
+            utils.extend(this.latestState, { currentState: latestState });
+        }
 
-            this.updateNavigation(event.state.PicoContentAdmin.page, event.state.PicoContentAdmin.title);
+        if (event.state && event.state.PicoContentAdmin) {
+            var historyObject = event.state.PicoContentAdmin;
+            if (historyObject.currentState == latestState) {
+                historyObject = this.latestState;
+            }
+
+            this.setYaml(historyObject.yaml);
+            this.setMarkdown(historyObject.markdown);
+            this.setPendingChanges(historyObject.pendingChanges);
+
+            this.updateNavigation(historyObject.page, historyObject.title);
+
+            this.currentState = historyObject.currentState;
         }
     }).bind(this));
+
+    // set initial state
+    this.currentState = 1;
+    this.latestState = this.getHistoryObject();
+    utils.extend(this.latestState, { currentState: this.currentState });
 
     // users shouldn't use the browser's reload button
     window.addEventListener('beforeunload', function (event) {
@@ -541,9 +562,11 @@ PicoContentAdmin.prototype.updateNavigation = function (page, title)
     this.currentPage = page;
 };
 
-PicoContentAdmin.prototype.updateHistory = function ()
+PicoContentAdmin.prototype.updateHistory = function (historyObject)
 {
-    var historyObject = this.getHistoryObject();
+    if (historyObject === undefined) historyObject = this.getHistoryObject();
+    utils.extend(historyObject, { currentState: this.currentState });
+
     window.history.replaceState(
         { PicoContentAdmin: historyObject },
         historyObject.title,
@@ -551,9 +574,12 @@ PicoContentAdmin.prototype.updateHistory = function ()
     );
 };
 
-PicoContentAdmin.prototype.pushHistory = function (urlPath)
+PicoContentAdmin.prototype.pushHistory = function (urlPath, historyObject)
 {
-    var historyObject = this.getHistoryObject();
+    if (historyObject === undefined) historyObject = this.getHistoryObject();
+    utils.extend(historyObject, { currentState: ++this.latestState.currentState });
+    this.currentState = this.latestState.currentState;
+
     window.history.pushState(
         { PicoContentAdmin: historyObject },
         historyObject.title,
