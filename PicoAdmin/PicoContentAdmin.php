@@ -82,7 +82,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $this->page = substr($this->resolveFilePath($payload), $contentDirLength, -$contentExtLength);
 
                 // allow editing conflicting files (i.e. allow editing sub.md when sub/index.md exists)
-                if ((basename($payload) !== 'index') && (basename($this->page) === 'index')) {
+                if (!empty($payload) && (basename($payload) !== 'index') && (basename($this->page) === 'index')) {
                     $this->page = dirname($this->page);
                 }
             }

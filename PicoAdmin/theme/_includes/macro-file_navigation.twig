@@ -90,20 +90,18 @@
 {% endmacro %}
 
 {% macro _file_navigation_actions(file) %}
-    {% if file.id != "index" %}
-        <span class="actions">
-            {% if file.id %}
-                <span class="delete" title="Delete Page" role="button">
-                    <span class="fa fa-trash-o fa-fw" aria-hidden="true"></span>
-                    <span class="sr-only">Delete Page</span>
-                </span>
-            {% endif %}
-            {% if file.children or not file.id %}
-                <span class="create" title="Create New Page" role="button">
-                    <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
-                    <span class="sr-only">Create New Page</span>
-                </span>
-            {% endif %}
-        </span>
-    {% endif %}
+    <span class="actions">
+        {% if file.id and (file.id != "index") and (file.id != "404") %}
+            <span class="delete" title="Delete Page" role="button">
+                <span class="fa fa-trash-o fa-fw" aria-hidden="true"></span>
+                <span class="sr-only">Delete Page</span>
+            </span>
+        {% endif %}
+        {% if file.children or not file.id %}
+            <span class="create" title="Create New Page" role="button">
+                <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
+                <span class="sr-only">Create New Page</span>
+            </span>
+        {% endif %}
+    </span>
 {% endmacro %}
