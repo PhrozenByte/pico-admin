@@ -192,3 +192,30 @@ utils.parse = function (html) {
         return tmp;
     }
 };
+
+utils.matches = function (element, selector) {
+    if (element.matches) {
+        return element.matches(selector);
+    } else if (element.webkitMatchesSelector) {
+        return element.webkitMatchesSelector(selector);
+    } else if (element.msMatchesSelector) {
+        return element.msMatchesSelector(selector);
+    } else {
+        console.error('Unable to call utils.matches(…): Not supported');
+        return false;
+    }
+};
+
+utils.closest = function (element, selector) {
+    if (element.closest) {
+        return element.closest(selector);
+    }
+
+    do {
+        if (utils.matches(element, selector)) {
+            return element;
+        }
+    } while ((element = element.parentElement) !== null);
+
+    return null;
+};

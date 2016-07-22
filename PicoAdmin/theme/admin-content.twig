@@ -58,7 +58,7 @@
         // init file navigation
         window.requestAnimationFrame(function () {
             picoContentAdmin.initNavigation(
-                document.getElementById('picoContentAdminNav'),
+                document.querySelector('#picoContentAdminNav > ul'),
                 {% if current_page %}'{{ current_page.id|escape("js") }}'{% else %}null{% endif %},
                 '{1} | Pico Admin Panel | {{ site_title }}'
             );
@@ -76,9 +76,11 @@
 {% block nav %}
     {% if file_navigation['.'] is defined %}
         <h3>Pico Content Admin</h3>
-        <ul id="picoContentAdminNav" class="fa-ul">
-            {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
-        </ul>
+        <div id="picoContentAdminNav">
+            <ul class="fa-ul">
+                {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
+            </ul>
+        </div>
     {% endif %}
 {% endblock %}
 

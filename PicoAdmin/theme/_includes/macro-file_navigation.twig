@@ -1,29 +1,37 @@
 {% macro file_navigation(files, base_url, ext) %}
     {% from _self import file_navigation,
+        _file_navigation_item_args as item_args,
         _file_navigation_anchor_args as anchor_args,
         _file_navigation_icon as icon,
-        _file_navigation_path as path %}
+        _file_navigation_path as path,
+        _file_navigation_actions as actions %}
     {% if files.index is defined %}
-        <li data-id="{{ files.index.id }}" data-file-name="index">
-            <a {{ anchor_args(files.index, base_url) }}>
-                {{ icon(files.index) }}
-                {{ path(files.index.path) }}<strong>index</strong>{{ ext }}
-            </a>
+        <li {{ item_args(files.index) }}>
+            <div class="item">
+                <a {{ anchor_args(files.index, base_url) }}>
+                    {{ icon(files.index) }}
+                    {{ path(files.index.path) }}<strong>index</strong>{{ ext }}
+                </a>
+                {{ actions(files.index) }}
+            </div>
         </li>
     {% endif %}
     {% for file in files if file.fileName != 'index' %}
-        <li data-id="{{ file.id }}" data-file-name="{{ file.fileName }}">
-            {% if file.id %}
-                <a {{ anchor_args(file, base_url) }}>
-                    {{ icon(file) }}
-                    {{ path(file.path) }}<strong>{{ file.fileName }}</strong>{{ ext }}
-                </a>
-            {% else %}
-                <span>
-                    {{ icon(file) }}
-                    {{ path(file.path) }}{{ file.fileName }}/
-                </span>
-            {% endif %}
+        <li {{ item_args(file) }}>
+            <div class="item">
+                {% if file.id %}
+                    <a {{ anchor_args(file, base_url) }}>
+                        {{ icon(file) }}
+                        {{ path(file.path) }}<strong>{{ file.fileName }}</strong>{{ ext }}
+                    </a>
+                {% else %}
+                    <span>
+                        {{ icon(file) }}
+                        {{ path(file.path) }}{{ file.fileName }}/
+                    </span>
+                {% endif %}
+                {{ actions(file) }}
+            </div>
             {% if file.children %}
                 <ul class="fa-ul">
                     {{ file_navigation(file.children, base_url, ext) }}
@@ -33,11 +41,17 @@
     {% endfor %}
 {% endmacro %}
 
+{% macro _file_navigation_item_args(file) -%}
+    data-id="{{ file.id|escape("html_attr") }}"
+    data-path="{{ file.path|escape("html_attr") }}"
+    data-file-name="{{ file.fileName|escape("html_attr") }}"
+{%- endmacro %}
+
 {% macro _file_navigation_anchor_args(file, base_url) -%}
     href="{{ base_url }}/{{ file.id|escape('html_attr') }}"
     {% if file.error %}
         title="{{ file.error|escape("html_attr") }}"
-    {% else %}
+    {% elseif file.title %}
         title="{{ file.title|escape("html_attr") }}"
     {% endif %}
 {%- endmacro %}
@@ -72,5 +86,24 @@
         {%- else -%}
             {{ path }}/
         {%- endif -%}
+    {% endif %}
+{% endmacro %}
+
+{% macro _file_navigation_actions(file) %}
+    {% if file.id != "index" %}
+        <span class="actions">
+            {% if file.id %}
+                <span class="delete" title="Delete Page" role="button">
+                    <span class="fa fa-trash-o fa-fw" aria-hidden="true"></span>
+                    <span class="sr-only">Delete Page</span>
+                </span>
+            {% endif %}
+            {% if file.children or not file.id %}
+                <span class="create" title="Create New Page" role="button">
+                    <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
+                    <span class="sr-only">Create New Page</span>
+                </span>
+            {% endif %}
+        </span>
     {% endif %}
 {% endmacro %}

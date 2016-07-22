@@ -23,8 +23,8 @@ a:hover {
 /*** LAYOUT ***/
 
 body { height: 100vh; }
-body, main, main > aside { display: flex; }
-body, main > aside { flex-direction: column; }
+body, main, main > aside, main > aside > nav { display: flex; }
+body, main > aside, main > aside > nav { flex-direction: column; }
 
 main {
     flex: 1 0 auto;
@@ -38,6 +38,8 @@ main > aside {
     overflow: auto;
     min-width: 1rem;
 }
+main > aside > nav { flex: 1 0 auto; }
+main > aside > nav > div:last-child { flex: 1 0 auto; }
 
 @media (max-width: 767px) {
     main { flex-direction: column; }
@@ -67,6 +69,14 @@ aside nav h3 {
     margin: 0;
     padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: 1px solid #ddd;
+}
+aside nav > div {
+    padding: 1rem 1rem 1rem 0.5rem;
+    overflow-x: auto;
+}
+aside nav > div ul {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 footer {

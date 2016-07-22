@@ -525,13 +525,10 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     });
 
     // clickable navigation items
-    utils.forEach(element.querySelectorAll('li > a'), (function (_, anchor) {
-        var page = anchor.parentNode.dataset.id,
-            path = '/' + anchor.href.replace(/^(?:https?:\/\/[^/]+(?:\/|$))?/, '');
-
+    utils.forEach(element.querySelectorAll('.item a'), (function (_, anchor) {
+        var page = utils.closest(anchor, 'li').dataset.id;
         anchor.addEventListener('click', (function (event) {
             event.preventDefault();
-
             this.open(page);
         }).bind(this));
     }).bind(this));
