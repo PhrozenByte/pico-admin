@@ -37,7 +37,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 'tabSize' => 4,
                 'spellChecker' => false,
                 'toolbar' => array(
-                    'create', 'save', 'save-as', 'preview', 'full-preview',
+                    'save', 'save-as', 'preview', 'full-preview',
                     '|', 'bold', 'italic', 'heading',
                     '|', 'code', 'quote', 'unordered-list', 'ordered-list',
                     '|', 'link', 'image', 'table', 'horizontal-rule',

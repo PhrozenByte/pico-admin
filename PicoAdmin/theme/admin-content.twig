@@ -75,11 +75,21 @@
 
 {% block nav %}
     {% if file_navigation['.'] is defined %}
-        <h3>Pico Content Admin</h3>
         <div id="picoContentAdminNav">
-            <ul class="fa-ul">
-                {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
-            </ul>
+            <div class="headline">
+                <h3>Pico Content Admin</h3>
+                <div class="actions">
+                    <a href="{{ "content/create"|admin_link }}" class="action create inverse" title="Create New Page" role="button">
+                        <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
+                        <span class="sr-only">Create New Page</span>
+                    </a>
+                </div>
+            </div>
+            <div class="nav">
+                <ul class="fa-ul">
+                    {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
+                </ul>
+            </div>
         </div>
     {% endif %}
 {% endblock %}
