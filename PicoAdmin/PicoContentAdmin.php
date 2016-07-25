@@ -234,13 +234,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
             if (!isset($files[$id])) {
                 $files[$id] = array(
-                    'path' => dirname($id),
+                    'path' => $id,
                     'fileName' => basename($id),
+                    'dirName' => dirname($id),
                     'children' => array()
                 );
             }
 
             $files[$id]['id'] = $id;
+            $files[$id]['type'] = 'file';
 
             if (isset($pageData['title'])) {
                 $files[$id]['title'] = $pageData['title'];
@@ -255,8 +257,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
                 if (!isset($files[$parentId])) {
                     $files[$parentId] = array(
-                        'path' => dirname($parentId),
+                        'path' => $parentId,
                         'fileName' => basename($parentId),
+                        'dirName' => dirname($parentId),
+                        'type' => 'dir',
                         'children' => array($fileName => &$files[$id])
                     );
                 } elseif (!isset($files[$parentId]['children'][$fileName])) {

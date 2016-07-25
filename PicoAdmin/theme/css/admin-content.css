@@ -51,9 +51,8 @@ main > aside > nav > div > .nav .item .actions .delete {
 }
 main > aside > nav > div > .nav .item:hover .actions .delete { opacity: 1; }
 
-main > aside > nav > div > .nav ul li > .item .fa-li { color: #444; }
-main > aside > nav > div > .nav ul li[data-file-name="index"] > .item .fa-li { color: #009; }
-main > aside > nav > div > .nav ul li[data-file-name="404"] > .item .fa-li { color: #990; }
+main > aside > nav > div > .nav ul li[data-file$="index"] > .item .fa-li { color: #009; }
+main > aside > nav > div > .nav ul li[data-file$="404"] > .item .fa-li { color: #990; }
 main > aside > nav > div > .nav ul li > .item .fa-li.fa-stack-exclamation { color: #900; }
 
 footer .editor-statusbar {

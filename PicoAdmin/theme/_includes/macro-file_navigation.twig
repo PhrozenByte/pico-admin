@@ -10,7 +10,7 @@
             <div class="item">
                 <a {{ anchor_args(files.index, base_url) }}>
                     {{ icon(files.index) }}
-                    {{ path(files.index.path) }}<strong>index</strong>{{ ext }}
+                    {{ path(files.index.dirName) }}<strong>index</strong>{{ ext }}
                 </a>
                 {{ actions(files.index) }}
             </div>
@@ -22,12 +22,12 @@
                 {% if file.id %}
                     <a {{ anchor_args(file, base_url) }}>
                         {{ icon(file) }}
-                        {{ path(file.path) }}<strong>{{ file.fileName }}</strong>{{ ext }}
+                        {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ ext }}
                     </a>
                 {% else %}
                     <span>
                         {{ icon(file) }}
-                        {{ path(file.path) }}{{ file.fileName }}/
+                        {{ path(file.dirName) }}{{ file.fileName }}/
                     </span>
                 {% endif %}
                 {{ actions(file) }}
@@ -42,9 +42,9 @@
 {% endmacro %}
 
 {% macro _file_navigation_item_args(file) -%}
-    data-id="{{ file.id|escape("html_attr") }}"
-    data-path="{{ file.path|escape("html_attr") }}"
-    data-file-name="{{ file.fileName|escape("html_attr") }}"
+    {% if file.id %}data-id="{{ file.id|escape("html_attr") }}"{% endif %}
+    data-{% if file.type matches "/^[-\\w]+$/" %}{{ file.type }}{% else %}file{% endif -%}
+        ="{{ file.path|escape("html_attr") }}"
 {%- endmacro %}
 
 {% macro _file_navigation_anchor_args(file, base_url) -%}
@@ -58,21 +58,17 @@
 
 {% macro _file_navigation_icon(file) %}
     {% set classNames = "fa fa-li" %}
-    {% if file.id %}
-        {% if file.error %}
-            {% set classNames = classNames ~ " fa-file-o fa-stack-exclamation" %}
-        {% elseif file.fileName == '404' %}
-            {% set classNames = classNames ~ " fa-file-o" %}
-        {% elseif file.title %}
+    {% if file.type == "file" %}
+        {% if file.title and not file.error and (file.fileName != "404") %}
             {% set classNames = classNames ~ " fa-file-text-o" %}
         {% else %}
             {% set classNames = classNames ~ " fa-file-o" %}
         {% endif %}
-    {% else %}
+    {% elseif file.type == "dir" %}
         {% set classNames = classNames ~ " fa-folder-o" %}
-        {% if file.error %}
-            {% set classNames = classNames ~ " fa-stack-exclamation" %}
-        {% endif %}
+    {% endif %}
+    {% if file.error %}
+        {% set classNames = classNames ~ " fa-stack-exclamation" %}
     {% endif %}
 
     <span class="{{ classNames }}" aria-hidden="true"></span>

@@ -101,6 +101,8 @@ main > aside > nav > div .actions .action:hover {
     color: #2EAE9B;
 }
 
+main > aside > nav > div > .nav ul li > .item .fa-li { color: #444; }
+
 footer {
     background: #707070;
     font-size: 0.85rem;
