@@ -106,7 +106,12 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
     }
 
     var addCloseButton = closeable,
+        alertTimerTimeout,
+        alertTimerInterval,
         closeCallback = function () {
+            if (alertTimerTimeout) clearTimeout(alertTimerTimeout);
+            if (alertTimerInterval) clearInterval(alertTimerInterval);
+
             utils.slideUp(alert, function() {
                 notification.removeChild(alert);
             });
@@ -114,7 +119,7 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
 
     if (timeout > 0) {
         if (timeout >= 100) {
-            setTimeout(closeCallback, (timeout * 1000));
+            alertTimerTimeout = setTimeout(closeCallback, (timeout * 1000));
         } else {
             var dismiss;
             if (closeable) {
@@ -136,7 +141,7 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             alert.appendChild(dismiss);
             addCloseButton = false;
 
-            var alertTimerInterval = setInterval(function() {
+            alertTimerInterval = setInterval(function() {
                 var valueElement = dismiss.querySelector('.timer'),
                     value = parseInt(valueElement.textContent);
 
@@ -152,7 +157,6 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             if (closeable) {
                 dismiss.addEventListener('click', function (e) {
                     e.preventDefault();
-                    clearInterval(alertTimerInterval);
                     closeCallback();
                 });
             }
@@ -176,7 +180,7 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
     }
 
     utils.slideDown(alert);
-    return alert;
+    return { element: alert, close: closeCallback };
 };
 
 PicoAdmin.prototype.showLoading = function ()

@@ -35,7 +35,17 @@ utils.isPlainObject = function (object) {
 utils.ajax = function (url, options) {
     var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
     xhr.open(options.postData ? 'POST' : 'GET', url);
-    if (options.responseType) xhr.responseType = options.responseType;
+
+    if (options.responseType) {
+        xhr.responseType = options.responseType;
+        if (options.responseType === 'json') xhr.setRequestHeader('Accept', 'application/json');
+    }
+
+    if (options.header) {
+        utils.forEach(options.header, function (header, value) {
+            xhr.setRequestHeader(header, value);
+        });
+    }
 
     xhr.onreadystatechange = function() {
         if (xhr.readyState > 3) {

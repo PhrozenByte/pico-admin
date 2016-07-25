@@ -56,13 +56,11 @@ PicoContentAdmin.prototype.open = function (page)
 
 PicoContentAdmin.prototype.save = function (page)
 {
-    console.log('Save current page');
-
     page = page ? page : this.currentPage;
-    if (page) {
-        // can't save a file without a path specified
-        return false;
-    }
+    if (!page) return false;
+
+    console.log('Save page', page);
+    return true;
 };
 
 PicoContentAdmin.prototype.saveAs = function ()
