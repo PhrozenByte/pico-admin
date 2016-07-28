@@ -58,7 +58,7 @@
         // init file navigation
         window.requestAnimationFrame(function () {
             picoContentAdmin.initNavigation(
-                document.querySelector('#picoContentAdminNav .nav > ul'),
+                document.querySelector('#picoContentAdminNav'),
                 {% if current_page %}'{{ current_page.id|escape("js") }}'{% else %}null{% endif %},
                 '{1} | Pico Admin Panel | {{ site_title }}'
             );

@@ -120,6 +120,7 @@ footer a:hover { color: #fff; }
     width: 768px;
     max-width: 100%;
     margin: 0 auto;
+    padding: 0 0.5em;
     z-index: 200;
     opacity: 0.95;
 }
@@ -246,6 +247,61 @@ footer a:hover { color: #fff; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
 }
+
+/*** INPUT GROUPS ***/
+
+.input-group {
+    display: flex;
+    font-size: 0.9rem;
+}
+
+.input-group > * {
+    padding: 0.3em 0.6em;
+    line-height: 1.4;
+    border: 0 solid #999;
+    border-width: 1px 0;
+    background: #fff;
+}
+
+.input-group > *:first-child {
+    border-left-width: 1px;
+    border-top-left-radius: 0.2em;
+    border-bottom-left-radius: 0.2em;
+}
+.input-group > *:last-child {
+    border-right-width: 1px;
+    border-top-right-radius: 0.2em;
+    border-bottom-right-radius: 0.2em;
+}
+
+.input-group > * + * {
+    margin-left: -0.6em;
+    padding-left: 0.3em;
+}
+
+.input-group > input,
+.input-group > .main {
+    flex: 1 0 auto;
+}
+.input-group > input {
+    font-size: 1em;
+    outline: 0 none;
+}
+
+.input-group > .button {
+    width: 2em;
+    margin: 0;
+    padding: 0.3em;
+    background: #eee;
+    text-align: center;
+    color: #444;
+    cursor: pointer;
+}
+.input-group > .button:hover { color: #2EAE9B; }
+.input-group > .button > .fa { font-size: 1.1em; vertical-align: middle; }
+.input-group > .button:not(:first-child) { border-left: 1px solid #999; }
+.input-group > .button:not(:last-child) { border-right: 1px solid #999; }
+.input-group > .button + * { margin-left: 0; padding-left: 0.6em; }
 
 /*** FONT AWESOME ***/
 

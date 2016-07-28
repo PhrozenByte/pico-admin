@@ -65,10 +65,13 @@ PicoContentAdmin.prototype.save = function (page)
 
 PicoContentAdmin.prototype.saveAs = function ()
 {
-    console.log('Save current page as ...');
-
-    //var page = /* ask user */;
-    //this.save(page);
+    this.askFileName({
+        title: 'Save As',
+        value: this.currentPage,
+        fileExtension: '.md',
+        iconName: 'fa-floppy-o',
+        callback: this.save.bind(this)
+    });
 };
 
 PicoContentAdmin.prototype.reset = function ()
@@ -225,6 +228,59 @@ PicoContentAdmin.prototype.requestLoad = function (page, success, error, complet
     });
 
     return this.loadXhr;
+};
+
+PicoContentAdmin.prototype.askFileName = function (callback, options) {
+    if (utils.isPlainObject(callback)) {
+        options = callback;
+    } else {
+        if (!options) options = {};
+        if (callback) options.callback = callback;
+    }
+
+    options = utils.extend({
+        title: null,
+        value: '',
+        fileExtension: null,
+        iconName: null,
+        className: null,
+        closeable: true,
+        callback: null
+    }, options);
+
+    var content = utils.parse(
+            '<div class="input-group">' +
+            '    <input type="text" />' +
+            '    <div class="button" role="button">' +
+            '        <span class="fa fa-floppy-o" aria-hidden="true"></span>' +
+            '        <span class="sr-only">Save</span>' +
+            '    </div>' +
+            '</div>'
+        ),
+        inputField = content.querySelector('div > input'),
+        submitButton = content.querySelector('div > .button');
+
+    if (options.fileExtension) {
+        content.insertBefore(
+            utils.parse('<div class="file_ext">' + options.fileExtension + '</div>'),
+            submitButton
+        );
+    }
+
+    inputField.value = options.value;
+
+    var notification = this.showNotification(
+        options.title,
+        content,
+        { iconName: options.iconName, className: options.className },
+        null,
+        options.closeable
+    );
+
+    submitButton.addEventListener('click', function () {
+        notification.close();
+        if (options.callback) options.callback(inputField.value);
+    });
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
@@ -567,7 +623,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     }).bind(this));
 
     // clickable navigation items
-    utils.forEach(element.querySelectorAll('.item a'), (function (_, anchor) {
+    utils.forEach(element.querySelectorAll('.nav .item a'), (function (_, anchor) {
         var page = utils.closest(anchor, 'li').dataset.id;
         anchor.addEventListener('click', (function (event) {
             event.preventDefault();
@@ -576,7 +632,36 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     }).bind(this));
 
     // clickable action icons
-    utils.forEach(element.querySelectorAll('.item .actions .delete'), (function (_, icon) {
+    var createPageEvent = function (event) {
+        event.preventDefault();
+
+        var icon = event.currentTarget,
+            path = '';
+
+        if (utils.closest(icon, '.actions').parentNode.classList.contains('item')) {
+            var li = utils.closest(event.target, 'li');
+            path = li.dataset.file || li.dataset.dir;
+        }
+
+        this.askFileName({
+            title: 'Create New Page',
+            value: path ? path + '/' : '',
+            fileExtension: '.md',
+            iconName: 'fa-plus',
+            callback: (function (page) {
+                this.create();
+                this.currentPage = page;
+            }).bind(this)
+        });
+    };
+
+    element.querySelector('.headline .actions .create').addEventListener('click', createPageEvent.bind(this));
+
+    utils.forEach(element.querySelectorAll('.nav .item .actions .create'), (function (_, icon) {
+        icon.addEventListener('click', createPageEvent.bind(this));
+    }).bind(this));
+
+    utils.forEach(element.querySelectorAll('.nav .item .actions .delete'), (function (_, icon) {
         var page = utils.closest(icon, 'li').dataset.id;
         icon.addEventListener('click', (function (event) {
             event.preventDefault();
