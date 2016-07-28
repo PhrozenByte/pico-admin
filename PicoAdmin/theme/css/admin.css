@@ -217,11 +217,9 @@ footer a:hover { color: #fff; }
     opacity: 0;
 
     -webkit-transition: width .8s ease-in-out,
-                        opacity .6s ease .3s,
-                        width .6s ease-in-out;
+                        opacity .6s ease .3s;
             transition: width .8s ease-in-out,
-                        opacity .6s ease .3s,
-                        width .6s ease-in-out;
+                        opacity .6s ease .3s;
 }
 
 #loading .glow {
@@ -296,6 +294,8 @@ footer a:hover { color: #fff; }
     text-align: center;
     color: #444;
     cursor: pointer;
+    -webkit-transition: color .2s ease-in;
+            transition: color .2s ease-in;
 }
 .input-group > .button:hover { color: #2EAE9B; }
 .input-group > .button > .fa { font-size: 1.1em; vertical-align: middle; }
