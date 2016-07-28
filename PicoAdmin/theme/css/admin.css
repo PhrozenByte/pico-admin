@@ -15,16 +15,12 @@ a {
     -webkit-transition: color .2s ease-in;
             transition: color .2s ease-in;
 }
-a,
-a.inverse:hover {
-    color: #2EAE9B;
-}
-a:hover,
-a.inverse {
-    color: #444;
-}
+a, a.inverse:hover { color: #2EAE9B; }
+a:hover, a.inverse { color: #444; }
 
 .sr-only { display: none; }
+
+small, .small { font-size: 0.8em; }
 
 /*** BASIC LAYOUT ***/
 

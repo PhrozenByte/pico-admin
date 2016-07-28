@@ -46,7 +46,7 @@ PicoAdmin.prototype.getUrl = function (module, action, payload)
     return url;
 };
 
-PicoAdmin.prototype.showNotification = function (title, message, type, timeout, closeable)
+PicoAdmin.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
 {
     if (timeout === undefined) timeout = 5;
     if (closeable === undefined) closeable = true;
@@ -108,7 +108,13 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
     var addCloseButton = closeable,
         alertTimerTimeout,
         alertTimerInterval,
-        closeCallback = function () {
+        close = function () {
+            if (closeCallback) {
+                if (closeCallback(alert) === false) {
+                    return;
+                }
+            }
+
             if (alertTimerTimeout) clearTimeout(alertTimerTimeout);
             if (alertTimerInterval) clearInterval(alertTimerInterval);
 
@@ -119,7 +125,7 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
 
     if (timeout > 0) {
         if (timeout >= 100) {
-            alertTimerTimeout = setTimeout(closeCallback, (timeout * 1000));
+            alertTimerTimeout = setTimeout(close, (timeout * 1000));
         } else {
             var dismiss;
             if (closeable) {
@@ -150,14 +156,14 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
                 }
                 if (value === 1) {
                     clearInterval(alertTimerInterval);
-                    closeCallback();
+                    close();
                 }
             }, 1000);
 
             if (closeable) {
                 dismiss.addEventListener('click', function (e) {
                     e.preventDefault();
-                    closeCallback();
+                    close();
                 });
             }
         }
@@ -173,14 +179,14 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
 
         closeButton.addEventListener('click', function (e) {
             e.preventDefault();
-            closeCallback();
+            close();
         });
 
         alert.appendChild(closeButton);
     }
 
     utils.slideDown(alert);
-    return { element: alert, close: closeCallback };
+    return { element: alert, close: close };
 };
 
 PicoAdmin.prototype.showLoading = function ()
