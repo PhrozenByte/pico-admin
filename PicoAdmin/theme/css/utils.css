@@ -4,11 +4,16 @@
 
 .slide {
     overflow: hidden !important;
-    -webkit-transition: height .5s ease-in;
-            transition: height .5s ease-in;
+    -webkit-transition: height .5s ease-in,
+                        width .5s ease-in !important;
+            transition: height .5s ease-in,
+                        width .5s ease-in !important;
 }
 .slide.up {
     height: 0 !important;
+}
+.slide.left {
+    width: 0 !important;
 }
 
 .smooth {

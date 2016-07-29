@@ -95,55 +95,95 @@ utils.ajax = function (url, options) {
 };
 
 utils.slideUp = function (element, finishCallback, startCallback) {
-    element.style.height = element.offsetHeight + 'px';
+    utils.slideOut(element, {
+        cssRule: 'height',
+        cssRuleRef: 'clientHeight',
+        cssClass: 'up',
+        startCallback: startCallback,
+        finishCallback: finishCallback
+    });
+};
+
+utils.slideDown = function (element, finishCallback, startCallback) {
+    utils.slideIn(element, {
+        cssRule: 'height',
+        cssRuleRef: 'clientHeight',
+        cssClass: 'up',
+        startCallback: startCallback,
+        finishCallback: finishCallback
+    });
+};
+
+utils.slideLeft = function (element, finishCallback, startCallback) {
+    utils.slideOut(element, {
+        cssRule: 'width',
+        cssRuleRef: 'clientWidth',
+        cssClass: 'left',
+        startCallback: startCallback,
+        finishCallback: finishCallback
+    });
+};
+
+utils.slideRight = function (element, finishCallback, startCallback) {
+    utils.slideIn(element, {
+        cssRule: 'width',
+        cssRuleRef: 'clientWidth',
+        cssClass: 'left',
+        startCallback: startCallback,
+        finishCallback: finishCallback
+    });
+};
+
+utils.slideOut = function (element, options) {
+    element.style[options.cssRule] = element[options.cssRuleRef] + 'px';
 
     window.requestAnimationFrame(function () {
         element.classList.add('slide');
 
         window.requestAnimationFrame(function () {
-            element.classList.add('up');
+            element.classList.add(options.cssClass);
 
-            if ((startCallback !== undefined) && (startCallback !== null)) {
-                startCallback();
+            if (options.startCallback) {
+                options.startCallback();
             }
 
             window.setTimeout(function () {
                 element.classList.add('hidden');
                 element.classList.remove('slide');
-                element.classList.remove('up');
-                element.style.height = '';
+                element.classList.remove(options.cssClass);
+                element.style[options.cssRule] = null;
 
-                if ((finishCallback !== undefined) && (finishCallback !== null)) {
-                    window.requestAnimationFrame(finishCallback);
+                if (options.finishCallback) {
+                    window.requestAnimationFrame(options.finishCallback);
                 }
             }, 500);
         });
     });
 };
 
-utils.slideDown = function (element, finishCallback, startCallback) {
+utils.slideIn = function (element, options) {
     element.classList.remove('hidden');
-    var elementHeight = element.offsetHeight + 'px';
+    var cssRuleValue = element[options.cssRuleRef] + 'px';
 
     element.classList.add('slide');
-    element.classList.add('up');
+    element.classList.add(options.cssClass);
 
     window.requestAnimationFrame(function () {
-        element.style.height = elementHeight;
+        element.style[options.cssRule] = cssRuleValue;
 
         window.requestAnimationFrame(function () {
-            element.classList.remove('up');
+            element.classList.remove(options.cssClass);
 
-            if ((startCallback !== undefined) && (startCallback !== null)) {
-                startCallback();
+            if (options.startCallback) {
+                options.startCallback();
             }
 
             window.setTimeout(function () {
                 element.classList.remove('slide');
-                element.style.height = '';
+                element.style[options.cssRule] = null;
 
-                if ((finishCallback !== undefined) && (finishCallback !== null)) {
-                    window.requestAnimationFrame(finishCallback);
+                if (options.finishCallback) {
+                    window.requestAnimationFrame(options.finishCallback);
                 }
             }, 500);
         });
