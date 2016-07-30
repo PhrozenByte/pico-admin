@@ -50,6 +50,9 @@ main > aside > nav > div > .headline h3 { flex: 1 1 auto; }
 main > aside > nav > div > .nav .item { display: flex; }
 main > aside > nav > div > .nav .item > *:first-child { flex: 1 1 auto; }
 
+main > aside > nav > div .actions { display: flex; }
+main > aside > nav > div .actions > * { display: block; }
+
 main { overflow-x: auto; }
 
 main > aside > nav > div > .nav { overflow-x: auto; }
@@ -98,6 +101,8 @@ main > aside > nav > div .actions .action:hover {
 }
 
 main > aside > nav > div > .nav ul li > .item .fa-li { color: #444; }
+
+main > aside > nav > div .actions > * > .fa { margin-left: 0.2em; }
 
 footer {
     background: #707070;

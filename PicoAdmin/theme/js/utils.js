@@ -84,7 +84,7 @@ utils.ajax = function (url, options) {
         }).join('&');
 
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.setRequestHeader('Content-length', options.postData.length);
+        xhr.setRequestHeader('Content-Length', options.postData.length);
 
         xhr.send(postParams);
     } else {

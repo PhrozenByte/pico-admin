@@ -86,7 +86,7 @@
 {% endmacro %}
 
 {% macro _file_navigation_actions(file) %}
-    <span class="actions">
+    <div class="actions">
         {% if file.id and (file.id != "index") and (file.id != "404") %}
             <span class="action delete" title="Delete Page" role="button">
                 <span class="fa fa-trash-o fa-fw" aria-hidden="true"></span>
@@ -99,5 +99,5 @@
                 <span class="sr-only">Create New Page</span>
             </span>
         {% endif %}
-    </span>
+    </div>
 {% endmacro %}
