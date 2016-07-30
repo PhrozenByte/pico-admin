@@ -42,16 +42,17 @@ PicoContentAdmin.prototype.open = function (page)
 {
     this.updateHistory();
 
-    this.load(page, (function (yaml, markdown, title) {
-        this.setYaml(yaml);
-        this.setMarkdown(markdown);
-        this.setPendingChanges(false);
+    var self = this;
+    this.load(page, function (yaml, markdown, title) {
+        self.setYaml(yaml);
+        self.setMarkdown(markdown);
+        self.setPendingChanges(false);
 
-        title = this.titleTemplate.replace('{1}', 'Edit ' + title);
-        this.updateNavigation(page, title);
+        title = self.getTitleTemplate().replace('{1}', 'Edit ' + title);
+        self.updateNavigation(page, title);
 
-        this.pushHistory(this.getUrl('content', 'edit', page));
-    }).bind(this));
+        self.pushHistory(self.getUrl('content', 'edit', page));
+    });
 };
 
 PicoContentAdmin.prototype.save = function (page)
@@ -79,13 +80,14 @@ PicoContentAdmin.prototype.reset = function ()
     if (this.currentPage !== null) {
         this.updateHistory();
 
-        this.load(this.currentPage, (function (yaml, markdown, title) {
-            this.setYaml(yaml);
-            this.setMarkdown(markdown);
-            this.setPendingChanges(false);
+        var self = this;
+        this.load(this.currentPage, function (yaml, markdown, title) {
+            self.setYaml(yaml);
+            self.setMarkdown(markdown);
+            self.setPendingChanges(false);
 
-            this.pushHistory(window.location.href);
-        }).bind(this));
+            self.pushHistory(window.location.href);
+        });
     } else {
         this.create();
     }
@@ -170,20 +172,21 @@ PicoContentAdmin.prototype.delete = function (page)
 {
     var currentHistoryObject = this.getHistoryObject(this.currentState);
 
-    this.load(page, (function (yaml, markdown, title) {
-        this.updateHistory({
+    var self = this;
+    this.load(page, function (yaml, markdown, title) {
+        self.updateHistory({
             page: page,
-            title: this.titleTemplate.replace('{1}', 'Recover deleted ' + title),
+            title: self.getTitleTemplate().replace('{1}', 'Recover deleted ' + title),
             yaml: yaml,
             markdown: markdown,
             pendingChanges: false,
-            url: this.getUrl('content', 'edit', page)
+            url: self.getUrl('content', 'edit', page)
         });
 
-        this.pushHistory(currentHistoryObject);
+        self.pushHistory(currentHistoryObject);
 
-        this.requestDelete(page);
-    }).bind(this));
+        self.requestDelete(page);
+    });
 };
 
 PicoContentAdmin.prototype.requestDelete = function (page, success, error, complete)
@@ -197,7 +200,7 @@ PicoContentAdmin.prototype.requestDelete = function (page, success, error, compl
 
 PicoContentAdmin.prototype.load = function (page, callback)
 {
-    this.requestLoad(page, (function (xhr, statusText, response) {
+    this.requestLoad(page, function (xhr, statusText, response) {
         if (
             !response
             || (response.yaml === undefined) || (response.yaml === null)
@@ -208,7 +211,7 @@ PicoContentAdmin.prototype.load = function (page, callback)
         }
 
         callback(response.yaml, response.markdown, response.title);
-    }).bind(this));
+    });
 };
 
 PicoContentAdmin.prototype.requestLoad = function (page, success, error, complete)
@@ -277,10 +280,11 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
         options.closeable
     );
 
-    submitButton.addEventListener('click', (function () {
-        this.hideNotification(notification);
+    var self = this;
+    submitButton.addEventListener('click', function () {
+        self.hideNotification(notification);
         if (options.callback) options.callback(inputField.value);
-    }).bind(this));
+    });
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
@@ -298,12 +302,13 @@ PicoContentAdmin.prototype.initYamlEditor = function (element, options)
     this.yamlEditorOptions = options;
     this.yamlEditor = new CodeMirror.fromTextArea(element, options);
 
-    this.yamlEditor.on('change', (function (editor) {
-        this.setPendingChanges(true);
+    var self = this;
+    this.yamlEditor.on('change', function (editor) {
+        self.setPendingChanges(true);
 
         // force syncing all changes
         if (options.forceSync) editor.save();
-    }).bind(this));
+    });
 
     return this.yamlEditor;
 };
@@ -330,13 +335,14 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
 {
     if (typeof element === 'string') element = document.querySelector(element);
     if (!utils.isPlainObject(options)) options = {};
+    var self = this;
 
     // prepare SimpleMDE options
     utils.extend(options, {
         element: element,
-        previewRender: (function (plainText, preview) {
-            var editor = this.getMarkdownEditor(),
-                yamlWrapper = this.yamlEditor.getWrapperElement(),
+        previewRender: function (plainText, preview) {
+            var editor = self.getMarkdownEditor(),
+                yamlWrapper = self.getYamlEditor().getWrapperElement(),
                 previewButton = editor.toolbarElements.preview,
                 sideBySideButton = editor.toolbarElements['side-by-side'],
                 requestPreview = null;
@@ -348,16 +354,16 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
             // if this isn't possible, assume that the preview is being opened
             if (requestPreview || (requestPreview === null)) {
                 var markdownContent = plainText,
-                    yamlContent = this.getYaml();
+                    yamlContent = self.getYaml();
 
                 // keep the editor preview hidden
                 // until the content is actually loaded
                 preview.classList.add('hidden');
 
-                this.requestPreview(
+                self.requestPreview(
                     yamlContent,
                     markdownContent,
-                    (function (xhr, statusText, response) {
+                    function (xhr, statusText, response) {
                         if (!response || (response.preview === undefined) || (response.preview === null)) {
                             return false;
                         }
@@ -369,8 +375,8 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                         if (requestPreview !== null) {
                             yamlWrapper.classList.add('hidden');
                         }
-                    }).bind(this),
-                    (function (xhr, statusText, response) {
+                    },
+                    function (xhr, statusText, response) {
                         var button = null;
                         if (requestPreview === 'previewButton') {
                             button = previewButton;
@@ -385,8 +391,8 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                         }
 
                         // return to edit mode
-                        this.edit();
-                    }).bind(this),
+                        self.edit();
+                    },
                     function (xhr, statusText, response, wasSuccesful) {
                         // reset editor preview visibility
                         // (usually makes it visible again)
@@ -397,17 +403,17 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                 // reset YAML editor visibility
                 yamlWrapper.classList.remove('hidden');
             }
-        }).bind(this)
+        }
     });
 
     // user extends/overwrites default shortcuts
     var picoKeyMap = {},
-        picoShortcutBindings = {
-            'create': this.create.bind(this),
-            'save': this.save.bind(this),
-            'save-as': this.saveAs.bind(this),
-            'reset': this.reset.bind(this),
-            'full-preview': this.fullPreview.bind(this)
+        picoEditorActions = {
+            'create': function () { self.create(); },
+            'save': function () { self.save(); },
+            'save-as': function () { self.saveAs(); },
+            'reset': function () { self.reset(); },
+            'full-preview': function () { self.fullPreview(); }
         };
 
     options.shortcuts = utils.extend({
@@ -441,7 +447,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
     }, options.shortcuts || {});
 
     var isMac = /Mac/.test(navigator.platform);
-    utils.forEach(picoShortcutBindings, (function (key, callback) {
+    utils.forEach(picoEditorActions, function (key, callback) {
         if (options.shortcuts[key] !== null) {
             if (isMac) {
                 options.shortcuts[key] = options.shortcuts[key].replace('Ctrl', 'Cmd');
@@ -449,50 +455,50 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                 options.shortcuts[key] = options.shortcuts[key].replace('Cmd', 'Ctrl');
             }
 
-            picoKeyMap[options.shortcuts[key]] = function () { picoShortcutBindings[key](); };
+            picoKeyMap[options.shortcuts[key]] = picoEditorActions[key];
         }
-    }).bind(this));
+    });
 
     // allow user to configure toolbar with button identifiers
     if (options.toolbar) {
         var toolbarButtons = [],
             builtInToolbarButtons = {
-                'bold': {            action: SimpleMDE.toggleBold,           className: 'fa fa-bold',                                 title: 'Bold' },
-                'italic': {          action: SimpleMDE.toggleItalic,         className: 'fa fa-italic',                               title: 'Italic' },
-                'strikethrough': {   action: SimpleMDE.toggleStrikethrough,  className: 'fa fa-strikethrough',                        title: 'Strikethrough' },
-                'heading': {         action: SimpleMDE.toggleHeadingSmaller, className: 'fa fa-header',                               title: 'Heading' },
-                'heading-smaller': { action: SimpleMDE.toggleHeadingSmaller, className: 'fa fa-header fa-header-x fa-header-smaller', title: 'Smaller Heading' },
-                'heading-bigger': {  action: SimpleMDE.toggleHeadingBigger,  className: 'fa fa-header fa-header-x fa-header-bigger',  title: 'Bigger Heading' },
-                'heading-1': {       action: SimpleMDE.toggleHeading1,       className: 'fa fa-header fa-header-x fa-header-1',       title: 'Big Heading' },
-                'heading-2': {       action: SimpleMDE.toggleHeading2,       className: 'fa fa-header fa-header-x fa-header-2',       title: 'Medium Heading' },
-                'heading-3': {       action: SimpleMDE.toggleHeading3,       className: 'fa fa-header fa-header-x fa-header-3',       title: 'Small Heading' },
-                'code': {            action: SimpleMDE.toggleCodeBlock,      className: 'fa fa-code',                                 title: 'Code' },
-                'quote': {           action: SimpleMDE.toggleBlockquote,     className: 'fa fa-quote-left',                           title: 'Quote' },
-                'unordered-list': {  action: SimpleMDE.toggleUnorderedList,  className: 'fa fa-list-ul',                              title: 'Generic List' },
-                'ordered-list': {    action: SimpleMDE.toggleOrderedList,    className: 'fa fa-list-ol',                              title: 'Numbered List' },
-                'clean-block': {     action: SimpleMDE.cleanBlock,           className: 'fa fa-eraser fa-clean-block',                title: 'Clean block' },
-                'link': {            action: SimpleMDE.drawLink,             className: 'fa fa-link',                                 title: 'Create Link' },
-                'image': {           action: SimpleMDE.drawImage,            className: 'fa fa-picture-o',                            title: 'Insert Image' },
-                'table': {           action: SimpleMDE.drawTable,            className: 'fa fa-table',                                title: 'Insert Table' },
-                'horizontal-rule': { action: SimpleMDE.drawHorizontalRule,   className: 'fa fa-minus',                                title: 'Insert Horizontal Line' },
-                'preview': {         action: SimpleMDE.togglePreview,        className: 'fa fa-eye no-disable',                       title: 'Toggle Preview' },
-                'side-by-side': {    action: SimpleMDE.toggleSideBySide,     className: 'fa fa-columns no-disable no-mobile',         title: 'Toggle Side by Side' },
-                'fullscreen': {      action: SimpleMDE.toggleFullScreen,     className: 'fa fa-arrows-alt no-disable no-mobile',      title: 'Toggle Fullscreen' },
-                'undo': {            action: SimpleMDE.undo,                 className: 'fa fa-undo no-disable',                      title: 'Undo' },
-                'redo': {            action: SimpleMDE.redo,                 className: 'fa fa-repeat no-disable',                    title: 'Redo' },
-                'create': {          action: this.create.bind(this),         className: 'fa fa-file-o',                               title: 'Create New Page' },
-                'save': {            action: this.save.bind(this),           className: 'fa fa-floppy-o',                             title: 'Save' },
-                'save-as': {         action: this.saveAs.bind(this),         className: 'fa fa-floppy-o fa-sub-arrow',                title: 'Save As' },
-                'reset': {           action: this.reset.bind(this),          className: 'fa fa-times-circle',                         title: 'Discard all changes' },
-                'full-preview': {    action: this.fullPreview.bind(this),    className: 'fa fa-home',                                 title: 'Open full page preview' },
-                'docs': {            action: 'http://picocms.org/docs/',     className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
+                'bold': {            action: SimpleMDE.toggleBold,              className: 'fa fa-bold',                                 title: 'Bold' },
+                'italic': {          action: SimpleMDE.toggleItalic,            className: 'fa fa-italic',                               title: 'Italic' },
+                'strikethrough': {   action: SimpleMDE.toggleStrikethrough,     className: 'fa fa-strikethrough',                        title: 'Strikethrough' },
+                'heading': {         action: SimpleMDE.toggleHeadingSmaller,    className: 'fa fa-header',                               title: 'Heading' },
+                'heading-smaller': { action: SimpleMDE.toggleHeadingSmaller,    className: 'fa fa-header fa-header-x fa-header-smaller', title: 'Smaller Heading' },
+                'heading-bigger': {  action: SimpleMDE.toggleHeadingBigger,     className: 'fa fa-header fa-header-x fa-header-bigger',  title: 'Bigger Heading' },
+                'heading-1': {       action: SimpleMDE.toggleHeading1,          className: 'fa fa-header fa-header-x fa-header-1',       title: 'Big Heading' },
+                'heading-2': {       action: SimpleMDE.toggleHeading2,          className: 'fa fa-header fa-header-x fa-header-2',       title: 'Medium Heading' },
+                'heading-3': {       action: SimpleMDE.toggleHeading3,          className: 'fa fa-header fa-header-x fa-header-3',       title: 'Small Heading' },
+                'code': {            action: SimpleMDE.toggleCodeBlock,         className: 'fa fa-code',                                 title: 'Code' },
+                'quote': {           action: SimpleMDE.toggleBlockquote,        className: 'fa fa-quote-left',                           title: 'Quote' },
+                'unordered-list': {  action: SimpleMDE.toggleUnorderedList,     className: 'fa fa-list-ul',                              title: 'Generic List' },
+                'ordered-list': {    action: SimpleMDE.toggleOrderedList,       className: 'fa fa-list-ol',                              title: 'Numbered List' },
+                'clean-block': {     action: SimpleMDE.cleanBlock,              className: 'fa fa-eraser fa-clean-block',                title: 'Clean block' },
+                'link': {            action: SimpleMDE.drawLink,                className: 'fa fa-link',                                 title: 'Create Link' },
+                'image': {           action: SimpleMDE.drawImage,               className: 'fa fa-picture-o',                            title: 'Insert Image' },
+                'table': {           action: SimpleMDE.drawTable,               className: 'fa fa-table',                                title: 'Insert Table' },
+                'horizontal-rule': { action: SimpleMDE.drawHorizontalRule,      className: 'fa fa-minus',                                title: 'Insert Horizontal Line' },
+                'preview': {         action: SimpleMDE.togglePreview,           className: 'fa fa-eye no-disable',                       title: 'Toggle Preview' },
+                'side-by-side': {    action: SimpleMDE.toggleSideBySide,        className: 'fa fa-columns no-disable no-mobile',         title: 'Toggle Side by Side' },
+                'fullscreen': {      action: SimpleMDE.toggleFullScreen,        className: 'fa fa-arrows-alt no-disable no-mobile',      title: 'Toggle Fullscreen' },
+                'undo': {            action: SimpleMDE.undo,                    className: 'fa fa-undo no-disable',                      title: 'Undo' },
+                'redo': {            action: SimpleMDE.redo,                    className: 'fa fa-repeat no-disable',                    title: 'Redo' },
+                'create': {          action: picoEditorActions['create'],       className: 'fa fa-file-o',                               title: 'Create New Page' },
+                'save': {            action: picoEditorActions['save'],         className: 'fa fa-floppy-o',                             title: 'Save' },
+                'save-as': {         action: picoEditorActions['save-as'],      className: 'fa fa-floppy-o fa-sub-arrow',                title: 'Save As' },
+                'reset': {           action: picoEditorActions['reset'],        className: 'fa fa-times-circle',                         title: 'Discard all changes' },
+                'full-preview': {    action: picoEditorActions['full-preview'], className: 'fa fa-home',                                 title: 'Open full page preview' },
+                'docs': {            action: 'http://picocms.org/docs/',        className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
             };
 
         utils.forEach(options.toolbar, function (_, button) {
             if ((typeof button === 'string') && (builtInToolbarButtons[button] !== undefined)) {
                 // append binding of Pico shortcuts to title
                 var toolbarButtonTitle = builtInToolbarButtons[button].title;
-                if ((picoShortcutBindings[button] !== undefined) && (options.shortcuts[button] !== null)) {
+                if ((picoEditorActions[button] !== undefined) && (options.shortcuts[button] !== null)) {
                     toolbarButtonTitle += ' (' + options.shortcuts[button] + ')';
                 }
 
@@ -516,9 +522,9 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
     }
 
     this.setPendingChanges(false);
-    this.markdownEditor.codemirror.on('change', (function () {
-        this.setPendingChanges(true);
-    }).bind(this));
+    this.markdownEditor.codemirror.on('change', function () {
+        self.setPendingChanges(true);
+    });
 
     return this.markdownEditor;
 };
@@ -565,6 +571,7 @@ PicoContentAdmin.prototype.getPendingChanges = function ()
 
 PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titleTemplate)
 {
+    var self = this;
     this.navigation = element;
     this.currentPage = currentPage;
     this.titleTemplate = titleTemplate;
@@ -617,19 +624,19 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     }
 
     // users shouldn't use the browser's reload button
-    window.addEventListener('beforeunload', (function (event) {
+    window.addEventListener('beforeunload', function (event) {
         event.preventDefault();
-        this.updateHistory();
-    }).bind(this));
+        self.updateHistory();
+    });
 
     // clickable navigation items
-    utils.forEach(element.querySelectorAll('.nav .item a'), (function (_, anchor) {
+    utils.forEach(element.querySelectorAll('.nav .item a'), function (_, anchor) {
         var page = utils.closest(anchor, 'li').dataset.id;
-        anchor.addEventListener('click', (function (event) {
+        anchor.addEventListener('click', function (event) {
             event.preventDefault();
-            this.open(page);
-        }).bind(this));
-    }).bind(this));
+            self.open(page);
+        });
+    });
 
     // clickable action icons
     var createPageEvent = function (event) {
@@ -643,7 +650,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
             path = li.dataset.file || li.dataset.dir;
         }
 
-        this.askFileName({
+        self.askFileName({
             title: 'Create New Page',
             value: path ? path + '/' : '',
             fileExtension: '.md',
@@ -651,23 +658,23 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
             callback: (function (page) {
                 this.create();
                 this.currentPage = page;
-            }).bind(this)
+            }).bind(self)
         });
     };
 
-    element.querySelector('.headline .actions .create').addEventListener('click', createPageEvent.bind(this));
+    element.querySelector('.headline .actions .create').addEventListener('click', createPageEvent);
 
-    utils.forEach(element.querySelectorAll('.nav .item .actions .create'), (function (_, icon) {
-        icon.addEventListener('click', createPageEvent.bind(this));
-    }).bind(this));
+    utils.forEach(element.querySelectorAll('.nav .item .actions .create'), function (_, icon) {
+        icon.addEventListener('click', createPageEvent);
+    });
 
-    utils.forEach(element.querySelectorAll('.nav .item .actions .delete'), (function (_, icon) {
+    utils.forEach(element.querySelectorAll('.nav .item .actions .delete'), function (_, icon) {
         var page = utils.closest(icon, 'li').dataset.id;
-        icon.addEventListener('click', (function (event) {
+        icon.addEventListener('click', function (event) {
             event.preventDefault();
-            this.delete(page);
-        }).bind(this));
-    }).bind(this));
+            self.delete(page);
+        });
+    });
 };
 
 PicoContentAdmin.prototype.updateNavigation = function (page, title)
@@ -782,4 +789,9 @@ PicoContentAdmin.prototype.getNavigation = function ()
 PicoContentAdmin.prototype.getCurrentPage = function ()
 {
     return this.currentPage;
+};
+
+PicoContentAdmin.prototype.getTitleTemplate = function ()
+{
+    return this.titleTemplate;
 };

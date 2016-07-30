@@ -18,14 +18,15 @@ PicoAdmin.prototype.ajax = function (module, action, payload, options)
 
     this.showLoading();
 
-    var completeCallback = options.complete;
-    options.complete = (function (xhr, statusText, response) {
-        this.hideLoading();
+    var completeCallback = options.complete,
+        self = this;
+    options.complete = function (xhr, statusText, response) {
+        self.hideLoading();
 
         if (completeCallback) {
             completeCallback(xhr, statusText, response);
         }
-    }).bind(this);
+    };
 
     // TODO: globally catch errors and print them somewhere
 
@@ -112,7 +113,8 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
         alert.appendChild(messageElement);
     }
 
-    var addCloseButton = closeable;
+    var addCloseButton = closeable,
+        self = this;
     if (timeout > 0) {
         if (timeout >= 100) {
             notificationData.timerTimeout = setTimeout(this.hideNotification.bind(this, alert), (timeout * 1000));
@@ -137,19 +139,19 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             alert.appendChild(dismiss);
             addCloseButton = false;
 
-            notificationData.timerInterval = setInterval((function() {
+            notificationData.timerInterval = setInterval(function() {
                 var valueElement = dismiss.querySelector('.timer'),
                     value = parseInt(valueElement.textContent);
 
                 if (value > 0) valueElement.textContent = value - 1;
-                if (value === 1) this.hideNotification(alert);
-            }).bind(this), 1000);
+                if (value === 1) self.hideNotification(alert);
+            }, 1000);
 
             if (closeable) {
-                dismiss.addEventListener('click', (function (event) {
+                dismiss.addEventListener('click', function (event) {
                     event.preventDefault();
-                    this.hideNotification(alert);
-                }).bind(this));
+                    self.hideNotification(alert);
+                });
             }
         }
     }
@@ -162,10 +164,10 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             '</a>'
         );
 
-        closeButton.addEventListener('click', (function (event) {
+        closeButton.addEventListener('click', function (event) {
             event.preventDefault();
-            this.hideNotification(alert);
-        }).bind(this));
+            self.hideNotification(alert);
+        });
 
         alert.appendChild(closeButton);
     }
