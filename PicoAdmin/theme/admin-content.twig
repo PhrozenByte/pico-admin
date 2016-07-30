@@ -59,7 +59,7 @@
         window.requestAnimationFrame(function () {
             picoContentAdmin.initNavigation(
                 document.querySelector('#picoContentAdminNav'),
-                {% if current_page %}'{{ current_page.id|escape("js") }}'{% else %}null{% endif %},
+                {% if edit_page %}'{{ edit_page|escape("js") }}'{% else %}null{% endif %},
                 '{1} | Pico Admin Panel | {{ site_title }}'
             );
         });
@@ -85,7 +85,7 @@
                     </a>
                 </div>
             </div>
-            <div class="nav">
+            <div class="nav allow-open">
                 <ul class="fa-ul">
                     {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
                 </ul>

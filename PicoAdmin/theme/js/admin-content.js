@@ -608,7 +608,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     } else {
         var currentHistoryObject = this.getHistoryObject();
 
-        this.currentState++;
+        this.currentState = 1;
         for (var historyObject; this.currentState <= this.latestState; this.currentState++) {
             historyObject = this.getHistoryObject(this.currentState);
             if (!historyObject.isLost) {
@@ -630,12 +630,19 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
     });
 
     // clickable navigation items
-    utils.forEach(element.querySelectorAll('.nav .item a'), function (_, anchor) {
-        var page = utils.closest(anchor, 'li').dataset.id;
-        anchor.addEventListener('click', function (event) {
+    var openPageEvent = function (event) {
+        var anchor = event.currentTarget,
+            page = utils.closest(anchor, 'li').dataset.id,
+            container = utils.closest(anchor, '.nav');
+
+        if (page && container.classList.contains('allow-open')) {
             event.preventDefault();
             self.open(page);
-        });
+        }
+    };
+
+    utils.forEach(element.querySelectorAll('.nav .item a'), function (_, anchor) {
+        anchor.addEventListener('click', openPageEvent);
     });
 
     // clickable action icons

@@ -185,6 +185,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $meta = $this->getFileMeta();
                 $twigVariables['title'] = $this->page . $this->getConfig('content_ext')
                     . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '');
+                $twigVariables['edit_page'] = $this->page;
                 // intentional fallthrough
 
             case 'create':
