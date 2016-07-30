@@ -641,7 +641,7 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
         }
     };
 
-    utils.forEach(element.querySelectorAll('.nav .item a'), function (_, anchor) {
+    utils.forEach(element.querySelectorAll('.nav .item > a[href]'), function (_, anchor) {
         anchor.addEventListener('click', openPageEvent);
     });
 
@@ -671,11 +671,11 @@ PicoContentAdmin.prototype.initNavigation = function (element, currentPage, titl
 
     element.querySelector('.headline .actions .create').addEventListener('click', createPageEvent);
 
-    utils.forEach(element.querySelectorAll('.nav .item .actions .create'), function (_, icon) {
+    utils.forEach(element.querySelectorAll('.nav .item > .actions .create'), function (_, icon) {
         icon.addEventListener('click', createPageEvent);
     });
 
-    utils.forEach(element.querySelectorAll('.nav .item .actions .delete'), function (_, icon) {
+    utils.forEach(element.querySelectorAll('.nav .item > .actions .delete'), function (_, icon) {
         var page = utils.closest(icon, 'li').dataset.id;
         icon.addEventListener('click', function (event) {
             event.preventDefault();

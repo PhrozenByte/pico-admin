@@ -11,12 +11,13 @@ body {
 }
 
 a {
+    color: #444;
     text-decoration: none;
     -webkit-transition: color .2s ease-in;
             transition: color .2s ease-in;
 }
-a, a.inverse:hover { color: #2EAE9B; }
-a:hover, a.inverse { color: #444; }
+a[href], a[href].inverse:hover { color: #2EAE9B; }
+a[href]:hover, a[href].inverse { color: #444; }
 
 .sr-only { display: none; }
 
@@ -68,8 +69,8 @@ main > aside > h1 {
     padding: 1rem;
     background: #2EAE9B;
 }
-main > aside > h1 a,
-main > aside > h1 a:hover {
+main > aside > h1.page-title a,
+main > aside > h1.page-title a:hover {
     color: #fff;
 }
 
@@ -87,15 +88,15 @@ main > aside > nav > div > .nav > ul {
 }
 main > aside > nav > div > .nav ul { margin: 0; padding-left: 2em; }
 
-main > aside > nav > div > .nav .item a,
+main > aside > nav > div > .nav .item > a[href],
 main > aside > nav > div .actions .action {
     cursor: pointer;
     color: #444;
     -webkit-transition: color .2s ease-in;
             transition: color .2s ease-in;
 }
-main > aside > nav > div > .nav .item:hover a,
-main > aside > nav > div > .nav .active > .item a,
+main > aside > nav > div > .nav .item:hover > a[href],
+main > aside > nav > div > .nav .active > .item > a[href],
 main > aside > nav > div .actions .action:hover {
     color: #2EAE9B;
 }
@@ -112,8 +113,8 @@ footer {
 footer > * {
     margin: 1rem;
 }
-footer a { color: #ddd; }
-footer a:hover { color: #fff; }
+footer a[href] { color: #ddd; }
+footer a[href]:hover { color: #fff; }
 
 /*** NOTIFICATIONS ***/
 

@@ -25,10 +25,10 @@
                         {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ ext }}
                     </a>
                 {% else %}
-                    <span>
+                    <a>
                         {{ icon(file) }}
                         {{ path(file.dirName) }}{{ file.fileName }}/
-                    </span>
+                    </a>
                 {% endif %}
                 {{ actions(file) }}
             </div>

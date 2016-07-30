@@ -44,12 +44,12 @@
     min-height: 0;
 }
 
-main > aside > nav > div > .nav .item .actions .delete {
+main > aside > nav > div > .nav .item > .actions .delete {
     opacity: 0;
     -webkit-transition: opacity .2s ease-in;
             transition: opacity .2s ease-in;
 }
-main > aside > nav > div > .nav .item:hover .actions .delete { opacity: 1; }
+main > aside > nav > div > .nav .item:hover > .actions .delete { opacity: 1; }
 
 main > aside > nav > div > .nav ul li[data-file$="index"] > .item .fa-li { color: #009; }
 main > aside > nav > div > .nav ul li[data-file$="404"] > .item .fa-li { color: #990; }
