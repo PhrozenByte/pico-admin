@@ -264,13 +264,18 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
             '        <span class="fa fa-floppy-o" aria-hidden="true"></span>' +
             '        <span class="sr-only">Save</span>' +
             '    </div>' +
-            '</div>'
+            '</div>' +
+            '<small>' +
+            '    <span class="fa fa-lightbulb-o" aria-hidden="true"></span>' +
+            '    <strong>Pro Tip:</strong> Click on a item in the file navigation to copy its path.' +
+            '</small>'
         ),
-        inputField = content.querySelector('div > input'),
-        submitButton = content.querySelector('div > .button');
+        inputGroup = content.querySelector('div > .input-group'),
+        inputField = inputGroup.querySelector('div > input'),
+        submitButton = inputGroup.querySelector('div > .button');
 
     if (options.fileExtension) {
-        content.insertBefore(
+        inputGroup.insertBefore(
             utils.parse('<div class="file_ext">' + options.fileExtension + '</div>'),
             submitButton
         );
@@ -542,10 +547,10 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                 'fullscreen': {      action: SimpleMDE.toggleFullScreen,        className: 'fa fa-arrows-alt no-disable no-mobile',      title: 'Toggle Fullscreen' },
                 'undo': {            action: SimpleMDE.undo,                    className: 'fa fa-undo no-disable',                      title: 'Undo' },
                 'redo': {            action: SimpleMDE.redo,                    className: 'fa fa-repeat no-disable',                    title: 'Redo' },
-                'create': {          action: picoEditorActions['create'],       className: 'fa fa-file-o',                               title: 'Create New Page' },
-                'save': {            action: picoEditorActions['save'],         className: 'fa fa-floppy-o',                             title: 'Save' },
+                'create': {          action: picoEditorActions.create,          className: 'fa fa-file-o',                               title: 'Create New Page' },
+                'save': {            action: picoEditorActions.save,            className: 'fa fa-floppy-o',                             title: 'Save' },
                 'save-as': {         action: picoEditorActions['save-as'],      className: 'fa fa-floppy-o fa-sub-arrow',                title: 'Save As' },
-                'reset': {           action: picoEditorActions['reset'],        className: 'fa fa-times-circle',                         title: 'Discard all changes' },
+                'reset': {           action: picoEditorActions.reset,           className: 'fa fa-times-circle',                         title: 'Discard all changes' },
                 'full-preview': {    action: picoEditorActions['full-preview'], className: 'fa fa-home',                                 title: 'Open full page preview' },
                 'docs': {            action: 'http://picocms.org/docs/',        className: 'fa fa-question-circle',                      title: 'Pico Documentation' },
             };
@@ -577,6 +582,7 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
         this.markdownEditor.codemirror.addKeyMap(picoKeyMap);
     }
 
+    // update pending changes
     this.setPendingChanges(false);
     this.markdownEditor.codemirror.on('change', function () {
         self.setPendingChanges(true);
@@ -777,6 +783,7 @@ PicoContentAdmin.prototype.updateHistory = function (historyObject)
     var oldHistoryObject = this.getHistoryObject(this.currentState);
     this.setHistoryObject(this.currentState, historyObject);
 
+    // replace the history object only when necessary
     if (!oldHistoryObject || (historyObject.title !== oldHistoryObject.title) || (historyObject.url !== oldHistoryObject.url)) {
         window.history.replaceState(
             { PicoContentAdmin: this.currentState },
@@ -830,6 +837,7 @@ PicoContentAdmin.prototype.setHistoryObject = function (state, historyObject)
 
 PicoContentAdmin.prototype.getHistoryObject = function (state)
 {
+    // return new history object
     if (state === undefined) {
         return {
             page: this.currentPage,
@@ -841,6 +849,8 @@ PicoContentAdmin.prototype.getHistoryObject = function (state)
         };
     }
 
+    // return existing history object
+    // however, this might fail; return null in this case
     return JSON.parse(sessionStorage.getItem('picoContentAdminHistory' + state) || 'null');
 };
 

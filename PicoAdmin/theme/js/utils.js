@@ -230,16 +230,16 @@ utils.parse = function (html) {
         var tmp = document.createElement('div');
 
         // deserialize a standard representation
-        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase();
-        var wrap = wrapMap[tag] || wrapMap._default;
+        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
+            wrap = wrapMap[tag] || wrapMap._default;
 
         tmp.innerHTML = wrap[1] + html.replace(rxhtmlTag, "<$1></$2>" ) + wrap[2];
 
         // descend through wrappers to the right content
-        var j = wrap[0] + 1;
+        var j = wrap[0];
         while (j--) tmp = tmp.lastChild;
 
-        return tmp;
+        return (tmp.childNodes.length) > 1 ? tmp : tmp.lastChild;
     }
 };
 
