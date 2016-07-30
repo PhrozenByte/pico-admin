@@ -277,10 +277,10 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
         options.closeable
     );
 
-    submitButton.addEventListener('click', function () {
-        notification.close();
+    submitButton.addEventListener('click', (function () {
+        this.hideNotification(notification);
         if (options.callback) options.callback(inputField.value);
-    });
+    }).bind(this));
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)

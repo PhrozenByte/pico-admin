@@ -2,6 +2,8 @@ function PicoAdmin(authToken, baseUrl)
 {
     this.authToken = authToken;
     this.baseUrl = baseUrl;
+
+    this.notifications = [];
 }
 
 PicoAdmin.prototype.ajax = function (module, action, payload, options)
@@ -86,8 +88,13 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
         document.body.appendChild(notification);
     }
 
-    var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"/>');
+    var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"></div>');
     notification.appendChild(alert);
+
+    var notificationId = this.notifications.length,
+        notificationData = {};
+    this.notifications.push(notificationData);
+    alert.dataset.notificationId = notificationId;
 
     if ((title !== undefined) && (title !== null)) {
         var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
@@ -105,27 +112,10 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
         alert.appendChild(messageElement);
     }
 
-    var addCloseButton = closeable,
-        alertTimerTimeout,
-        alertTimerInterval,
-        close = function () {
-            if (closeCallback) {
-                if (closeCallback(alert) === false) {
-                    return;
-                }
-            }
-
-            if (alertTimerTimeout) clearTimeout(alertTimerTimeout);
-            if (alertTimerInterval) clearInterval(alertTimerInterval);
-
-            utils.slideUp(alert, function() {
-                notification.removeChild(alert);
-            });
-        };
-
+    var addCloseButton = closeable;
     if (timeout > 0) {
         if (timeout >= 100) {
-            alertTimerTimeout = setTimeout(close, (timeout * 1000));
+            notificationData.timerTimeout = setTimeout(this.hideNotification.bind(this, alert), (timeout * 1000));
         } else {
             var dismiss;
             if (closeable) {
@@ -147,24 +137,19 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             alert.appendChild(dismiss);
             addCloseButton = false;
 
-            alertTimerInterval = setInterval(function() {
+            notificationData.timerInterval = setInterval((function() {
                 var valueElement = dismiss.querySelector('.timer'),
                     value = parseInt(valueElement.textContent);
 
-                if (value > 0) {
-                    valueElement.textContent = value - 1;
-                }
-                if (value === 1) {
-                    clearInterval(alertTimerInterval);
-                    close();
-                }
-            }, 1000);
+                if (value > 0) valueElement.textContent = value - 1;
+                if (value === 1) this.hideNotification(alert);
+            }).bind(this), 1000);
 
             if (closeable) {
-                dismiss.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    close();
-                });
+                dismiss.addEventListener('click', (function (event) {
+                    event.preventDefault();
+                    this.hideNotification(alert);
+                }).bind(this));
             }
         }
     }
@@ -177,16 +162,49 @@ PicoAdmin.prototype.showNotification = function (title, message, type, timeout, 
             '</a>'
         );
 
-        closeButton.addEventListener('click', function (e) {
-            e.preventDefault();
-            close();
-        });
+        closeButton.addEventListener('click', (function (event) {
+            event.preventDefault();
+            this.hideNotification(alert);
+        }).bind(this));
 
         alert.appendChild(closeButton);
     }
 
+    if (closeCallback) {
+        notificationData.closeCallback = closeCallback;
+    }
+
     utils.slideDown(alert);
-    return { element: alert, close: close };
+    return alert;
+};
+
+PicoAdmin.prototype.hideNotification = function (alert)
+{
+    var notificationId = alert.dataset.notificationId;
+
+    if (notificationId) {
+        var notificationData = this.notifications[notificationId];
+
+        if (notificationData.closeCallback) {
+            if (notificationData.closeCallback(alert) === false) {
+                return false;
+            }
+        }
+
+        delete this.notifications[notificationId];
+        delete alert.dataset.notificationId;
+
+        if (notificationData.timerTimeout) clearTimeout(notificationData.timerTimeout);
+        if (notificationData.timerInterval) clearInterval(notificationData.timerInterval);
+
+        utils.slideUp(alert, function() {
+            alert.parentNode.removeChild(alert);
+        });
+
+        return true;
+    }
+
+    return false;
 };
 
 PicoAdmin.prototype.showLoading = function ()
