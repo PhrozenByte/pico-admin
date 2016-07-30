@@ -19,6 +19,8 @@ function PicoContentAdmin(authToken, baseUrl)
     this.saveXhr = null;
     this.previewXhr = null;
     this.loadXhr = null;
+
+    this.askFileNameNotification = null;
 }
 
 PicoContentAdmin.prototype = Object.create(PicoAdmin.prototype);
@@ -251,6 +253,10 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
         callback: null
     }, options);
 
+    // disallow opening multiple file name notifications at the same time
+    if (this.askFileNameNotification) return false;
+
+    // prepare notification content
     var content = utils.parse(
             '<div class="input-group">' +
             '    <input type="text" />' +
@@ -270,21 +276,71 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
         );
     }
 
+    // set default value
     inputField.value = options.value;
 
+    // instead of opening files, take the path of the clicked page in the navigation as value
+    var navContainer = this.getNavigation().querySelector('.nav'),
+        anchors = navContainer.querySelectorAll('.item > a'),
+        applyPathEvent = function (event) {
+            var anchor = event.currentTarget,
+                li = utils.closest(anchor, 'li'),
+                path = li.dataset.file || li.dataset.dir;
+
+            if (path) {
+                event.preventDefault();
+                inputField.value = path;
+            }
+        };
+
+    navContainer.classList.remove('allow-open');
+    utils.forEach(anchors, function (_, anchor) {
+        if (!anchor.hasAttribute('href')) anchor.setAttribute('href', '#');
+        anchor.addEventListener('click', applyPathEvent);
+    });
+
+    // hide all action buttons in the navigation
+    var actionLists = this.getNavigation().querySelectorAll('.headline .actions, .nav .item > .actions');
+    utils.forEach(actionLists, function (_, actionList) { utils.slideLeft(actionList); });
+
+    // disable the "Save As" toolbar button
+    var toolbar = this.getMarkdownEditor().toolbarElements;
+    if (toolbar['save-as']) toolbar['save-as'].classList.add('disabled');
+
+    // rollback the above changes when the notification is being closed
+    var closeCallback = (function () {
+        navContainer.classList.add('allow-open');
+        utils.forEach(anchors, function (_, anchor) {
+            if (anchor.getAttribute('href') === '#') anchor.removeAttribute('href');
+            anchor.removeEventListener('click', applyPathEvent);
+        });
+
+        utils.forEach(actionLists, function (_, actionList) { utils.slideRight(actionList); });
+        if (toolbar['save-as']) toolbar['save-as'].classList.remove('disabled');
+
+        this.askFileNameNotification = null;
+    }).bind(this);
+
+    // create the notification
     var notification = this.showNotification(
         options.title,
         content,
         { iconName: options.iconName, className: options.className },
         null,
-        options.closeable
+        options.closeable,
+        closeCallback
     );
 
+    // make the save button functional
     var self = this;
     submitButton.addEventListener('click', function () {
         self.hideNotification(notification);
         if (options.callback) options.callback(inputField.value);
     });
+
+    this.askFileNameNotification = notification;
+
+    return true;
 };
 
 PicoContentAdmin.prototype.initYamlEditor = function (element, options)
