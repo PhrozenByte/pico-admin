@@ -130,10 +130,18 @@ footer a[href]:hover { color: #fff; }
     z-index: 200;
     opacity: 0.95;
 }
-#notification .alert { border-top: 0 none; }
-#notification .alert:last-child {
+#notification > .alert { border-top: 0 none; }
+#notification > .alert:last-child {
     border-bottom-left-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
+}
+
+@media (max-width: 767px) {
+    #notification > .alert { flex-wrap: wrap; }
+    #notification > .alert > p {
+        order: 1;
+        width: 100%;
+    }
 }
 
 /*** ALERTS ***/
@@ -150,19 +158,19 @@ footer a[href]:hover { color: #fff; }
 .alert.alert-warning { background: #fc9; border-color: #c96; }
 .alert.alert-error {   background: #f66; border-color: #c33; }
 
-.alert h1,
-.alert p {
+.alert > h1,
+.alert > p {
     margin: 1rem;
 }
-.alert h1 {
+.alert > h1 {
     flex: 1 0 auto;
     font-size: 1.2rem;
     white-space: nowrap;
     font-weight: bold;
 }
-.alert p { flex: 1000000 1 auto; }
+.alert > p { flex: 1000000 1 auto; }
 
-.alert .dismiss {
+.alert > .dismiss {
     align-self: flex-start;
     width: 2em;
     height: 2em;
@@ -176,20 +184,20 @@ footer a[href]:hover { color: #fff; }
     border-radius: 0.3rem;
     cursor: default;
 }
-.alert .dismiss.closeable:hover {
+.alert > .dismiss.closeable:hover {
     background: rgba(0, 0, 0, 0.3);
     cursor: pointer;
 }
 
-.alert .dismiss .close {
+.alert > .dismiss .close {
     font-size: 1.2rem;
 }
 
-.alert .dismiss.countdown.closeable .close,
-.alert .dismiss.countdown.closeable:hover .timer {
+.alert > .dismiss.countdown.closeable .close,
+.alert > .dismiss.countdown.closeable:hover .timer {
     display: none;
 }
-.alert .dismiss.countdown.closeable:hover .close {
+.alert > .dismiss.countdown.closeable:hover .close {
     display: inline;
 }
 
