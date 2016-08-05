@@ -406,19 +406,25 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
         element: element,
         previewRender: function (plainText, preview) {
             var editor = self.getMarkdownEditor(),
+                editorElement = editor.codemirror.getWrapperElement().querySelector('.CodeMirror-scroll'),
                 yamlWrapper = self.getYamlEditor().getWrapperElement(),
-                previewButton = editor.toolbarElements.preview,
-                sideBySideButton = editor.toolbarElements['side-by-side'],
-                requestPreview = null;
+                requestPreview = !preview.classList.contains('active');
 
-            if (previewButton) requestPreview = previewButton.classList.contains('active') ? 'previewButton' : false;
-            if (sideBySideButton) requestPreview = sideBySideButton.classList.contains('active') ? 'sideBySideButton' : false;
-
-            // rely on .active class of built-in buttons to determine whether preview is opened or closed
-            // if this isn't possible, assume that the preview is being opened
-            if (requestPreview || (requestPreview === null)) {
+            if (requestPreview) {
                 var markdownContent = plainText,
-                    yamlContent = self.getYaml();
+                    yamlContent = self.getYaml(),
+                    previewButton = editor.toolbarElements.preview,
+                    sideBySideButton = editor.toolbarElements['side-by-side'],
+                    editorButton = null;
+
+                if (previewButton && previewButton.classList.contains('active')) {
+                    editorButton = previewButton;
+                } else if (sideBySideButton && sideBySideButton.classList.contains('active')) {
+                    editorButton = sideBySideButton;
+                }
+
+                // we're now officially in preview mode
+                preview.classList.add('active');
 
                 // keep the editor preview hidden
                 // until the content is actually loaded
@@ -435,23 +441,15 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                         // show preview content
                         preview.innerHTML = response.preview;
 
-                        // hide YAML editor
-                        if (requestPreview !== null) {
-                            yamlWrapper.classList.add('hidden');
-                        }
+                        // hide markdown and YAML editors
+                        yamlWrapper.classList.add('hidden');
+                        editorElement.classList.add('hidden');
                     },
                     function (xhr, statusText, response) {
-                        var button = null;
-                        if (requestPreview === 'previewButton') {
-                            button = previewButton;
-                        } else if (requestPreview === 'sideBySideButton') {
-                            button = sideBySideButton;
-                        }
-
                         // highlight button for 5 seconds
-                        if (button) {
-                            window.requestAnimationFrame(function() { button.classList.add('error'); });
-                            window.setTimeout(function () { button.classList.remove('error'); }, 5000);
+                        if (editorButton) {
+                            window.requestAnimationFrame(function() { editorButton.classList.add('error'); });
+                            window.setTimeout(function () { editorButton.classList.remove('error'); }, 5000);
                         }
 
                         // return to edit mode
@@ -459,13 +457,19 @@ PicoContentAdmin.prototype.initMarkdownEditor = function (element, options)
                     },
                     function (xhr, statusText, response, wasSuccesful) {
                         // reset editor preview visibility
-                        // (usually makes it visible again)
                         preview.classList.remove('hidden');
                     }
                 );
-            } else if (requestPreview !== null) {
-                // reset YAML editor visibility
+            } else {
+                // abort possibly still ongoing request
+                if (self.previewXhr) self.previewXhr.abort();
+
+                // show markdown and YAML editors
                 yamlWrapper.classList.remove('hidden');
+                editorElement.classList.remove('hidden');
+
+                // preview is now deactivated
+                preview.classList.remove('active');
             }
         }
     });

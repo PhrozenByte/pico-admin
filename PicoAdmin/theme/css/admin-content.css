@@ -9,6 +9,14 @@
     flex: 1 0 auto;
 }
 
+.markdownContainer .CodeMirror { padding: 0; }
+.markdownContainer .CodeMirror .CodeMirror-scroll { margin: 10px; }
+.markdownContainer .CodeMirror .editor-preview {
+    position: static;
+    height: auto;
+    padding: 10px;
+}
+
 .yamlContainer .CodeMirror {
     font-family: 'Droid Sans Mono', monospace;
     font-size: 0.92rem;
