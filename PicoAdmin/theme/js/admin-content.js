@@ -357,7 +357,24 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
     var self = this;
     submitButton.addEventListener('click', function () {
         self.hideNotification(notification);
-        if (options.callback) options.callback(inputField.value);
+
+        if (inputField.value === '') return;
+
+        // drop file extension when necessary
+        if (options.fileExtension) {
+            var testFileExtension = inputField.value.substr(-options.fileExtension.length);
+            if (testFileExtension === options.fileExtension) {
+                var fileNameLength = inputField.value.length - options.fileExtension.length;
+                inputField.value = inputField.value.substr(0, fileNameLength);
+            }
+        }
+
+        // validate path
+        if (inputField.value.substr(-1) === '/') {
+            self.showNotification('Invalid Path', 'The path you\'ve entered is invalid. Please specify a valid file path.', 'error');
+        } else if (options.callback) {
+            options.callback(inputField.value);
+        }
     });
 
     this.askFileNameNotification = notification;
