@@ -2,9 +2,13 @@
     box-sizing: border-box;
 }
 
+html {
+    font-size: 16px;
+}
+
 body {
     font-family: 'Droid Sans', Helvetica, Arial, sans-serif;
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.6;
     color: #444;
     margin: 0;
@@ -265,6 +269,7 @@ footer a[href]:hover { color: #fff; }
 .input-group {
     display: flex;
     font-size: 0.9rem;
+    border-radius: 0.2em;
 }
 
 .input-group > * {
@@ -316,6 +321,18 @@ footer a[href]:hover { color: #fff; }
 .input-group > .button:not(:first-child) { border-left: 1px solid #999; }
 .input-group > .button:not(:last-child) { border-right: 1px solid #999; }
 .input-group > .button + * { margin-left: 0; padding-left: 0.6em; }
+
+.input-group.focus {
+    box-shadow: 0 0 8px #2EAE9B;
+    -webkit-transition: box-shadow .2s ease-in;
+            transition: box-shadow .2s ease-in;
+}
+
+.input-group.focus > * {
+    border-color: #2EAE9B;
+    -webkit-transition: border-color .2s ease-in;
+            transition: border-color .2s ease-in;
+}
 
 /*** FONT AWESOME ***/
 

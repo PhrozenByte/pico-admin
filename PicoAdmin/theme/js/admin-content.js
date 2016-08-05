@@ -281,6 +281,9 @@ PicoContentAdmin.prototype.askFileName = function (callback, options) {
         );
     }
 
+    inputField.addEventListener('focus', function () { inputGroup.classList.add('focus'); });
+    inputField.addEventListener('blur', function () { inputGroup.classList.remove('focus'); });
+
     // set default value
     inputField.value = options.value;
 

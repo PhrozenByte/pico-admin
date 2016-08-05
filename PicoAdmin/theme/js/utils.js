@@ -98,7 +98,6 @@ utils.slideUp = function (element, finishCallback, startCallback) {
     utils.slideOut(element, {
         cssRule: 'height',
         cssRuleRef: 'clientHeight',
-        cssClass: 'up',
         startCallback: startCallback,
         finishCallback: finishCallback
     });
@@ -108,7 +107,6 @@ utils.slideDown = function (element, finishCallback, startCallback) {
     utils.slideIn(element, {
         cssRule: 'height',
         cssRuleRef: 'clientHeight',
-        cssClass: 'up',
         startCallback: startCallback,
         finishCallback: finishCallback
     });
@@ -118,7 +116,6 @@ utils.slideLeft = function (element, finishCallback, startCallback) {
     utils.slideOut(element, {
         cssRule: 'width',
         cssRuleRef: 'clientWidth',
-        cssClass: 'left',
         startCallback: startCallback,
         finishCallback: finishCallback
     });
@@ -128,7 +125,6 @@ utils.slideRight = function (element, finishCallback, startCallback) {
     utils.slideIn(element, {
         cssRule: 'width',
         cssRuleRef: 'clientWidth',
-        cssClass: 'left',
         startCallback: startCallback,
         finishCallback: finishCallback
     });
@@ -137,20 +133,24 @@ utils.slideRight = function (element, finishCallback, startCallback) {
 utils.slideOut = function (element, options) {
     element.style[options.cssRule] = element[options.cssRuleRef] + 'px';
 
+    var slideId = parseInt(element.dataset.slideId) || 0;
+    element.dataset.slideId = ++slideId;
+
     window.requestAnimationFrame(function () {
         element.classList.add('slide');
 
         window.requestAnimationFrame(function () {
-            element.classList.add(options.cssClass);
+            element.style[options.cssRule] = '0px';
 
             if (options.startCallback) {
                 options.startCallback();
             }
 
             window.setTimeout(function () {
+                if (parseInt(element.dataset.slideId) !== slideId) return;
+
                 element.classList.add('hidden');
                 element.classList.remove('slide');
-                element.classList.remove(options.cssClass);
                 element.style[options.cssRule] = null;
 
                 if (options.finishCallback) {
@@ -162,23 +162,31 @@ utils.slideOut = function (element, options) {
 };
 
 utils.slideIn = function (element, options) {
+    var cssRuleOriginalValue = element[options.cssRuleRef] + 'px',
+        slideId = parseInt(element.dataset.slideId) || 0;
+
+    element.dataset.slideId = ++slideId;
+
+    element.style[options.cssRule] = null;
     element.classList.remove('hidden');
+    element.classList.remove('slide');
     var cssRuleValue = element[options.cssRuleRef] + 'px';
 
-    element.classList.add('slide');
-    element.classList.add(options.cssClass);
+    element.style[options.cssRule] = cssRuleOriginalValue;
 
     window.requestAnimationFrame(function () {
-        element.style[options.cssRule] = cssRuleValue;
+        element.classList.add('slide');
 
         window.requestAnimationFrame(function () {
-            element.classList.remove(options.cssClass);
+            element.style[options.cssRule] = cssRuleValue;
 
             if (options.startCallback) {
                 options.startCallback();
             }
 
             window.setTimeout(function () {
+                if (parseInt(element.dataset.slideId) !== slideId) return;
+
                 element.classList.remove('slide');
                 element.style[options.cssRule] = null;
 
