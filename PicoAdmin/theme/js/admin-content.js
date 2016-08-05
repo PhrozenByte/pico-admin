@@ -62,8 +62,22 @@ PicoContentAdmin.prototype.save = function (page)
     page = page ? page : this.currentPage;
     if (!page) return false;
 
-    console.log('Save page', page);
+    this.requestSave(page, this.getYaml(), this.getMarkdown());
     return true;
+};
+
+PicoContentAdmin.prototype.requestSave = function (page, yaml, markdown, success, error, complete)
+{
+    return this.ajax('content', 'save', page, {
+        postData: {
+            yaml: yaml,
+            markdown: markdown
+        },
+        responseType: 'json',
+        success: success,
+        error: error,
+        complete: complete
+    });
 };
 
 PicoContentAdmin.prototype.saveAs = function ()
