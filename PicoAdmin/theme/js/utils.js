@@ -42,7 +42,8 @@ utils.createClass = function (constructor, baseClass, blueprint) {
         constructor.prototype.constructor = constructor;
     }
     if (blueprint) {
-        blueprint.call(constructor);
+        var parent = baseClass ? baseClass.prototype : undefined;
+        blueprint.call(constructor, parent);
     }
     return constructor;
 };
