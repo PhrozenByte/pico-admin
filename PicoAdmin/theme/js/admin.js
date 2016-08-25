@@ -6,270 +6,272 @@ function PicoAdmin(authToken, baseUrl)
     this.notifications = [];
 }
 
-PicoAdmin.prototype.ajax = function (module, action, payload, options)
-{
-    if (options.postData === undefined) {
-        options.postData = { auth_client_token: this.authToken };
-    } else if (options.postData.auth_client_token === undefined) {
-        options.postData.auth_client_token = this.authToken;
-    } else if (options.postData.auth_client_token === null) {
-        delete options.postData.auth_client_token;
-    }
-
-    this.showLoading();
-
-    var completeCallback = options.complete,
-        self = this;
-    options.complete = function (xhr, statusText, response) {
-        self.hideLoading();
-
-        if (completeCallback) {
-            completeCallback(xhr, statusText, response);
+utils.createClass(PicoAdmin, function () {
+    this.prototype.ajax = function (module, action, payload, options)
+    {
+        if (options.postData === undefined) {
+            options.postData = { auth_client_token: this.authToken };
+        } else if (options.postData.auth_client_token === undefined) {
+            options.postData.auth_client_token = this.authToken;
+        } else if (options.postData.auth_client_token === null) {
+            delete options.postData.auth_client_token;
         }
+
+        this.showLoading();
+
+        var completeCallback = options.complete,
+            self = this;
+        options.complete = function (xhr, statusText, response) {
+            self.hideLoading();
+
+            if (completeCallback) {
+                completeCallback(xhr, statusText, response);
+            }
+        };
+
+        // TODO: globally catch errors and print them somewhere
+
+        return utils.ajax(this.getUrl(module, action, payload), options);
     };
 
-    // TODO: globally catch errors and print them somewhere
-
-    return utils.ajax(this.getUrl(module, action, payload), options);
-};
-
-PicoAdmin.prototype.getUrl = function (module, action, payload)
-{
-    var url = this.baseUrl;
-    if (module) {
-        url += '/' + module;
-        if (action) {
-            url += '/' + action;
-            if (payload) {
-                url += '/' + (Array.isArray(payload) ? payload.join('/') : payload);
+    this.prototype.getUrl = function (module, action, payload)
+    {
+        var url = this.baseUrl;
+        if (module) {
+            url += '/' + module;
+            if (action) {
+                url += '/' + action;
+                if (payload) {
+                    url += '/' + (Array.isArray(payload) ? payload.join('/') : payload);
+                }
             }
         }
-    }
 
-    return url;
-};
+        return url;
+    };
 
-PicoAdmin.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
-{
-    if (timeout === undefined) timeout = 5;
-    if (closeable === undefined) closeable = true;
+    this.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
+    {
+        if (timeout === undefined) timeout = 5;
+        if (closeable === undefined) closeable = true;
 
-    var className = '',
-        iconName = '';
-    if (typeof(type) === 'object') {
-        if (type.className) className = ' ' + type.className;
-        if (type.iconName) iconName = ' ' + type.iconName;
-    } else {
-        switch (type) {
-            case 'success':
-                className = ' alert-success';
-                iconName = ' fa-check';
-                break;
-
-            case 'info':
-                className = ' alert-info';
-                iconName = ' fa-info';
-                break;
-
-            case 'warning':
-                className = ' alert-warning';
-                iconName = ' fa-exclamation-triangle';
-                break;
-
-            case 'error':
-                className = ' alert-error';
-                iconName = ' fa-ban';
-                break;
-        }
-    }
-
-    var notification = document.getElementById('notification');
-    if (!notification) {
-        notification = utils.parse('<div id="notification"></div>');
-        document.body.appendChild(notification);
-    }
-
-    var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"></div>');
-    notification.appendChild(alert);
-
-    var notificationId = this.notifications.length,
-        notificationData = {};
-    this.notifications.push(notificationData);
-    alert.dataset.notificationId = notificationId;
-
-    if ((title !== undefined) && (title !== null)) {
-        var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
-        alert.appendChild(titleElement);
-    }
-
-    if ((message !== undefined) && (message !== null)) {
-        var messageElement;
-        if (typeof message === 'string') {
-            messageElement = utils.parse('<p>' + message + '</p>');
+        var className = '',
+            iconName = '';
+        if (typeof(type) === 'object') {
+            if (type.className) className = ' ' + type.className;
+            if (type.iconName) iconName = ' ' + type.iconName;
         } else {
-            messageElement = document.createElement('p');
-            messageElement.appendChild(message);
-        }
-        alert.appendChild(messageElement);
-    }
+            switch (type) {
+                case 'success':
+                    className = ' alert-success';
+                    iconName = ' fa-check';
+                    break;
 
-    var addCloseButton = closeable,
-        self = this;
-    if (timeout > 0) {
-        if (timeout >= 100) {
-            notificationData.timerTimeout = setTimeout(this.hideNotification.bind(this, alert), (timeout * 1000));
-        } else {
-            var dismiss;
-            if (closeable) {
-                dismiss = utils.parse(
-                    '<a href="" class="dismiss countdown closeable" role="button">' +
-                    '    <span class="close" aria-hidden="true">&times;</span>' +
-                    '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
-                    '    <span class="sr-only">Close</span>' +
-                    '</a>'
-                );
+                case 'info':
+                    className = ' alert-info';
+                    iconName = ' fa-info';
+                    break;
+
+                case 'warning':
+                    className = ' alert-warning';
+                    iconName = ' fa-exclamation-triangle';
+                    break;
+
+                case 'error':
+                    className = ' alert-error';
+                    iconName = ' fa-ban';
+                    break;
+            }
+        }
+
+        var notification = document.getElementById('notification');
+        if (!notification) {
+            notification = utils.parse('<div id="notification"></div>');
+            document.body.appendChild(notification);
+        }
+
+        var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"></div>');
+        notification.appendChild(alert);
+
+        var notificationId = this.notifications.length,
+            notificationData = {};
+        this.notifications.push(notificationData);
+        alert.dataset.notificationId = notificationId;
+
+        if ((title !== undefined) && (title !== null)) {
+            var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
+            alert.appendChild(titleElement);
+        }
+
+        if ((message !== undefined) && (message !== null)) {
+            var messageElement;
+            if (typeof message === 'string') {
+                messageElement = utils.parse('<p>' + message + '</p>');
             } else {
-                dismiss = utils.parse(
-                    '<span class="dismiss countdown">' +
-                    '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
-                    '</span>'
-                );
+                messageElement = document.createElement('p');
+                messageElement.appendChild(message);
             }
-
-            alert.appendChild(dismiss);
-            addCloseButton = false;
-
-            notificationData.timerInterval = setInterval(function() {
-                var valueElement = dismiss.querySelector('.timer'),
-                    value = parseInt(valueElement.textContent);
-
-                if (value > 0) valueElement.textContent = value - 1;
-                if (value === 1) self.hideNotification(alert);
-            }, 1000);
-
-            if (closeable) {
-                dismiss.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    self.hideNotification(alert);
-                });
-            }
+            alert.appendChild(messageElement);
         }
-    }
 
-    if (addCloseButton) {
-        var closeButton = utils.parse(
-            '<a href="" class="dismiss closeable" role="button">' +
-            '    <span class="close" aria-hidden="true">&times;</span>' +
-            '    <span class="sr-only">Close</span>' +
-            '</a>'
-        );
+        var addCloseButton = closeable,
+            self = this;
+        if (timeout > 0) {
+            if (timeout >= 100) {
+                notificationData.timerTimeout = setTimeout(this.hideNotification.bind(this, alert), (timeout * 1000));
+            } else {
+                var dismiss;
+                if (closeable) {
+                    dismiss = utils.parse(
+                        '<a href="" class="dismiss countdown closeable" role="button">' +
+                        '    <span class="close" aria-hidden="true">&times;</span>' +
+                        '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                        '    <span class="sr-only">Close</span>' +
+                        '</a>'
+                    );
+                } else {
+                    dismiss = utils.parse(
+                        '<span class="dismiss countdown">' +
+                        '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                        '</span>'
+                    );
+                }
 
-        closeButton.addEventListener('click', function (event) {
-            event.preventDefault();
-            self.hideNotification(alert);
-        });
+                alert.appendChild(dismiss);
+                addCloseButton = false;
 
-        alert.appendChild(closeButton);
-    }
+                notificationData.timerInterval = setInterval(function() {
+                    var valueElement = dismiss.querySelector('.timer'),
+                        value = parseInt(valueElement.textContent);
 
-    if (closeCallback) {
-        notificationData.closeCallback = closeCallback;
-    }
+                    if (value > 0) valueElement.textContent = value - 1;
+                    if (value === 1) self.hideNotification(alert);
+                }, 1000);
 
-    utils.slideDown(alert);
-    return alert;
-};
-
-PicoAdmin.prototype.hideNotification = function (alert)
-{
-    var notificationId = alert.dataset.notificationId;
-
-    if (notificationId) {
-        var notificationData = this.notifications[notificationId];
-
-        if (notificationData.closeCallback) {
-            if (notificationData.closeCallback(alert) === false) {
-                return false;
+                if (closeable) {
+                    dismiss.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        self.hideNotification(alert);
+                    });
+                }
             }
         }
 
-        delete this.notifications[notificationId];
-        delete alert.dataset.notificationId;
+        if (addCloseButton) {
+            var closeButton = utils.parse(
+                '<a href="" class="dismiss closeable" role="button">' +
+                '    <span class="close" aria-hidden="true">&times;</span>' +
+                '    <span class="sr-only">Close</span>' +
+                '</a>'
+            );
 
-        if (notificationData.timerTimeout) clearTimeout(notificationData.timerTimeout);
-        if (notificationData.timerInterval) clearInterval(notificationData.timerInterval);
+            closeButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                self.hideNotification(alert);
+            });
 
-        utils.slideUp(alert, function() {
-            alert.parentNode.removeChild(alert);
-        });
-
-        return true;
-    }
-
-    return false;
-};
-
-PicoAdmin.prototype.showLoading = function ()
-{
-    var loading = document.getElementById('loading'),
-        animateProgress = function () { loading.style.width = (50 + Math.random() * 30) + '%'; };
-
-    if (loading) {
-        loading.dataset.requests = parseInt(loading.dataset.requests) + 1;
-
-        if (loading.classList.contains('finish')) {
-            window.clearTimeout(loading.dataset.timeout);
-            delete loading.dataset.timeout;
-
-            loading.classList.remove('finish');
-
-            loading.classList.add('wait');
-            animateProgress();
-        } else if (!loading.classList.contains('wait')) {
-            loading.classList.add('wait');
-            animateProgress();
+            alert.appendChild(closeButton);
         }
-    } else {
-        loading = utils.parse('<div id="loading" class="wait"><div class="glow"></div></div>');
-        loading.dataset.requests = 1;
 
-        window.requestAnimationFrame(function () {
-            document.body.appendChild(loading);
-            window.requestAnimationFrame(animateProgress);
-        });
-    }
-};
+        if (closeCallback) {
+            notificationData.closeCallback = closeCallback;
+        }
 
-PicoAdmin.prototype.hideLoading = function ()
-{
-    var loading = document.getElementById('loading');
-    if (loading) {
-        var requestCount = parseInt(loading.dataset.requests);
-        loading.dataset.requests = requestCount - 1;
+        utils.slideDown(alert);
+        return alert;
+    };
 
-        if (requestCount == 1) {
-            loading.classList.remove('wait');
-            loading.classList.add('finish');
-            loading.style.width = null;
+    this.prototype.hideNotification = function (alert)
+    {
+        var notificationId = alert.dataset.notificationId;
 
-            loading.dataset.timeout = window.setTimeout(function () {
-                loading.classList.remove('finish');
-                delete loading.dataset.timeout;
-            }, 800);
+        if (notificationId) {
+            var notificationData = this.notifications[notificationId];
+
+            if (notificationData.closeCallback) {
+                if (notificationData.closeCallback(alert) === false) {
+                    return false;
+                }
+            }
+
+            delete this.notifications[notificationId];
+            delete alert.dataset.notificationId;
+
+            if (notificationData.timerTimeout) clearTimeout(notificationData.timerTimeout);
+            if (notificationData.timerInterval) clearInterval(notificationData.timerInterval);
+
+            utils.slideUp(alert, function() {
+                alert.parentNode.removeChild(alert);
+            });
 
             return true;
         }
-    }
 
-    return false;
-};
+        return false;
+    };
 
-PicoAdmin.prototype.getAuthToken = function ()
-{
-    return this.authToken;
-};
+    this.prototype.showLoading = function ()
+    {
+        var loading = document.getElementById('loading'),
+            animateProgress = function () { loading.style.width = (50 + Math.random() * 30) + '%'; };
 
-PicoAdmin.prototype.getBaseUrl = function ()
-{
-    return this.baseUrl;
-};
+        if (loading) {
+            loading.dataset.requests = parseInt(loading.dataset.requests) + 1;
+
+            if (loading.classList.contains('finish')) {
+                window.clearTimeout(loading.dataset.timeout);
+                delete loading.dataset.timeout;
+
+                loading.classList.remove('finish');
+
+                loading.classList.add('wait');
+                animateProgress();
+            } else if (!loading.classList.contains('wait')) {
+                loading.classList.add('wait');
+                animateProgress();
+            }
+        } else {
+            loading = utils.parse('<div id="loading" class="wait"><div class="glow"></div></div>');
+            loading.dataset.requests = 1;
+
+            window.requestAnimationFrame(function () {
+                document.body.appendChild(loading);
+                window.requestAnimationFrame(animateProgress);
+            });
+        }
+    };
+
+    this.prototype.hideLoading = function ()
+    {
+        var loading = document.getElementById('loading');
+        if (loading) {
+            var requestCount = parseInt(loading.dataset.requests);
+            loading.dataset.requests = requestCount - 1;
+
+            if (requestCount == 1) {
+                loading.classList.remove('wait');
+                loading.classList.add('finish');
+                loading.style.width = null;
+
+                loading.dataset.timeout = window.setTimeout(function () {
+                    loading.classList.remove('finish');
+                    delete loading.dataset.timeout;
+                }, 800);
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    this.prototype.getAuthToken = function ()
+    {
+        return this.authToken;
+    };
+
+    this.prototype.getBaseUrl = function ()
+    {
+        return this.baseUrl;
+    };
+});

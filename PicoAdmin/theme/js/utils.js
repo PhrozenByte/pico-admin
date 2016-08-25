@@ -32,6 +32,21 @@ utils.isPlainObject = function (object) {
     return false;
 };
 
+utils.createClass = function (constructor, baseClass, blueprint) {
+    if (blueprint === undefined) {
+        blueprint = baseClass;
+        baseClass = undefined;
+    }
+    if (baseClass) {
+        constructor.prototype = Object.create(baseClass.prototype);
+        constructor.prototype.constructor = constructor;
+    }
+    if (blueprint) {
+        blueprint.call(constructor);
+    }
+    return constructor;
+};
+
 utils.ajax = function (url, options) {
     var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
     xhr.open(options.postData ? 'POST' : 'GET', url);
