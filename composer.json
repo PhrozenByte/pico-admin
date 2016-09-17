@@ -1,5 +1,5 @@
 {
-    "name": "PhrozenByte/pico-admin",
+    "name": "phrozenbyte/pico-admin",
     "description": "This is Pico's official admin plugin. Pico is a stupidly simple, blazing fast, flat file CMS.",
     "keywords": ["admin","pico","pico-plugin"],
     "homepage": "http://picocms.org/",
