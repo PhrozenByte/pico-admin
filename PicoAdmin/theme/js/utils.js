@@ -329,4 +329,61 @@ var utils = {};
 
         return null;
     };
+
+    var namedEventListener = {};
+
+    function getNamedEventListener(element, type, name) {
+        var elementEventId = element.dataset.eventId;
+
+        if (!elementEventId) return null;
+        if (!namedEventListener[elementEventId]) return null;
+        if (!namedEventListener[elementEventId][type]) return null;
+        if (!namedEventListener[elementEventId][type][name]) return null;
+
+        return namedEventListener[elementEventId][type][name];
+    }
+
+    utils.addNamedEventListener = function (element, type, name, listener) {
+        var elementEventId = element.dataset.eventId;
+        if (!elementEventId) {
+            do {
+                elementEventId = Math.floor(Math.random() * 10000000 + 10000000).toString();
+            } while (namedEventListener[elementEventId]);
+        }
+
+        if (!namedEventListener[elementEventId]) namedEventListener[elementEventId] = {};
+        if (!namedEventListener[elementEventId][type]) namedEventListener[elementEventId][type] = {};
+
+        if (namedEventListener[elementEventId][type][name]) {
+            // remove a previously added, conflicting event (event names must be unique)
+            element.removeEventListener(type, namedEventListener[elementEventId][type][name]);
+        }
+        namedEventListener[elementEventId][type][name] = listener;
+
+        element.dataset.eventId = elementEventId;
+        element.addEventListener(type, listener);
+    };
+
+    utils.removeNamedEventListener = function (element, type, name) {
+        var listener = getNamedEventListener(element, type, name);
+        if (listener) {
+            element.removeEventListener(type, listener);
+            delete namedEventListener[element.dataset.eventId][type][name];
+        }
+    };
+
+    utils.enableNamedEventListener = function (element, type, name) {
+        var listener = getNamedEventListener(element, type, name);
+        if (listener) {
+            // browsers won't add the same event listener multiple times, thus this is completely safe
+            element.addEventListener(type, listener);
+        }
+    };
+
+    utils.disableNamedEventListener = function (element, type, name) {
+        var listener = getNamedEventListener(element, type, name);
+        if (listener) {
+            element.removeEventListener(type, listener);
+        }
+    };
 })();
