@@ -134,6 +134,18 @@ var utils = {};
         return xhr;
     };
 
+    utils.fadeOut = function (element, finishCallback, startCallback) {
+        if (startCallback) startCallback();
+        element.classList.add('hidden');
+        if (finishCallback) finishCallback();
+    };
+
+    utils.fadeIn = function (element, finishCallback, startCallback) {
+        if (startCallback) startCallback();
+        element.classList.remove('hidden');
+        if (finishCallback) finishCallback();
+    };
+
     utils.slideUp = function (element, finishCallback, startCallback) {
         utils.slideOut(element, {
             cssRule: 'height',
