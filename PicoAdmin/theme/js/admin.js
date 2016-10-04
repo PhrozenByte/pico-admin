@@ -4,9 +4,17 @@ function PicoAdmin(authToken, baseUrl)
     this.baseUrl = baseUrl;
 
     this.notifications = [];
+
+    this.init();
 }
 
 utils.createClass(PicoAdmin, function () {
+    this.prototype.init = function ()
+    {
+        this.initNotification();
+        this.initLoading();
+    };
+
     this.prototype.ajax = function (module, action, payload, options)
     {
         if (options.postData === undefined) {
@@ -50,6 +58,12 @@ utils.createClass(PicoAdmin, function () {
         return url;
     };
 
+    this.prototype.initNotification = function ()
+    {
+        notification = utils.parse('<div id="notification"></div>');
+        document.body.appendChild(notification);
+    };
+
     this.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
     {
         if (timeout === undefined) timeout = 5;
@@ -85,10 +99,7 @@ utils.createClass(PicoAdmin, function () {
         }
 
         var notification = document.getElementById('notification');
-        if (!notification) {
-            notification = utils.parse('<div id="notification"></div>');
-            document.body.appendChild(notification);
-        }
+        if (!notification) return null;
 
         var alert = utils.parse('<div class="alert' + className + ' hidden" role="alert"></div>');
         notification.appendChild(alert);
@@ -98,9 +109,12 @@ utils.createClass(PicoAdmin, function () {
         this.notifications.push(notificationData);
         alert.dataset.notificationId = notificationId;
 
+        notificationData.type = type;
+
         if ((title !== undefined) && (title !== null)) {
             var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
             alert.appendChild(titleElement);
+            notificationData.title = title;
         }
 
         if ((message !== undefined) && (message !== null)) {
@@ -112,13 +126,17 @@ utils.createClass(PicoAdmin, function () {
                 messageElement.appendChild(message);
             }
             alert.appendChild(messageElement);
+            notificationData.message = message;
         }
 
         var addCloseButton = closeable,
             self = this;
         if (timeout > 0) {
+            notificationData.timeout = timeout;
+
             if (timeout >= 100) {
-                notificationData.timerTimeout = setTimeout(this.hideNotification.bind(this, alert), (timeout * 1000));
+                var timeoutCallback = this.hideNotification.bind(this, alert);
+                notificationData.timerTimeout = setTimeout(timeoutCallback, (timeout * 1000));
             } else {
                 var dismiss;
                 if (closeable) {
@@ -173,6 +191,8 @@ utils.createClass(PicoAdmin, function () {
             alert.appendChild(closeButton);
         }
 
+        notificationData.closeable = closeable;
+
         if (closeCallback) {
             notificationData.closeCallback = closeCallback;
         }
@@ -210,13 +230,19 @@ utils.createClass(PicoAdmin, function () {
         return false;
     };
 
+    this.prototype.initLoading = function ()
+    {
+        loading = utils.parse('<div id="loading"><div class="glow"></div></div>');
+        document.body.appendChild(loading);
+    };
+
     this.prototype.showLoading = function ()
     {
         var loading = document.getElementById('loading'),
             animateProgress = function () { loading.style.width = (50 + Math.random() * 30) + '%'; };
 
         if (loading) {
-            loading.dataset.requests = parseInt(loading.dataset.requests) + 1;
+            loading.dataset.requests = (parseInt(loading.dataset.requests) || 0) + 1;
 
             if (loading.classList.contains('finish')) {
                 window.clearTimeout(loading.dataset.timeout);
@@ -230,14 +256,6 @@ utils.createClass(PicoAdmin, function () {
                 loading.classList.add('wait');
                 animateProgress();
             }
-        } else {
-            loading = utils.parse('<div id="loading" class="wait"><div class="glow"></div></div>');
-            loading.dataset.requests = 1;
-
-            window.requestAnimationFrame(function () {
-                document.body.appendChild(loading);
-                window.requestAnimationFrame(animateProgress);
-            });
         }
     };
 
@@ -245,7 +263,7 @@ utils.createClass(PicoAdmin, function () {
     {
         var loading = document.getElementById('loading');
         if (loading) {
-            var requestCount = parseInt(loading.dataset.requests);
+            var requestCount = parseInt(loading.dataset.requests) || 0;
             loading.dataset.requests = requestCount - 1;
 
             if (requestCount == 1) {
