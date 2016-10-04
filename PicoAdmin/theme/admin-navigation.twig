@@ -1,0 +1,10 @@
+{% from "_includes/macro-file_navigation.twig" import file_navigation %}
+{% if items|length %}
+    <div class="nav-inner">
+        <ul>
+            {{ file_navigation(items) }}
+        </ul>
+    </div>
+{% else %}
+    <div class="nav-inner"></div>
+{% endif %}

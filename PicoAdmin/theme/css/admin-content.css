@@ -1,11 +1,20 @@
-#content,
-.markdownContainer {
+#module-content {
+    width: 100%;
+    height: 100%;
+}
+
+#module-content,
+.markdownContainer,
+.rescueContainer {
     display: flex;
     flex-direction: column;
 }
 
+#module-content,
 .markdownContainer,
-.markdownContainer .CodeMirror {
+.markdownContainer .CodeMirror,
+.rescueContainer,
+.rescueContainer textarea {
     flex: 1 0 auto;
 }
 
@@ -17,7 +26,15 @@
     padding: 10px;
 }
 
-.yamlContainer .CodeMirror {
+.rescueContainer textarea {
+    width: 100%;
+    margin: 0;
+    border: 0 none;
+    padding: 10px;
+}
+
+.yamlContainer .CodeMirror,
+.rescueContainer textarea {
     font-family: 'Droid Sans Mono', monospace;
     font-size: 0.92rem;
 }
@@ -27,7 +44,8 @@
     border: 0 none;
     border-radius: 0;
 }
-.CodeMirror {
+.CodeMirror,
+.rescueContainer textarea {
     border-top: 1px solid #ddd;
 }
 
@@ -45,22 +63,23 @@
     display: none;
 }
 .editor-toolbar a.error { color: #d00 !important; }
+.editor-toolbar .rescue-info strong { color: #d00; }
 
 .CodeMirror,
 .CodeMirror-scroll {
     min-height: 0;
 }
 
-main > aside > nav > div > .nav .item > .actions .delete {
+main > aside > nav .nav .item .actions .delete {
     opacity: 0;
     -webkit-transition: opacity .2s ease-in;
             transition: opacity .2s ease-in;
 }
-main > aside > nav > div > .nav .item:hover > .actions .delete { opacity: 1; }
+main > aside > nav .nav .item:hover .actions .delete { opacity: 1; }
 
-main > aside > nav > div > .nav ul li[data-file$="index"] > .item .fa-li { color: #009; }
-main > aside > nav > div > .nav ul li[data-file$="404"] > .item .fa-li { color: #990; }
-main > aside > nav > div > .nav ul li > .item .fa-li.fa-stack-exclamation { color: #900; }
+main > aside > nav .nav .item[data-path$="index"] > a > .fa { color: #009; }
+main > aside > nav .nav .item[data-path$="404"] > a > .fa { color: #990; }
+main > aside > nav .nav .item > a > .fa.fa-stack-exclamation { color: #900; }
 
 footer .editor-statusbar {
     float: right;

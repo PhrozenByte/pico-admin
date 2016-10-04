@@ -1,94 +1,43 @@
 {# You may overwrite this template by adding a admin-content.twig to your custom theme #}
 
-{% extends "admin.twig" %}
-{% from "_includes/macro-file_navigation.twig" import file_navigation %}
-
-{% block title %}
-    {% if admin_request.action == "create" %}Create New Page{% else %}Edit {{ title }}{% endif %}
-    | Pico Admin Panel | {{ site_title }}
-{% endblock %}
-
 {% block stylesheets %}
-    {{ parent() }}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontawesome/4.6/css/font-awesome.min.css" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.css" type="text/css" />
     <link rel="stylesheet" href="{{ admin_theme_url }}/css/admin-content.css" type="text/css" />
 {% endblock %}
 
 {% block javascript %}
-    {{ parent() }}
-
     <script src="https://cdn.jsdelivr.net/g/codemirror@4(codemirror.min.js+mode/yaml/yaml.js)" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/simplemde/1/simplemde.min.js" type="text/javascript"></script>
     <script src="{{ admin_theme_url }}/js/admin-content.js" type="text/javascript"></script>
 
     <script type="text/javascript">
-        var picoContentAdmin = new PicoContentAdmin(
-            '{{ admin_auth_client_token|escape("js") }}',
-            '{{ ""|admin_link|escape("js") }}'
-        );
-
-        // init YAML editor (plain CodeMirror)
-        var yamlEditorOptions = {{ config.PicoAdmin.PicoContentAdmin.yamlEditor|json_encode }};
-        window.requestAnimationFrame(function () {
-            picoContentAdmin.initYamlEditor(
-                yamlEditorOptions.element,
-                yamlEditorOptions
-            );
-        });
-
-        // init Markdown editor (SimpleMDE, a CodeMirror wrapper)
-        var markdownEditorOptions = {{ config.PicoAdmin.PicoContentAdmin.markdownEditor|json_encode }};
-        window.requestAnimationFrame(function () {
-            picoContentAdmin.initMarkdownEditor(
-                markdownEditorOptions.element,
-                utils.extend({}, markdownEditorOptions, { autoDownloadFontAwesome: false })
-            );
-
-            // move SimpleMDE toolbar and statusbar
-            var content = document.getElementById('content');
-            content.insertBefore(picoContentAdmin.getMarkdownEditor().gui.toolbar, content.firstChild);
-
-            var footer = document.querySelector('footer');
-            footer.insertBefore(picoContentAdmin.getMarkdownEditor().gui.statusbar, footer.firstChild);
-        });
-
-        // init file navigation
-        window.requestAnimationFrame(function () {
-            picoContentAdmin.initNavigation(
-                document.querySelector('#picoContentAdminNav'),
-                {% if edit_page %}'{{ edit_page|escape("js") }}'{% else %}null{% endif %},
-                '{1} | Pico Admin Panel | {{ site_title }}'
-            );
+        var picoContentAdmin = new PicoContentAdmin(picoAdmin);
+        picoContentAdmin.init({
+            title: {% filter json_encode %}{1} | Pico Admin Panel | {{ site_title }}{% endfilter %},
+            contentExt: {{ config.content_ext|json_encode }},
+            yamlEditorOptions: utils.extend(
+                {{ config.PicoAdmin.PicoContentAdmin.yamlEditor|json_encode }},
+                { element: '#module-content .yamlContainer textarea' }
+            ),
+            markdownEditorOptions: utils.extend(
+                {{ config.PicoAdmin.PicoContentAdmin.markdownEditor|json_encode }},
+                { element: '#module-content .markdownContainer textarea' },
+                { autoDownloadFontAwesome: false }
+            ),
+            rescueEditorOptions: { element: '#module-content .rescueContainer textarea' }
         });
     </script>
-    <script type="text/javascript">
-        // both editors are initialized async to speed up initialization
-        // this also allows you to change options theme-dependant
-        // simply modify the global variables
-        yamlEditorOptions.element = '.yamlContainer textarea';
-        markdownEditorOptions.element = '.markdownContainer textarea';
-    </script>
-{% endblock %}
 
-{% block nav %}
-    {% if file_navigation['.'] is defined %}
-        <div id="picoContentAdminNav">
-            <div class="headline">
-                <h3>Pico Content Admin</h3>
-                <div class="actions">
-                    <a href="{{ "content/create"|admin_link }}" class="action create inverse" title="Create New Page" role="button">
-                        <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
-                        <span class="sr-only">Create New Page</span>
-                    </a>
-                </div>
-            </div>
-            <div class="nav allow-open">
-                <ul class="fa-ul">
-                    {{ file_navigation(file_navigation['.']['children'], "content/edit"|admin_link, config.content_ext) }}
-                </ul>
-            </div>
-        </div>
+    {% if admin_request.module == "content" %}
+        {% if (admin_request.action == "create") or (admin_request.action == "edit") %}
+            <script type="text/javascript">
+                picoContentAdmin.takeOver(
+                    '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
+                    '{{ page_path|escape("js") }}',
+                    '{{ page_title|escape("js") }}'
+                );
+            </script>
+        {% endif %}
     {% endif %}
 {% endblock %}
 
@@ -102,4 +51,19 @@
     <div class="markdownContainer">
         <textarea>{{ markdown_content|escape('html') }}</textarea>
     </div>
+
+    <h2 class="sr-only">Rescue Editor</h2>
+    <div class="rescueContainer hidden">
+        <div class="editor-toolbar">
+            <a title="Save" class="save fa fa-floppy-o"></a>
+            <i class="separator">|</i>
+            <span class="rescue-info"><strong>Rescue Mode:</strong> This file doesn't contain a valid Pico page.</span>
+        </div>
+        <textarea>{{ raw_content|escape('html') }}</textarea>
+    </div>
+{% endblock %}
+
+{% block landing %}
+    <span class="fa fa-pencil-square-o" aria-hidden="true"></span>
+    <h3>Content Admin</h3>
 {% endblock %}

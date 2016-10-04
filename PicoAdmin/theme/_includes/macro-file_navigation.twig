@@ -1,40 +1,39 @@
-{% macro file_navigation(files, base_url, ext) %}
+{% macro file_navigation(files) %}
     {% from _self import file_navigation,
         _file_navigation_item_args as item_args,
         _file_navigation_anchor_args as anchor_args,
         _file_navigation_icon as icon,
-        _file_navigation_path as path,
-        _file_navigation_actions as actions %}
+        _file_navigation_path as path %}
     {% if files.index is defined %}
-        <li {{ item_args(files.index) }}>
-            <div class="item">
-                <a {{ anchor_args(files.index, base_url) }}>
+        <li>
+            <div {{ item_args(files.index) }}>
+                <a {{ anchor_args(files.index) }}>
                     {{ icon(files.index) }}
-                    {{ path(files.index.dirName) }}<strong>index</strong>{{ ext }}
+                    {{ path(files.index.dirName) }}<strong>index</strong>{{ files.index.fileExt }}
                 </a>
-                {{ actions(files.index) }}
+                <div class="actions"></div>
             </div>
         </li>
     {% endif %}
     {% for file in files if file.fileName != 'index' %}
-        <li {{ item_args(file) }}>
-            <div class="item">
-                {% if file.id %}
-                    <a {{ anchor_args(file, base_url) }}>
-                        {{ icon(file) }}
-                        {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ ext }}
-                    </a>
-                {% else %}
+        <li>
+            <div {{ item_args(file) }}>
+                {% if file.type == "dir" %}
                     <a>
                         {{ icon(file) }}
                         {{ path(file.dirName) }}{{ file.fileName }}/
                     </a>
+                {% else %}
+                    <a {{ anchor_args(file) }}>
+                        {{ icon(file) }}
+                        {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ file.fileExt }}
+                    </a>
                 {% endif %}
-                {{ actions(file) }}
+                <div class="actions hidden"></div>
             </div>
             {% if file.children %}
-                <ul class="fa-ul">
-                    {{ file_navigation(file.children, base_url, ext) }}
+                <ul>
+                    {{ file_navigation(file.children) }}
                 </ul>
             {% endif %}
         </li>
@@ -42,13 +41,18 @@
 {% endmacro %}
 
 {% macro _file_navigation_item_args(file) -%}
-    {% if file.id %}data-id="{{ file.id|escape("html_attr") }}"{% endif %}
-    data-{% if file.type matches "/^[-\\w]+$/" %}{{ file.type }}{% else %}file{% endif -%}
-        ="{{ file.path|escape("html_attr") }}"
+    {% set classNames = "item" %}
+    {% if file.error %}{% set classNames = classNames ~ " error" %}{% endif %}
+    {% if file.children %}{% set classNames = classNames ~ " parent" %}{% endif %}
+
+    class="{{ classNames }}"
+    data-path="{{ file.path|escape("html_attr") }}"
+    data-type="{{ file.type|escape("html_attr") }}"
+    {% if file.children %}data-children="{{ file.children|length }}"{% endif %}
 {%- endmacro %}
 
-{% macro _file_navigation_anchor_args(file, base_url) -%}
-    href="{{ base_url }}/{{ file.id|escape('html_attr') }}"
+{% macro _file_navigation_anchor_args(file) -%}
+    href="{{ file.url|escape('html_attr') }}"
     {% if file.error %}
         title="{{ file.error|escape("html_attr") }}"
     {% elseif file.title %}
@@ -56,16 +60,13 @@
     {% endif %}
 {%- endmacro %}
 
-{% macro _file_navigation_icon(file) %}
-    {% set classNames = "fa fa-li" %}
-    {% if file.type == "file" %}
-        {% if file.title and not file.error and (file.fileName != "404") %}
-            {% set classNames = classNames ~ " fa-file-text-o" %}
-        {% else %}
-            {% set classNames = classNames ~ " fa-file-o" %}
-        {% endif %}
-    {% elseif file.type == "dir" %}
+{% macro _file_navigation_icon(file) -%}
+    {% set classNames = "fa" %}
+    {% if file.type == "dir" %}
         {% set classNames = classNames ~ " fa-folder-o" %}
+    {% endif %}
+    {% if file.icon %}
+        {% set classNames = classNames ~ " " ~ file.icon %}
     {% endif %}
     {% if file.error %}
         {% set classNames = classNames ~ " fa-stack-exclamation" %}
@@ -83,21 +84,4 @@
             {{ path }}/
         {%- endif -%}
     {% endif %}
-{% endmacro %}
-
-{% macro _file_navigation_actions(file) %}
-    <div class="actions">
-        {% if file.id and (file.id != "index") and (file.id != "404") %}
-            <span class="action delete" title="Delete Page" role="button">
-                <span class="fa fa-trash-o fa-fw" aria-hidden="true"></span>
-                <span class="sr-only">Delete Page</span>
-            </span>
-        {% endif %}
-        {% if file.children or not file.id %}
-            <span class="action create" title="Create New Page" role="button">
-                <span class="fa fa-plus fa-fw" aria-hidden="true"></span>
-                <span class="sr-only">Create New Page</span>
-            </span>
-        {% endif %}
-    </div>
 {% endmacro %}

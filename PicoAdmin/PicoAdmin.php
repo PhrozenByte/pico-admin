@@ -88,8 +88,10 @@ class PicoAdmin extends AbstractPicoPlugin
             $this->requestModule = 'info';
             $this->requestAction = $this->requestPayload = '';
         } elseif (empty($this->requestModule)) {
-            // show built-in content module when no specific module was requested
-            $this->requestModule = 'content';
+            // show built-in landing page when no specific module was requested
+            // landing page requires authentication, therefore non-authenticated users will end up on the login page
+            $this->requestModule = 'landing';
+            $this->authenticationRequired = true;
         }
 
         $this->triggerEvent('onAdminRequest', array(
@@ -173,8 +175,22 @@ class PicoAdmin extends AbstractPicoPlugin
             return;
         }
 
+        // landing page
+        if ($this->requestModule === 'landing') {
+            header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
+
+            $twig->getLoader()->addPath(__DIR__ . '/theme');
+            $templateName = 'admin.twig';
+        }
+
         // register admin_link filter
         $twig->addFilter(new Twig_SimpleFilter('admin_link', array($this, 'getAdminPageUrl')));
+
+        // register include_block filter
+        $twig->addFunction(new Twig_SimpleFunction('include_block', function (Twig_Environment $env, $context, $templateName, $blockName) {
+            $template = $env->loadTemplate($templateName);
+            return $template->renderBlock($blockName, $context);
+        }, array('needs_context' => true, 'needs_environment' => true)));
 
         // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
         if ($this->authenticationRequired && !$this->authenticated) {

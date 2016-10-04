@@ -3,9 +3,16 @@ function PicoAdmin(authToken, baseUrl)
     this.authToken = authToken;
     this.baseUrl = baseUrl;
 
-    this.notifications = [];
+    this.modules = {};
 
-    this.init();
+    this.activeModule = 'landing';
+    this.activePath = null;
+
+    this.currentState = null;
+    this.latestState = null;
+
+    this.notifications = [];
+    this.askFileNameModal = null;
 }
 
 utils.createClass(PicoAdmin, function () {
@@ -13,6 +20,216 @@ utils.createClass(PicoAdmin, function () {
     {
         this.initNotification();
         this.initLoading();
+        this.initHistory();
+    };
+
+    this.prototype.registerModule = function (moduleName, instance)
+    {
+        this.modules[moduleName] = instance;
+    };
+
+    this.prototype.selectModule = function (activeModule, activePath, intermediateCallback)
+    {
+        var oldModule = this.activeModule ? this.modules[this.activeModule] : null,
+            newModule = activeModule ? this.modules[activeModule] : null,
+            landingPage = document.getElementById('landing');
+
+        if (oldModule) {
+            if (!newModule || (oldModule.moduleName !== newModule.moduleName)) {
+                oldModule.disable();
+            }
+        } else {
+            utils.fadeOut(landingPage);
+        }
+
+        if (intermediateCallback) {
+            intermediateCallback(oldModule, newModule);
+        }
+
+        if (newModule) {
+            if (!oldModule || (oldModule.moduleName !== newModule.moduleName)) {
+                newModule.enable();
+            }
+
+            this.activeModule = newModule.moduleName;
+            this.selectPath(activePath);
+        } else {
+            utils.fadeIn(landingPage);
+
+            this.activeModule = null;
+            this.activePath = null;
+        }
+    };
+
+    this.prototype.selectPath = function (path)
+    {
+        this.activePath = path || null;
+
+        var module = this.modules[this.activeModule];
+        if (module) {
+            module.selectPath(path);
+        }
+    };
+
+    this.prototype.initHistory = function ()
+    {
+        var self = this;
+
+        // restore old page states when navigating back/forward
+        // without the need of reloading the page
+        window.addEventListener('popstate', function (event) {
+            if (self.currentState === self.latestState) {
+                // navigating away from latest page; update history object
+                // TODO: open question: is this (explicitly added) limitation really favored?
+                self.updateHistory({ url: self.getHistoryObject(self.currentState).url });
+            }
+
+            if (event.state && event.state.PicoAdmin) {
+                self.restoreHistory(event.state.PicoAdmin);
+            }
+        });
+
+        // users shouldn't use the browser's reload button
+        window.addEventListener('beforeunload', function (event) {
+            event.preventDefault();
+            self.updateHistory();
+        });
+
+        // restore history objects of a previous session
+        this.latestState = parseInt(sessionStorage.getItem('PicoAdminHistory')) || null;
+        if (!this.latestState) {
+            this.currentState = this.latestState = 1;
+            sessionStorage.setItem('PicoAdminHistory', this.latestState);
+
+            this.updateHistory();
+        } else {
+            var currentHistoryObject = this.createHistoryObject();
+
+            this.currentState = 1;
+            for (var historyObject; this.currentState <= this.latestState; this.currentState++) {
+                historyObject = this.getHistoryObject(this.currentState);
+                if (!historyObject.isLost) {
+                    window.history.pushState(
+                        { PicoAdmin: this.currentState },
+                        historyObject.title,
+                        '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
+                    );
+                }
+            }
+
+            this.pushHistory(currentHistoryObject);
+        }
+    };
+
+    this.prototype.pushHistory = function (url, historyObject)
+    {
+        if (!historyObject) {
+            historyObject = utils.isPlainObject(url) ? url : { url: url };
+        } else if (url) {
+            utils.extend(historyObject, { url: url });
+        }
+
+        // mark unreachable history states as lost
+        if (this.currentState < this.latestState) {
+            for (var lostState = (this.currentState + 1); lostState <= this.latestState; lostState++) {
+                var lostStateObject = this.getHistoryObject(lostState);
+                utils.extend(lostStateObject, { isLost: true });
+                this.setHistoryObject(lostState, lostStateObject);
+            }
+        }
+
+        // push new history state
+        historyObject = utils.extend(
+            { lastUpdate: (new Date()).getTime() },
+            this.createHistoryObject(),
+            historyObject
+        );
+
+        this.latestState++;
+        this.setHistoryObject(this.latestState, historyObject);
+        this.currentState = this.latestState;
+
+        window.history.pushState(
+            { PicoAdmin: this.currentState },
+            historyObject.title,
+            '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
+        );
+
+        // update number of history states
+        sessionStorage.setItem('PicoAdminHistory', this.latestState);
+    };
+
+    this.prototype.updateHistory = function (historyObject)
+    {
+        historyObject = utils.extend(
+            { lastUpdate: (new Date()).getTime() },
+            this.createHistoryObject(),
+            historyObject || {}
+        );
+
+        var oldHistoryObject = this.getHistoryObject(this.currentState);
+        this.setHistoryObject(this.currentState, historyObject);
+
+        // replace the history object only when necessary
+        if (!oldHistoryObject || (historyObject.title !== oldHistoryObject.title) || (historyObject.url !== oldHistoryObject.url)) {
+            // make sure we don't accidently replace other states than the expected
+            // this e.g. happens when navigating back accross modules (PicoContentAdmin.disable() via popstate event)
+            if ((window.history.state === null) || (window.history.state === this.currentState)) {
+                window.history.replaceState(
+                    { PicoAdmin: this.currentState },
+                    historyObject.title,
+                    '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
+                );
+            }
+        }
+    };
+
+    this.prototype.restoreHistory = function (state)
+    {
+        var historyObject = this.getHistoryObject(state),
+            self = this;
+
+        // select module and path
+        this.selectModule(historyObject.activeModule, historyObject.activePath, function () {
+            self.currentState = state;
+        });
+
+        // update title
+        document.title = historyObject.title;
+
+        // transfer responsibility to the new module
+        var module = this.modules[historyObject.activeModule];
+        if (module) {
+            module.restoreHistory(historyObject, state);
+        }
+    };
+
+    this.prototype.createHistoryObject = function ()
+    {
+        var historyObject = {
+            activeModule: this.activeModule,
+            activePath: this.activePath,
+            title: document.title,
+            url: window.location.href
+        };
+
+        var module = this.modules[this.activeModule];
+        if (module) {
+            historyObject = module.createHistoryObject(historyObject);
+        }
+
+        return historyObject;
+    };
+
+    this.prototype.setHistoryObject = function (state, historyObject)
+    {
+        sessionStorage.setItem('PicoAdminHistory' + state, JSON.stringify(historyObject));
+    };
+
+    this.prototype.getHistoryObject = function (state)
+    {
+        if (!state) state = this.currentState;
+        return JSON.parse(sessionStorage.getItem('PicoAdminHistory' + state) || 'null');
     };
 
     this.prototype.ajax = function (module, action, payload, options)
@@ -205,6 +422,9 @@ utils.createClass(PicoAdmin, function () {
             notificationData.closeCallback = closeCallback;
         }
 
+        var module = this.modules[this.activeModule];
+        if (module) module.showNotification(notificationData, alert);
+
         utils.slideDown(alert);
         return alert;
     };
@@ -228,6 +448,9 @@ utils.createClass(PicoAdmin, function () {
             if (notificationData.timerTimeout) clearTimeout(notificationData.timerTimeout);
             if (notificationData.timerInterval) clearInterval(notificationData.timerInterval);
 
+            var module = this.modules[this.activeModule];
+            if (module) module.hideNotification(notificationData, alert);
+
             utils.slideUp(alert, function() {
                 alert.parentNode.removeChild(alert);
             });
@@ -236,6 +459,194 @@ utils.createClass(PicoAdmin, function () {
         }
 
         return false;
+    };
+
+    this.prototype.askFileName = function (callback, options)
+    {
+        var self = this;
+
+        if ((options === undefined) && utils.isPlainObject(callback)) {
+            options = callback;
+        } else {
+            if (!options) options = {};
+            if (callback) options.callback = callback;
+        }
+
+        options = utils.extend({
+            title: null,
+            value: '',
+            fileExt: null,
+            iconName: null,
+            className: null,
+            closeable: true,
+            callback: null
+        }, options);
+
+        // disallow opening multiple file name notifications at the same time
+        if (this.askFileNameModal) return null;
+        this.askFileNameModal = {};
+
+        // prepare notification content
+        var content = utils.parse(
+                '<div class="input-group">' +
+                '    <input type="text" />' +
+                '    <div class="button" role="button">' +
+                '        <span class="fa fa-floppy-o" aria-hidden="true"></span>' +
+                '        <span class="sr-only">Save</span>' +
+                '    </div>' +
+                '</div>' +
+                '<small>' +
+                '    <span class="fa fa-lightbulb-o" aria-hidden="true"></span>' +
+                '    <strong>Pro Tip:</strong> Click on a item in the file navigation to copy its path.' +
+                '</small>'
+            ),
+            inputGroup = content.querySelector('div > .input-group'),
+            inputField = inputGroup.querySelector('div > input'),
+            submitButton = inputGroup.querySelector('div > .button');
+
+        if (options.fileExt) {
+            inputGroup.insertBefore(
+                utils.parse('<div class="file_ext">' + options.fileExt + '</div>'),
+                submitButton
+            );
+        }
+
+        inputField.addEventListener('focus', function () { inputGroup.classList.add('focus'); });
+        inputField.addEventListener('blur', function () { inputGroup.classList.remove('focus'); });
+
+        // set default value
+        inputField.value = options.value;
+
+        // take over navigation
+        var navigation = document.querySelector('main > aside > nav'),
+            actionLists = navigation.querySelectorAll('.headline .actions, .nav .item > .actions'),
+            itemAnchors = navigation.querySelectorAll('.nav .item > a');
+
+        var applyPathEvent = function (event) {
+            event.preventDefault();
+
+            var anchor = event.currentTarget,
+                item = utils.closest(anchor, '.item'),
+                path = item.dataset.path + (item.classList.contains('parent') ? '/' : '');
+
+            self.setFileNameModalValue(path);
+        };
+
+        utils.forEach(itemAnchors, function (_, itemAnchor) {
+            utils.disableNamedEventListener(itemAnchor, 'click', 'action');
+
+            if (!itemAnchor.hasAttribute('href')) itemAnchor.setAttribute('href', '');
+            utils.addNamedEventListener(itemAnchor, 'click', 'apply-path', applyPathEvent);
+        });
+
+        utils.forEach(actionLists, function (_, actionList) { utils.slideLeft(actionList); });
+
+        // create notification
+        var notification = this.showNotification(
+            options.title,
+            content,
+            { iconName: options.iconName, className: options.className },
+            null,
+            options.closeable,
+            function () { self.closeFileNameModal(); }
+        );
+
+        var notificationId = notification.dataset.notificationId;
+        this.askFileNameModal = utils.extend(
+            { alert: notification},
+            this.notifications[notificationId],
+            {
+                defaultValue: options.value,
+                fileExt: options.fileExt,
+                submitCallback: options.callback
+            }
+        );
+
+        // make the save button functional
+        submitButton.addEventListener('click', function () {
+            self.submitFileNameModal();
+        });
+        inputField.addEventListener('keydown', function (event) {
+            if (event.keyCode == 13) {
+                self.submitFileNameModal();
+            }
+        });
+
+        var module = this.modules[this.activeModule];
+        if (module) module.askFileName(this.askFileNameModal, notification);
+
+        return notification;
+    };
+
+    this.prototype.closeFileNameModal = function ()
+    {
+        var notification = this.askFileNameModal.alert;
+        if (notification) {
+            var navigation = document.querySelector('main > aside > nav'),
+                actionLists = navigation.querySelectorAll('.module .headline .actions, .module .nav .item > .actions'),
+                itemAnchors = navigation.querySelectorAll('.module .nav .item > a');
+
+            utils.forEach(actionLists, function (_, actionList) { utils.slideRight(actionList); });
+
+            utils.forEach(itemAnchors, function (_, itemAnchor) {
+                utils.removeNamedEventListener(itemAnchor, 'click', 'apply-path');
+                if (itemAnchor.getAttribute('href') === '') itemAnchor.removeAttribute('href');
+
+                utils.enableNamedEventListener(itemAnchor, 'click', 'action');
+            });
+
+            var module = this.modules[this.activeModule];
+            if (module) module.closeFileNameModal(this.askFileNameModal, notification);
+
+            this.askFileNameModal = null;
+        }
+    };
+
+    this.prototype.submitFileNameModal = function ()
+    {
+        var notification = this.askFileNameModal.alert;
+        if (notification) {
+            var inputField = notification.querySelector('.input-group > input'),
+                value = inputField.value,
+                fileExt = this.askFileNameModal.fileExt,
+                submitCallback = this.askFileNameModal.submitCallback;
+
+            this.hideNotification(notification);
+
+            if (value === '') return;
+
+            // drop file extension when necessary
+            if (fileExt) {
+                var testFileExt = value.substr(-fileExt.length);
+                if (testFileExt === fileExt) {
+                    var fileNameLength = value.length - fileExt.length;
+                    value = value.substr(0, fileNameLength);
+                }
+            }
+
+            var module = this.modules[this.activeModule];
+            if (module) module.submitFileNameModal(this.askFileNameModal, notification);
+
+            // validate path and call success callback
+            if (value.substr(-1) === '/') {
+                this.showNotification(
+                    'Invalid Path',
+                    'The path you\'ve entered is invalid. Please specify a valid file path.',
+                    'error'
+                );
+            } else if (submitCallback) {
+                submitCallback(value);
+            }
+        }
+    };
+
+    this.prototype.setFileNameModalValue = function (path)
+    {
+        var notification = this.askFileNameModal.alert;
+        if (notification) {
+            var inputField = notification.querySelector('.input-group > input');
+            inputField.value = path;
+        }
     };
 
     this.prototype.initLoading = function ()
@@ -289,15 +700,5 @@ utils.createClass(PicoAdmin, function () {
         }
 
         return false;
-    };
-
-    this.prototype.getAuthToken = function ()
-    {
-        return this.authToken;
-    };
-
-    this.prototype.getBaseUrl = function ()
-    {
-        return this.baseUrl;
     };
 });

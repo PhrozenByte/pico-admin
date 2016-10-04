@@ -57,23 +57,29 @@ main > aside { display: flex; flex-direction: column; }
 main > aside > nav { flex: 1 0 auto; }
 
 main > aside > nav { display: flex; flex-direction: column; }
-main > aside > nav > div:last-child { flex: 1 0 auto; }
+main > aside > nav .module:last-child { flex: 1 0 auto; }
 
-main > aside > nav > div { display: flex; flex-direction: column; }
-main > aside > nav > div > .nav { flex: 1 0 auto; }
+main > aside > nav .module { display: flex; flex-direction: column; }
+main > aside > nav .module .nav { flex: 1 0 auto; }
 
-main > aside > nav > div > .headline { display: flex; }
-main > aside > nav > div > .headline h3 { flex: 1 1 auto; }
+main > aside > nav .module .headline { display: flex; }
+main > aside > nav .module .headline h3 { flex: 1 1 auto; }
+main > aside > nav .module .headline h3 a { display: block; }
 
-main > aside > nav > div > .nav .item { display: flex; }
-main > aside > nav > div > .nav .item > *:first-child { flex: 1 1 auto; }
+main > aside > nav .module .nav .item { display: flex; }
+main > aside > nav .module .nav .item > a { flex: 1 1 auto; }
 
-main > aside > nav > div .actions { display: flex; }
-main > aside > nav > div .actions > * { display: block; }
+main > aside > nav .module .actions { display: flex; }
+main > aside > nav .module .actions > * { display: block; }
+
+main > #content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
 main { overflow-x: auto; }
-
-main > aside > nav > div > .nav { overflow-x: auto; }
+main > aside > nav .module .nav .nav-inner { overflow-x: auto; }
 
 @media (max-width: 767px) {
     main { flex-direction: column; }
@@ -92,36 +98,50 @@ main > aside > h1.page-title a:hover {
     color: #fff;
 }
 
-main > aside > nav > div > .headline {
+main > aside > nav .module .headline {
     align-items: center;
     padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: 1px solid #ddd;
 }
-main > aside > nav > div > .headline h3 { margin: 0; }
+main > aside > nav .module .headline h3 { margin: 0; }
 
-main > aside > nav > div > .nav { padding: 1rem 1rem 1rem 0.5rem; }
-main > aside > nav > div > .nav > ul {
+main > aside > nav .module .nav .nav-inner:not(:empty) { padding: 1rem 1rem 1rem 0.5rem; }
+main > aside > nav .module .nav .nav-inner > ul {
     display: inline-block;
     min-width: 100%;
 }
-main > aside > nav > div > .nav ul { margin: 0; padding-left: 2em; }
 
-main > aside > nav > div > .nav .item > a[href],
-main > aside > nav > div .actions .action {
+main > aside > nav .module .nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+main > aside > nav .module .nav .parent ~ ul {
+    margin-left: 1.6em;
+}
+
+main > aside > nav .module .nav .item > a[href],
+main > aside > nav .module .actions .action {
     cursor: pointer;
     color: #444;
     -webkit-transition: color .2s ease-in;
             transition: color .2s ease-in;
 }
-main > aside > nav > div > .nav .item:hover > a[href],
-main > aside > nav > div > .nav .active > .item > a[href],
-main > aside > nav > div .actions .action:hover {
+main > aside > nav .module .nav .item:hover > a[href],
+main > aside > nav .module .nav .item.active > a[href],
+main > aside > nav .module .actions .action:hover {
     color: #2EAE9B;
 }
 
-main > aside > nav > div > .nav ul li > .item .fa-li { color: #444; }
+main > aside > nav .module .nav .item > a > .fa {
+    display: inline-block;
+    width: 1.6em;
+    line-height: 1.6;
+    text-align: center;
+    color: #444;
+}
 
-main > aside > nav > div .actions > * > .fa { margin-left: 0.2em; }
+main > aside > nav .module .actions .fa { margin-left: 0.2em; }
 
 footer {
     background: #707070;
@@ -377,3 +397,69 @@ footer a[href]:hover { color: #fff; }
     top: -0.2em;
     left: -0.95em;
 }
+
+/*** LANDING PAGE ***/
+
+#landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 50em;
+    padding: 1em 0;
+}
+
+#landing > .big {
+    margin: 0 0 0.25em;
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+}
+#landing > .big a,
+#landing > .big a:hover {
+    color: #444;
+    cursor: text;
+}
+
+#landing > ul {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#landing .module {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 12em;
+    height: 10em;
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+    margin: 0.25em;
+    padding: 1em;
+    cursor: pointer;
+    -webkit-transition: border-color .2s ease-in,
+                        box-shadow .2s ease-in;
+            transition: border-color .2s ease-in,
+                        box-shadow .2s ease-in;
+}
+#landing .module > * {
+    text-align: center;
+    -webkit-transition: color .2s ease-in;
+            transition: color .2s ease-in;
+}
+#landing .module .fa {
+    display: block;
+    margin-bottom: 0.33em;
+    font-size: 3rem;
+    color: #666;
+}
+#landing .module h3 { margin: 0; }
+
+#landing .module:hover {
+    border-color: #2EAE9B;
+    box-shadow: 0 0 8px #2EAE9B;
+}
+#landing .module:hover > * { color: #2EAE9B; }

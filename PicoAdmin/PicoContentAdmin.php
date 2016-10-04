@@ -19,8 +19,13 @@ class PicoContentAdmin extends AbstractPicoPlugin
     protected $action;
     protected $page;
 
+    protected $rawRequest;
+    protected $rawContent;
+
     protected $yamlContent;
     protected $markdownContent;
+
+    protected $navigation;
 
     /**
      * Bootstrap the plugin's default configuration
@@ -100,14 +105,21 @@ class PicoContentAdmin extends AbstractPicoPlugin
             }
 
             switch ($this->action) {
+                case 'edit':
+                case 'load':
+                    $this->rawRequest = (isset($_REQUEST['raw']) && $_REQUEST['raw']);
+                    return;
+
                 case 'preview':
                 case 'fullPreview':
                     $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
                     $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
-                    break;
-            }
+                    return;
 
-            return;
+                case 'navigation':
+                case 'create':
+                    return;
+            }
         }
 
         // the user wasn't requesting a page of this admin module
@@ -127,6 +139,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         switch ($this->action) {
             case 'edit':
+                if ($this->rawRequest) {
+                    // rescue mode: don't let Pico handle this page,
+                    // otherwise parse errors won't show up properly
+                    $file = null;
+                    break;
+                }
+                // intentional fallthrough
+
             case 'load':
             case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
@@ -150,6 +170,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onContentLoaded(&$rawContent)
     {
         switch ($this->action) {
+            case 'navigation':
+                $rawContent = '';
+                break;
+
             case 'create':
                 $rawContent = '';
                 $this->yamlContent = '';
@@ -158,6 +182,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
             case 'edit':
             case 'load':
+                if ($this->rawRequest) {
+                    // rescue mode: return raw file contents
+                    $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
+                    $this->rawContent = file_exists($file) ? $this->loadFileContent($file) : '';
+                    $rawContent = '';
+                    break;
+                }
+
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
                     . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
@@ -192,98 +224,123 @@ class PicoContentAdmin extends AbstractPicoPlugin
         header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
 
         $twig->getLoader()->addPath(__DIR__ . '/theme');
+
         switch ($this->action) {
-            case 'edit':
-                $meta = $this->getFileMeta();
-                $twigVariables['title'] = $this->page . $this->getConfig('content_ext')
-                    . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '');
-                $twigVariables['edit_page'] = $this->page;
-                // intentional fallthrough
+            case 'navigation':
+                $templateName = 'admin-navigation.twig';
+                $twigVariables['items'] = $this->getNavigation();
+                break;
 
             case 'create':
-                $templateName = 'admin-content.twig';
+            case 'edit':
+                $templateName = 'admin.twig';
 
+                $meta = $this->getFileMeta();
+
+                if ($this->rawRequest) {
+                    $twigVariables['raw_content'] = $this->rawContent;
+                }
+
+                $twigVariables['rescue_mode'] = $this->rawRequest;
                 $twigVariables['yaml_content'] = $this->yamlContent;
                 $twigVariables['markdown_content'] = $this->markdownContent;
-                $twigVariables['file_navigation'] = $this->getFileNavigation();
+                $twigVariables['page_path'] = $this->page;
+                $twigVariables['page_title'] = !empty($meta['title']) ? $meta['title'] : '';
+                $twigVariables['navigation'] = $this->getNavigation();
                 break;
 
             case 'load':
-                $meta = $this->getFileMeta();
-
-                header('Content-Type: application/json; charset=UTF-8');
-                $templateName = 'admin-ajax.twig';
-
-                $twigVariables['json'] = array(
-                    'yaml' => $this->yamlContent,
-                    'markdown' => $this->markdownContent,
-                    'title' => $this->page . $this->getConfig('content_ext')
-                        . (!empty($meta['title']) ? ' (' . $meta['title'] . ')' : '')
-                );
-                break;
-
             case 'preview':
                 header('Content-Type: application/json; charset=UTF-8');
                 $templateName = 'admin-ajax.twig';
-                $twigVariables['json'] = array('preview' => $twigVariables['content']);
+
+                if ($this->action === 'load') {
+                    if ($this->rawRequest) {
+                        $twigVariables['json'] = array(
+                            'content' => $this->rawContent
+                        );
+                        break;
+                    }
+
+                    $meta = $this->getFileMeta();
+                    $twigVariables['json'] = array(
+                        'yaml' => $this->yamlContent,
+                        'markdown' => $this->markdownContent,
+                        'title' => !empty($meta['title']) ? $meta['title'] : ''
+                    );
+                } else {
+                    $twigVariables['json'] = array(
+                        'preview' => $twigVariables['content']
+                    );
+                }
                 break;
         }
     }
 
-    protected function getFileNavigation()
+    public function getNavigation()
     {
-        $contentDir = $this->getConfig('content_dir');
-        $contentDirLength = strlen($contentDir);
-        $contentExt = $this->getConfig('content_ext');
-        $contentExtLength = strlen($contentExt);
+        if ($this->navigation === null) {
+            $contentDir = $this->getConfig('content_dir');
+            $contentDirLength = strlen($contentDir);
+            $contentExt = $this->getConfig('content_ext');
+            $contentExtLength = strlen($contentExt);
 
-        $pages = $this->getPages();
+            $pages = $this->getPages();
 
-        $files = array();
-        $rawFiles = $this->getFiles($contentDir, $contentExt);
-        foreach ($rawFiles as $file) {
-            $id = substr($file, $contentDirLength, -$contentExtLength);
-            $pageData = isset($pages[$id]) ? $pages[$id] : array();
+            $items = array();
+            $files = $this->getFiles($contentDir, $contentExt);
+            foreach ($files as $file) {
+                $id = substr($file, $contentDirLength, -$contentExtLength);
+                $pageData = isset($pages[$id]) ? $pages[$id] : array();
 
-            if (!isset($files[$id])) {
-                $files[$id] = array(
-                    'path' => $id,
-                    'fileName' => basename($id),
-                    'dirName' => dirname($id),
-                    'children' => array()
-                );
-            }
-
-            $files[$id]['id'] = $id;
-            $files[$id]['type'] = 'file';
-
-            if (isset($pageData['title'])) {
-                $files[$id]['title'] = $pageData['title'];
-            }
-            if (isset($pageData['meta']['YAML_ParseError'])) {
-                $files[$id]['error'] = 'YAML Parse Error: ' . $pageData['meta']['YAML_ParseError'];
-            }
-
-            do {
-                $parentId = dirname($id);
-                $fileName = basename($id);
-
-                if (!isset($files[$parentId])) {
-                    $files[$parentId] = array(
-                        'path' => $parentId,
-                        'fileName' => basename($parentId),
-                        'dirName' => dirname($parentId),
-                        'type' => 'dir',
-                        'children' => array($fileName => &$files[$id])
+                if (!isset($items[$id])) {
+                    $items[$id] = array(
+                        'path' => $id,
+                        'dirName' => dirname($id),
+                        'fileName' => basename($id),
+                        'children' => array()
                     );
-                } elseif (!isset($files[$parentId]['children'][$fileName])) {
-                    $files[$parentId]['children'][$fileName] = &$files[$id];
                 }
 
-                $id = $parentId;
-            } while ($parentId !== '.');
+                $items[$id]['type'] = 'content';
+                $items[$id]['url'] = $this->admin->getAdminPageUrl('content/edit/' . $id);
+                $items[$id]['fileExt'] = $contentExt;
+
+                if (isset($pageData['title'])) {
+                    $items[$id]['title'] = $pageData['title'];
+                }
+                if (isset($pageData['meta']['YAML_ParseError'])) {
+                    $items[$id]['error'] = 'YAML Parse Error: ' . $pageData['meta']['YAML_ParseError'];
+                }
+                if (!isset($items[$id]['error']) && ($items[$id]['fileName'] !== '404')) {
+                    $items[$id]['icon'] = 'fa-file-text-o';
+                } else {
+                    $items[$id]['icon'] = 'fa-file-o';
+                }
+
+                do {
+                    $parentId = dirname($id);
+                    $fileName = basename($id);
+
+                    if (!isset($items[$parentId])) {
+                        $items[$parentId] = array(
+                            'path' => $parentId,
+                            'dirName' => dirname($parentId),
+                            'fileName' => basename($parentId),
+                            'type' => 'dir',
+                            'children' => array($fileName => &$items[$id])
+                        );
+                    } elseif (!isset($items[$parentId]['children'][$fileName])) {
+                        $items[$parentId]['children'][$fileName] = &$items[$id];
+                    }
+
+                    $id = $parentId;
+                } while ($parentId !== '.');
+            }
+
+            $this->navigation = isset($items['.']['children']) ? $items['.']['children'] : array();
         }
 
-        return $files;
+        return $this->navigation;
     }
 }

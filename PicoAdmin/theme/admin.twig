@@ -10,8 +10,15 @@
 
     {% block stylesheets %}
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans:400,700|Droid+Sans+Mono" type="text/css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontawesome/4.6/css/font-awesome.min.css" type="text/css" />
         <link rel="stylesheet" href="{{ admin_theme_url }}/css/utils.css" type="text/css" />
         <link rel="stylesheet" href="{{ admin_theme_url }}/css/admin.css" type="text/css" />
+
+        {% for module in admin_modules %}
+            {% if module.template %}
+                {{ include_block(module.template, "stylesheets") }}
+            {% endif %}
+        {% endfor %}
     {% endblock %}
 </head>
 <body>
@@ -22,12 +29,55 @@
                 <h1 class="page-title"><a href="{{ "index"|link }}">{{ site_title }}</a></h1>
                 <nav>
                     <h2 class="sr-only">Navigation</h2>
-                    {% block nav "" %}
+                    {% block nav %}
+                        {% for moduleName, module in admin_modules %}
+                            <div class="module" id="module-{{ moduleName|escape("html_attr") }}-nav">
+                                <div class="headline">
+                                    <h3>
+                                        <a href="" class="inverse" title="Toggle Navigation" role="button">
+                                            {{ module.title }}
+                                        </a>
+                                    </h3>
+                                    <div class="actions hidden"></div>
+                                </div>
+                                <div class="nav">
+                                    {% if (admin_request.module == moduleName) and (navigation is defined) %}
+                                         {% include "admin-navigation.twig" with { 'items': navigation } only %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endblock %}
                 </nav>
             </aside>
 
             <section id="content">
-                {% block content content %}
+                {% block content %}
+                    <div id="landing">
+                        <h2 class="sr-only">Landing Page</h2>
+
+                        <p class="big">
+                            <a href="https://xkcd.com/149/" title="Proper User Policy apparently means Simon Says."><code>sudo</code></a> mode
+                        </p>
+                        <ul>
+                            {% for moduleName, module in admin_modules %}
+                                {% if module.template %}
+                                    <li class="module" id="module-{{ moduleName|escape("html_attr") }}-landing" role="button">
+                                        {{ include_block(module.template, "landing") }}
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% for moduleName, module in admin_modules %}
+                        <div id="module-{{ moduleName|escape("html_attr") }}" class="hidden">
+                            {% if module.template %}
+                                {{ include_block(module.template, "content") }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endblock %}
             </section>
         </main>
 
@@ -44,6 +94,21 @@
     {% block javascript %}
         <script src="{{ admin_theme_url }}/js/utils.js" type="text/javascript"></script>
         <script src="{{ admin_theme_url }}/js/admin.js" type="text/javascript"></script>
+        <script src="{{ admin_theme_url }}/js/admin-module.js" type="text/javascript"></script>
+
+        <script type="text/javascript">
+            var picoAdmin = new PicoAdmin(
+                '{{ admin_auth_client_token|escape("js") }}',
+                '{{ ""|admin_link|escape("js") }}'
+            );
+            picoAdmin.init();
+        </script>
+
+        {% for module in admin_modules %}
+            {% if module.template %}
+                {{ include_block(module.template, "javascript") }}
+            {% endif %}
+        {% endfor %}
     {% endblock %}
 
 </body>
