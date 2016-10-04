@@ -17,7 +17,9 @@ utils.createClass(PicoAdmin, function () {
 
     this.prototype.ajax = function (module, action, payload, options)
     {
-        if (options.postData === undefined) {
+        if (options === undefined) {
+            options = { postData: { auth_client_token: this.authToken } };
+        } else if (options.postData === undefined) {
             options.postData = { auth_client_token: this.authToken };
         } else if (options.postData.auth_client_token === undefined) {
             options.postData.auth_client_token = this.authToken;
@@ -42,9 +44,10 @@ utils.createClass(PicoAdmin, function () {
         return utils.ajax(this.getUrl(module, action, payload), options);
     };
 
-    this.prototype.getUrl = function (module, action, payload)
+    this.prototype.getUrl = function (module, action, payload, queryParams)
     {
         var url = this.baseUrl;
+
         if (module) {
             url += '/' + module;
             if (action) {
@@ -53,6 +56,11 @@ utils.createClass(PicoAdmin, function () {
                     url += '/' + (Array.isArray(payload) ? payload.join('/') : payload);
                 }
             }
+        }
+
+        if (queryParams) {
+            var queryString = utils.encodeUriParams(queryParams);
+            if (queryString !== '') url += '?' + queryString;
         }
 
         return url;

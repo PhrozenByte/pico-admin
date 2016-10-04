@@ -170,12 +170,15 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
         try {
             form.submit();
         } catch(e) {
-            window.alert(
+            this.picoAdmin.showNotification(
+                'Pop-up blocked',
                 'Your web browser has just blocked your attempt to open the full page preview in ' +
-                'a new window or tab. Your web browser falsely thinks that a malicious website ' +
-                'just tried to open a pop-up. You can either use the matching toolbar button ' +
-                'to open the full page preview instead, or configure your web browser to ' +
-                'allow pop-ups on ' + window.location.origin + '/.'
+                    'a new window or tab. Your web browser falsely thinks that a malicious website ' +
+                    'just tried to open a pop-up. You can either use the matching toolbar button ' +
+                    'to open the full page preview instead, or configure your web browser to ' +
+                    'allow pop-ups on ' + window.location.origin + '/.',
+                'warning',
+                0
             );
         }
 
@@ -413,14 +416,19 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
 
     this.prototype.getYaml = function ()
     {
-        return (this.yamlEditor !== null) ? this.yamlEditor.getValue() : null;
+        return this.yamlEditor ? this.yamlEditor.getValue() : '';
     };
 
     this.prototype.setYaml = function (value)
     {
-        if (this.yamlEditor !== null) {
+        if (this.yamlEditor) {
             this.yamlEditor.setValue(value);
             this.yamlEditor.save();
+
+            var self = this;
+            window.requestAnimationFrame(function () {
+                self.yamlEditor.refresh();
+            });
         }
     };
 
@@ -434,9 +442,9 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
         utils.extend(options, {
             element: element,
             previewRender: function (plainText, preview) {
-                var editor = self.getMarkdownEditor(),
+                var editor = self.markdownEditor,
                     editorElement = editor.codemirror.getWrapperElement().querySelector('.CodeMirror-scroll'),
-                    yamlWrapper = self.getYamlEditor().getWrapperElement(),
+                    yamlWrapper = self.yamlEditor.getWrapperElement(),
                     requestPreview = !preview.classList.contains('active');
 
                 if (requestPreview) {
@@ -545,7 +553,7 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
 
         var isMac = /Mac/.test(navigator.platform);
         utils.forEach(picoEditorActions, function (key, callback) {
-            if (options.shortcuts[key] !== null) {
+            if (options.shortcuts[key]) {
                 if (isMac) {
                     options.shortcuts[key] = options.shortcuts[key].replace('Ctrl', 'Cmd');
                 } else {
@@ -595,7 +603,7 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
                 if ((typeof button === 'string') && (builtInToolbarButtons[button] !== undefined)) {
                     // append binding of Pico shortcuts to title
                     var toolbarButtonTitle = builtInToolbarButtons[button].title;
-                    if ((picoEditorActions[button] !== undefined) && (options.shortcuts[button] !== null)) {
+                    if ((picoEditorActions[button] !== undefined) && options.shortcuts[button]) {
                         toolbarButtonTitle += ' (' + options.shortcuts[button] + ')';
                     }
 
@@ -634,14 +642,19 @@ utils.createClass(PicoContentAdmin, PicoAdmin, function () {
 
     this.prototype.getMarkdown = function ()
     {
-        return (this.markdownEditor !== null) ? this.markdownEditor.codemirror.getValue() : null;
+        return this.markdownEditor ? this.markdownEditor.codemirror.getValue() : '';
     };
 
     this.prototype.setMarkdown = function (value)
     {
-        if (this.markdownEditor !== null) {
+        if (this.markdownEditor) {
             this.markdownEditor.codemirror.setValue(value);
             this.markdownEditor.codemirror.save();
+
+            var self = this;
+            window.requestAnimationFrame(function () {
+                self.markdownEditor.codemirror.refresh();
+            });
         }
     };
 

@@ -157,6 +157,7 @@ footer a[href]:hover { color: #fff; }
     border-bottom-left-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
 }
+#notification > .alert > p { text-align: justify; }
 
 @media (max-width: 767px) {
     #notification > .alert { flex-wrap: wrap; }
@@ -194,7 +195,7 @@ footer a[href]:hover { color: #fff; }
 
 .alert > .dismiss {
     align-self: flex-start;
-    width: 2em;
+    min-width: 2em;
     height: 2em;
     margin: 1rem;
     line-height: 2em;
