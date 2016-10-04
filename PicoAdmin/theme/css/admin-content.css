@@ -13,7 +13,7 @@
 .markdownContainer .CodeMirror .CodeMirror-scroll { margin: 10px; }
 .markdownContainer .CodeMirror .editor-preview {
     position: static;
-    height: auto;
+    height: 100%;
     padding: 10px;
 }
 
@@ -25,9 +25,10 @@
 .editor-toolbar,
 .CodeMirror {
     border: 0 none;
-    border-left: 1px solid #ddd;
-    border-top: 1px solid #ddd;
     border-radius: 0;
+}
+.CodeMirror {
+    border-top: 1px solid #ddd;
 }
 
 .editor-toolbar a {
@@ -43,9 +44,7 @@
 .editor-toolbar a.disabled[class*="fa-sub-"]::after {
     display: none;
 }
-.editor-toolbar a.error {
-    color: #d00 !important;
-}
+.editor-toolbar a.error { color: #d00 !important; }
 
 .CodeMirror,
 .CodeMirror-scroll {

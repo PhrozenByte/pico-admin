@@ -9,12 +9,6 @@
             transition: height .5s ease-in,
                         width .5s ease-in !important;
 }
-.slide.up {
-    height: 0 !important;
-}
-.slide.left {
-    width: 0 !important;
-}
 
 .smooth {
     -webkit-transition: all .2s ease-in;

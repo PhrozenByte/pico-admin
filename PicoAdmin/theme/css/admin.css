@@ -22,10 +22,23 @@ a {
 }
 a[href], a[href].inverse:hover { color: #2EAE9B; }
 a[href]:hover, a[href].inverse { color: #444; }
+a.disabled { pointer-events: none; }
 
-.sr-only { display: none; }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0 none;
+}
+
+code { font-family: 'Droid Sans Mono', monospace; }
 
 small, .small { font-size: 0.8em; }
+big, .big { font-size: 1.2em; }
 
 /*** BASIC LAYOUT ***/
 
@@ -68,6 +81,7 @@ main > aside > nav > div > .nav { overflow-x: auto; }
 
 /*** BASIC LAYOUT STYLING ***/
 
+main > aside { border-right: 1px solid #ddd; }
 main > aside > h1 {
     margin: 0;
     padding: 1rem;
@@ -119,6 +133,10 @@ footer > * {
 }
 footer a[href] { color: #ddd; }
 footer a[href]:hover { color: #fff; }
+
+@media (max-width: 767px) {
+    main > aside { border-right: 0 none; }
+}
 
 /*** NOTIFICATIONS ***/
 
@@ -230,8 +248,8 @@ footer a[href]:hover { color: #fff; }
             transition: width .8s ease-in-out;
 }
 #loading.finish {
-    display: block !important;
-    width: 100% !important;
+    display: block;
+    width: 100%;
     opacity: 0;
 
     -webkit-transition: width .8s ease-in-out,

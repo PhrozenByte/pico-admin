@@ -86,13 +86,16 @@ class PicoContentAdmin extends AbstractPicoPlugin
             } else {
                 $this->action = $action;
 
-                $contentDirLength = strlen($this->getConfig('content_dir'));
-                $contentExtLength = strlen($this->getConfig('content_ext'));
-                $this->page = substr($this->resolveFilePath($payload), $contentDirLength, -$contentExtLength);
+                if (!empty($payload)) {
+                    $contentDirLength = strlen($this->getConfig('content_dir'));
+                    $contentExtLength = strlen($this->getConfig('content_ext'));
 
-                // allow editing conflicting files (i.e. allow editing sub.md when sub/index.md exists)
-                if (!empty($payload) && (basename($payload) !== 'index') && (basename($this->page) === 'index')) {
-                    $this->page = dirname($this->page);
+                    $this->page = substr($this->resolveFilePath($payload), $contentDirLength, -$contentExtLength);
+
+                    // allow editing conflicting files (i.e. allow editing sub.md when sub/index.md exists)
+                    if ((basename($payload) !== 'index') && (basename($this->page) === 'index')) {
+                        $this->page = dirname($this->page);
+                    }
                 }
             }
 
