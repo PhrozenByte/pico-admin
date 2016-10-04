@@ -49,7 +49,32 @@ var utils = {};
         return constructor;
     };
 
+    utils.encodeUriParams = function(params) {
+        var iterator = function (params, keyPrefix) {
+            var result = '';
+            utils.forEach(params, function (key, value) {
+                key = encodeURIComponent(key);
+                key = keyPrefix ? (keyPrefix + "[" + key + "]") : key;
+
+                if (Array.isArray(value) || utils.isPlainObject(value)) {
+                    result += iterator(value, key);
+                } else {
+                    result += "&" + key + "=" + encodeURIComponent(value);
+                }
+            });
+            return result;
+        };
+
+        var result = iterator(params);
+        return (params !== '') ? result.slice(1) : '';
+    };
+
     utils.ajax = function (url, options) {
+        if (options.queryParams) {
+            var queryString = utils.encodeUriParams(options.queryParams);
+            if (queryString !== '') url += (url.indexOf('?') === -1) ? '?' + queryString : '&' + queryString;
+        }
+
         var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
         xhr.open(options.postData ? 'POST' : 'GET', url);
 
@@ -96,9 +121,7 @@ var utils = {};
 
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         if (options.postData) {
-            var postParams = Object.keys(options.postData).map(function (key) {
-                return encodeURIComponent(key) + '=' + encodeURIComponent(options.postData[key]);
-            }).join('&');
+            var postParams = utils.encodeUriParams(options.postData);
 
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.setRequestHeader('Content-Length', options.postData.length);
