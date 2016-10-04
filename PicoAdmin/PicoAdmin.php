@@ -2,6 +2,8 @@
 
 class PicoAdmin extends AbstractPicoPlugin
 {
+    protected $modules = array();
+
     protected $requestModule;
     protected $requestAction;
     protected $requestPayload;
@@ -64,8 +66,12 @@ class PicoAdmin extends AbstractPicoPlugin
             $this->requestAction = isset($adminUrlMatches[2]) ? $adminUrlMatches[2] : '';
             $this->requestPayload = isset($adminUrlMatches[3]) ? $adminUrlMatches[3] : '';
 
+            $this->triggerEvent('onAdminInitializing', array($this, &$this->modules));
+
             $this->handleAdminRequest();
             $this->handleAuthentication();
+
+            $this->triggerEvent('onAdminInitialized');
             return;
         }
 
@@ -87,7 +93,6 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         $this->triggerEvent('onAdminRequest', array(
-            $this,
             &$this->requestModule,
             &$this->requestAction,
             &$this->requestPayload
@@ -177,6 +182,8 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         // register variables
+        $twigVariables['admin_modules'] = $this->modules;
+
         $twigVariables['admin_url'] = rtrim($this->getPageUrl($this->getPluginConfig('url')));
         $twigVariables['admin_theme_url'] = rtrim($this->getAdminThemeUrl(), '/');
 

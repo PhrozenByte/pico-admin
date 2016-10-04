@@ -65,10 +65,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
         $pluginConfig += $defaultPluginConfig;
     }
 
-    public function onAdminRequest(PicoAdmin $admin, &$module, &$action, &$payload)
+    public function onAdminInitializing(PicoAdmin $admin, array &$modules)
     {
         $this->admin = $admin;
 
+        $modules['content'] = array(
+            'title' => 'Pico Content Admin',
+            'template' => 'admin-content.twig',
+            'plugin' => $this
+        );
+    }
+
+    public function onAdminRequest(&$module, &$action, &$payload)
+    {
         if ($module === 'content') {
             if (empty($action)) {
                 header('307 Temporary Redirect');
