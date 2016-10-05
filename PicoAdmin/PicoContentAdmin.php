@@ -192,19 +192,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     break;
                 }
 
-                $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
+                $pattern = "/^(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
-                    . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
+                    . "(?:$|(?:\r)?\n(?:[[:blank:]]*(?:$|(?:\r)?\n))?)/s";
                 if (preg_match($pattern, $fileContent, $matches)) {
                     $this->yamlContent = isset($matches[3]) ? $matches[3] : '';
-
-                    if (isset($matches[5])) {
-                        $this->markdownContent = $matches[5];
-                    } elseif (isset($matches[4])) {
-                        $this->markdownContent = $matches[4];
-                    } else {
-                        $this->markdownContent = '';
-                    }
+                    $this->markdownContent = substr($fileContent, strlen($matches[0]));
+                } else {
+                    $this->yamlContent = '';
+                    $this->markdownContent = $fileContent;
                 }
                 break;
 
