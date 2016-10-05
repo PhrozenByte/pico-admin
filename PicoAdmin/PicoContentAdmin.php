@@ -109,6 +109,12 @@ class PicoContentAdmin extends AbstractPicoPlugin
             switch ($this->action) {
                 case 'edit':
                 case 'load':
+                    if (empty($this->page)) {
+                        header('307 Temporary Redirect');
+                        header('Location: ' . $this->admin->getAdminPageUrl('content/' . $action . '/index'));
+                        die();
+                    }
+
                     $this->rawRequest = (isset($_REQUEST['raw']) && $_REQUEST['raw']);
                     return;
 
