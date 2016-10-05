@@ -1,5 +1,5 @@
 ---
-Title: Pico Admin
+Title: Pico Admin Panel
 ---
 
 <style type="text/css">
@@ -8,7 +8,7 @@ Title: Pico Admin
     }
 </style>
 
-## Welcome to Pico's admin panel
+## Welcome to Pico's Admin Panel
 
 ### Install
 

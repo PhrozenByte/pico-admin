@@ -1,5 +1,5 @@
 ---
-Title: Pico Admin Login
+Title: Pico Admin Panel - Login
 Robots: noindex,nofollow
 ---
 
