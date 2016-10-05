@@ -624,6 +624,13 @@ utils.createClass(PicoAdmin, function () {
                 utils.enableNamedEventListener(itemAnchor, 'click', 'action');
             });
 
+            var conflictNotifications = this.askFileNameModal.conflictNotifications;
+            if (conflictNotifications) {
+                for (var i = 0; i < conflictNotifications.length; i++) {
+                    this.hideNotification(conflictNotifications[i]);
+                }
+            }
+
             var module = this.modules[this.activeModule];
             if (module) module.closeFileNameModal(this.askFileNameModal, notification);
 
@@ -637,14 +644,16 @@ utils.createClass(PicoAdmin, function () {
         if (notification) {
             var inputField = notification.querySelector('.input-group > input'),
                 value = inputField.value,
-                fileExt = this.askFileNameModal.fileExt,
                 submitCallback = this.askFileNameModal.submitCallback;
 
-            this.hideNotification(notification);
-
-            if (value === '') return;
+            // just close the notification when no value has been entered
+            if (value === '') {
+                this.hideNotification(notification);
+                return;
+            }
 
             // drop file extension when necessary
+            var fileExt = this.askFileNameModal.fileExt;
             if (fileExt) {
                 var testFileExt = value.substr(-fileExt.length);
                 if (testFileExt === fileExt) {
@@ -653,8 +662,35 @@ utils.createClass(PicoAdmin, function () {
                 }
             }
 
+            // check for conflicting files
+            var defaultValue = this.askFileNameModal.defaultValue,
+                conflictValue = this.askFileNameModal.conflictValue;
+            if ((value !== defaultValue) && (value !== conflictValue)) {
+                var moduleNav = document.getElementById('module-' + this.activeModule + '-nav'),
+                    conflictItem = moduleNav.querySelector('.nav .item[data-path="' + value + '"]');
+                if (conflictItem) {
+                    var conflictNotification = this.showNotification(
+                        'Conflict',
+                        "There's already a page of this name, be careful about not accidently overwriting it! " +
+                            'Try again to overwrite the file.',
+                        'warning'
+                    );
+
+                    this.askFileNameModal.conflictValue = value;
+
+                    if (!this.askFileNameModal.conflictNotifications) {
+                        this.askFileNameModal.conflictNotifications = [ conflictNotification ];
+                    } else {
+                        this.askFileNameModal.conflictNotifications.push(conflictNotification);
+                    }
+                    return;
+                }
+            }
+
             var module = this.modules[this.activeModule];
             if (module) module.submitFileNameModal(this.askFileNameModal, notification);
+
+            this.hideNotification(notification);
 
             // validate path and call success callback
             if (value.substr(-1) === '/') {

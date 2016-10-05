@@ -883,10 +883,13 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         // transform toolbar depending on the current mode
         switch (this.currentMode) {
             case 'create':
-                if (toolbar.save && !this.picoAdmin.activePath) {
-                    toolbar.save.classList.add('disabled');
+                if (toolbar.save) {
+                    toolbar.save.classList.add(this.picoAdmin.activePath ? 'fa-sub-star' : 'disabled');
                 }
-                // intentional fallthrough
+                if (toolbar.reset) {
+                    toolbar.reset.classList.add('disabled');
+                }
+                break;
 
             case 'recover':
                 if (toolbar.reset) toolbar.reset.classList.add('disabled');

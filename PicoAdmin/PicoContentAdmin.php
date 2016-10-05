@@ -149,6 +149,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 }
                 // intentional fallthrough
 
+            case 'create':
             case 'load':
             case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
@@ -159,6 +160,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function on404ContentLoaded(&$rawContent)
     {
         switch ($this->action) {
+            case 'create':
+                $this->pageNotFound = true;
+                break;
+
             case 'edit':
             case 'load':
                 if (!$this->rawRequest) {
@@ -182,6 +187,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 break;
 
             case 'create':
+                $this->pageNotFound = !!$this->pageNotFound;
+
                 $rawContent = '';
                 $this->yamlContent = '';
                 $this->markdownContent = '';
@@ -240,10 +247,6 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
         $twig->getLoader()->addPath(__DIR__ . '/theme');
 
-        if ($this->pageNotFound === true) {
-            header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-        }
-
         switch ($this->action) {
             case 'navigation':
                 $templateName = 'admin-navigation.twig';
@@ -262,10 +265,21 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     }
 
                     if ($this->pageNotFound) {
+                        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+
                         $twigVariables['error'] = array(
                             'title' => 'Error 404',
                             'message' => "Woops. Looks like this page doesn't exist.",
                             'type' => 'error',
+                            'timeout' => 0
+                        );
+                    }
+                } else {
+                    if (!$this->pageNotFound) {
+                        $twigVariables['error'] = array(
+                            'title' => 'Conflict',
+                            'message' => "There's already a page of this name, be careful about not accidently overwriting it!",
+                            'type' => 'warning',
                             'timeout' => 0
                         );
                     }
@@ -293,6 +307,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     }
 
                     if ($this->pageNotFound) {
+                        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+
                         $twigVariables['json'] = array('error' => array(
                             'title' => 'Error 404',
                             'message' => "Woops. Looks like this page doesn't exist.",
