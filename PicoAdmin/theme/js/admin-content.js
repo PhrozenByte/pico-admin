@@ -251,6 +251,8 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         var self = this;
         this.load(page, function (yaml, markdown, title) {
             self.picoAdmin.updateHistory({
+                activeModule: self.moduleName,
+                activePath: page,
                 title: self.titleTemplate.replace(
                     '{1}',
                     'Recover deleted ' + page + self.contentExt + (title ? ' (' + title + ')' : '')
@@ -593,9 +595,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
                 var editor = self.markdownEditor,
                     editorElement = editor.codemirror.getWrapperElement().querySelector('.CodeMirror-scroll'),
                     yamlWrapper = self.yamlEditor.getWrapperElement(),
-                    requestPreview = !preview.classList.contains('active');
+                    isPreviewActive = preview.classList.contains('active');
 
-                if (requestPreview) {
+                if (!isPreviewActive) {
                     var markdownContent = plainText,
                         yamlContent = self.getYaml(),
                         previewButton = editor.toolbarElements.preview,
