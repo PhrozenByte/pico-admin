@@ -234,6 +234,8 @@ utils.createClass(PicoAdmin, function () {
 
     this.prototype.ajax = function (module, action, payload, options)
     {
+        var self = this;
+
         if (options === undefined) {
             options = { postData: { auth_client_token: this.authToken } };
         } else if (options.postData === undefined) {
@@ -246,17 +248,44 @@ utils.createClass(PicoAdmin, function () {
 
         this.showLoading();
 
-        var completeCallback = options.complete,
-            self = this;
-        options.complete = function (xhr, statusText, response) {
+        var completeCallback = options.complete;
+        options.complete = function (xhr, statusText, response, isSuccessful) {
             self.hideLoading();
 
             if (completeCallback) {
-                completeCallback(xhr, statusText, response);
+                completeCallback(xhr, statusText, response, isSuccessful);
             }
         };
 
-        // TODO: globally catch errors and print them somewhere
+        var errorCallback = options.error;
+        options.error = function (xhr, statusText, response) {
+            if (utils.isPlainObject(response) && (response.error !== undefined)) {
+                self.showNotification(
+                    response.error.title,
+                    response.error.message,
+                    response.error.type || 'error',
+                    response.error.timeout,
+                    response.error.closeable
+                );
+            } else {
+                var errorTitle;
+                if ((xhr.status >= 400) && (xhr.status <= 600)) {
+                    errorTitle = '' + xhr.status + ' ' + statusText;
+                } else {
+                    errorTitle = 'Fatal Error';
+                }
+
+                self.showNotification(
+                    errorTitle,
+                    'An unexpected error has occured.',
+                    'error'
+                );
+            }
+
+            if (errorCallback) {
+                errorCallback(xhr, statusText, response);
+            }
+        };
 
         return utils.ajax(this.getUrl(module, action, payload), options);
     };
@@ -291,8 +320,8 @@ utils.createClass(PicoAdmin, function () {
 
     this.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
     {
-        if (timeout === undefined) timeout = 5;
-        if (closeable === undefined) closeable = true;
+        if ((timeout === undefined) || (timeout === null)) timeout = 5;
+        if ((closeable === undefined) || (closeable === null)) closeable = true;
 
         var className = '',
             iconName = '';
@@ -546,7 +575,7 @@ utils.createClass(PicoAdmin, function () {
             options.title,
             content,
             { iconName: options.iconName, className: options.className },
-            null,
+            0,
             options.closeable,
             function () { self.closeFileNameModal(); }
         );

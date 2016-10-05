@@ -19,6 +19,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
     protected $action;
     protected $page;
 
+    protected $pageNotFound;
+
     protected $rawRequest;
     protected $rawContent;
 
@@ -159,6 +161,11 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'edit':
             case 'load':
+                if (!$this->rawRequest) {
+                    // page wasn't found
+                    $this->pageNotFound = true;
+                }
+
                 // reset content of non-existing files
                 if (basename($this->page) !== '404') {
                     $rawContent = '';
@@ -185,10 +192,18 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 if ($this->rawRequest) {
                     // rescue mode: return raw file contents
                     $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
-                    $this->rawContent = file_exists($file) ? $this->loadFileContent($file) : '';
+
+                    $this->rawContent = '';
+                    if (file_exists($file)) {
+                        $this->rawContent = $this->loadFileContent($file);
+                        $this->pageNotFound = true;
+                    }
+
                     $rawContent = '';
                     break;
                 }
+
+                $this->pageNotFound = !!$this->pageNotFound;
 
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
@@ -225,6 +240,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
         $twig->getLoader()->addPath(__DIR__ . '/theme');
 
+        if ($this->pageNotFound === true) {
+            header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+        }
+
         switch ($this->action) {
             case 'navigation':
                 $templateName = 'admin-navigation.twig';
@@ -237,8 +256,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
                 $meta = $this->getFileMeta();
 
-                if ($this->rawRequest) {
-                    $twigVariables['raw_content'] = $this->rawContent;
+                if ($this->action === 'edit') {
+                    if ($this->rawRequest) {
+                        $twigVariables['raw_content'] = $this->rawContent;
+                    }
+
+                    if ($this->pageNotFound) {
+                        $twigVariables['error'] = array(
+                            'title' => 'Error 404',
+                            'message' => "Woops. Looks like this page doesn't exist.",
+                            'type' => 'error',
+                            'timeout' => 0
+                        );
+                    }
                 }
 
                 $twigVariables['rescue_mode'] = $this->rawRequest;
@@ -259,6 +289,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
                         $twigVariables['json'] = array(
                             'content' => $this->rawContent
                         );
+                        break;
+                    }
+
+                    if ($this->pageNotFound) {
+                        $twigVariables['json'] = array('error' => array(
+                            'title' => 'Error 404',
+                            'message' => "Woops. Looks like this page doesn't exist.",
+                            'type' => 'error'
+                        ));
                         break;
                     }
 

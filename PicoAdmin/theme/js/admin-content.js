@@ -43,20 +43,24 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
     this.prototype.open = function (page)
     {
-        if (this.picoAdmin.activeModule === this.moduleName) {
-            this.picoAdmin.updateHistory();
-            this.picoAdmin.selectPath(page);
-        } else {
-            this.picoAdmin.selectModule(this.moduleName, page);
-        }
-
         var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
             item = moduleNav.querySelector('.nav .item[data-path="' + page + '"]'),
             self = this;
 
+        var selectPage = function (page) {
+            if (self.picoAdmin.activeModule === self.moduleName) {
+                self.picoAdmin.updateHistory();
+                self.picoAdmin.selectPath(page);
+            } else {
+                self.picoAdmin.selectModule(self.moduleName, page);
+            }
+        };
+
         if (item && item.classList.contains('error')) {
             // broken page, request as raw content
             this.loadRaw(page, function (content) {
+                selectPage(page);
+
                 setContent.call(self, {
                     mode: 'rescue',
                     rescueContent: content,
@@ -70,6 +74,8 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         }
 
         this.load(page, function (yaml, markdown, title) {
+            selectPage(page);
+
             setContent.call(self, {
                 mode: 'edit',
                 yaml: yaml,

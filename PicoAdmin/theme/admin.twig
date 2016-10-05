@@ -104,6 +104,18 @@
             picoAdmin.init();
         </script>
 
+        {% if error %}
+            <script type="text/javascript">
+                picoAdmin.showNotification(
+                    {{ error.title|json_encode }},
+                    {{ error.message|json_encode }},
+                    {{ error.type|json_encode }},
+                    {{ error.timeout|json_encode }},
+                    {{ error.closeable|json_encode }}
+                );
+            </script>
+        {% endif %}
+
         {% for module in admin_modules %}
             {% if module.template %}
                 {{ include_block(module.template, "javascript") }}
