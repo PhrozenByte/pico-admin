@@ -416,6 +416,7 @@ utils.createClass(PicoAdmin, function () {
                     var valueElement = dismiss.querySelector('.timer'),
                         value = parseInt(valueElement.textContent);
 
+                    if (dismiss.classList.contains('pause')) return;
                     if (value > 0) valueElement.textContent = value - 1;
                     if (value === 1) self.hideNotification(alert);
                 }, 1000);
@@ -426,6 +427,13 @@ utils.createClass(PicoAdmin, function () {
                         self.hideNotification(alert);
                     });
                 }
+
+                alert.addEventListener('mouseenter', function (event) {
+                    dismiss.classList.add('pause');
+                });
+                alert.addEventListener('mouseleave', function (event) {
+                    dismiss.classList.remove('pause');
+                });
             }
         }
 
