@@ -104,29 +104,16 @@ class PicoContentAdmin extends AbstractPicoPlugin
                         $this->page = dirname($this->page);
                     }
                 }
-            }
 
-            switch ($this->action) {
-                case 'edit':
-                case 'load':
-                    if (empty($this->page)) {
+                if (empty($this->page)) {
+                    if (($this->action === 'edit') || ($this->action === 'load')) {
                         header('307 Temporary Redirect');
                         header('Location: ' . $this->admin->getAdminPageUrl('content/' . $action . '/index'));
                         die();
                     }
+                }
 
-                    $this->rawRequest = (isset($_REQUEST['raw']) && $_REQUEST['raw']);
-                    return;
-
-                case 'preview':
-                case 'fullPreview':
-                    $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
-                    $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
-                    return;
-
-                case 'navigation':
-                case 'create':
-                    return;
+                return;
             }
         }
 
@@ -143,91 +130,78 @@ class PicoContentAdmin extends AbstractPicoPlugin
         }
     }
 
-    public function onRequestFile(&$file)
+    public function onAdminInitialized()
     {
         switch ($this->action) {
             case 'edit':
-                if ($this->rawRequest) {
-                    // rescue mode: don't let Pico handle this page,
-                    // otherwise parse errors won't show up properly
-                    $file = null;
-                    break;
-                }
-                // intentional fallthrough
-
-            case 'create':
             case 'load':
+                $this->rawRequest = (isset($_REQUEST['raw']) && $_REQUEST['raw']);
+                break;
+
+            case 'preview':
+            case 'fullPreview':
+                $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
+                $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
+                break;
+
+            case 'navigation':
+            case 'create':
+                break;
+
+            default:
+                // unknown action; disable module...
+                $this->setEnabled(false);
+                break;
+        }
+    }
+
+    public function onRequestFile(&$file)
+    {
+        switch ($this->action) {
             case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 break;
         }
     }
 
-    public function on404ContentLoaded(&$rawContent)
-    {
-        switch ($this->action) {
-            case 'create':
-                $this->pageNotFound = true;
-                break;
-
-            case 'edit':
-            case 'load':
-                if (!$this->rawRequest) {
-                    // page wasn't found
-                    $this->pageNotFound = true;
-                }
-
-                // reset content of non-existing files
-                if (basename($this->page) !== '404') {
-                    $rawContent = '';
-                }
-                break;
-        }
-    }
-
     public function onContentLoaded(&$rawContent)
     {
+        // don't let Pico parse Pico Admin's dummy contents
+        // TODO (Pico 2.0): skip the appropriate events instead
+        $rawContent = '';
+
         switch ($this->action) {
-            case 'navigation':
-                $rawContent = '';
-                break;
-
             case 'create':
-                $this->pageNotFound = !!$this->pageNotFound;
+                $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
+                $this->pageNotFound = !file_exists($file);
 
-                $rawContent = '';
                 $this->yamlContent = '';
                 $this->markdownContent = '';
                 break;
 
             case 'edit':
             case 'load':
+                $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
+                $this->pageNotFound = !file_exists($file);
+
+                $fileContent = !$this->pageNotFound ? $this->loadFileContent($file) : '';
+
                 if ($this->rawRequest) {
                     // rescue mode: return raw file contents
-                    $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
-
-                    $this->rawContent = '';
-                    if (file_exists($file)) {
-                        $this->rawContent = $this->loadFileContent($file);
-                        $this->pageNotFound = true;
-                    }
-
-                    $rawContent = '';
+                    $this->rawContent = $fileContent;
                     break;
                 }
-
-                $this->pageNotFound = !!$this->pageNotFound;
 
                 $pattern = "/^(?:(\/(\*)|---)[[:blank:]]*(?:\r)?\n"
                     . "(?:(.*?)(?:\r)?\n)?(?(2)\*\/|---)[[:blank:]]*"
                     . "(?:(?:\r)?\n(?:[[:blank:]]*(?:\r)?\n)?(.*?))?|(.*))$/s";
-                if (preg_match($pattern, $rawContent, $rawMetaMatches)) {
-                    $this->yamlContent = isset($rawMetaMatches[3]) ? $rawMetaMatches[3] : '';
+                if (preg_match($pattern, $fileContent, $matches)) {
+                    $this->yamlContent = isset($matches[3]) ? $matches[3] : '';
 
-                    if (isset($rawMetaMatches[5])) {
-                        $this->markdownContent = $rawMetaMatches[5];
-                    } elseif (isset($rawMetaMatches[4])) {
-                        $this->markdownContent = $rawMetaMatches[4];
+                    if (isset($matches[5])) {
+                        $this->markdownContent = $matches[5];
+                    } elseif (isset($matches[4])) {
+                        $this->markdownContent = $matches[4];
                     } else {
                         $this->markdownContent = '';
                     }
@@ -236,9 +210,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
             case 'preview':
             case 'fullPreview':
-                $rawContent = '';
                 if (!empty($this->yamlContent)) {
-                    $rawContent .= "---\n" . $this->yamlContent . "\n---\n\n";
+                    $rawContent = "---\n" . $this->yamlContent . "\n---\n\n";
                 }
                 $rawContent .= $this->markdownContent;
                 break;
@@ -247,10 +220,6 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
     public function onPageRendering(Twig_Environment &$twig, array &$twigVariables, &$templateName)
     {
-        // reset "404 Not Found" header
-        // TODO (Pico 2.0): skip the appropriate events instead
-        header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
-
         $twig->getLoader()->addPath(__DIR__ . '/theme');
 
         switch ($this->action) {
@@ -306,9 +275,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
                 if ($this->action === 'load') {
                     if ($this->rawRequest) {
-                        $twigVariables['json'] = array(
-                            'content' => $this->rawContent
-                        );
+                        $twigVariables['json'] = array('content' => $this->rawContent);
                         break;
                     }
 

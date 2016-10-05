@@ -132,7 +132,6 @@ class PicoAdmin extends AbstractPicoPlugin
     public function onRequestFile(&$file)
     {
         // reset requested file
-        $file = null;
         switch ($this->requestModule) {
             case 'info':
                 $file = __DIR__ . '/content/info.md';
@@ -140,6 +139,10 @@ class PicoAdmin extends AbstractPicoPlugin
 
             case 'login':
                 $file = __DIR__ . '/content/login.md';
+                break;
+
+            default:
+                $file = __DIR__ . '/content/admin.md';
                 break;
         }
     }
@@ -177,8 +180,6 @@ class PicoAdmin extends AbstractPicoPlugin
 
         // landing page
         if ($this->requestModule === 'landing') {
-            header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
-
             $twig->getLoader()->addPath(__DIR__ . '/theme');
             $templateName = 'admin.twig';
         }
