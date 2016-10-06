@@ -23,6 +23,15 @@
             transition: opacity .6s ease-in !important;
 }
 
+.cross-fade {
+    position: relative !important;
+    overflow: hidden !important;
+}
+.cross-fade > .cross-fade-hide {
+    pointer-events: none !important;
+    z-index: 100;
+}
+
 .smooth {
     -webkit-transition: all .2s ease-in;
             transition: all .2s ease-in;

@@ -345,6 +345,133 @@ var utils = {};
         });
     };
 
+    utils.crossFade = function (element1, element2, finishCallback, startCallback) {
+        var hideElement, showElement;
+        if (!element1 || !element2 || (element1.parentNode !== element2.parentNode) || (element1 === element2)) {
+            throw 'Unable to call utils.crossFade(…): The given elements must be siblings';
+        }
+
+        var parentElement = element1.parentNode;
+        for (var i = 0, childElement; i < parentElement.children.length; i++) {
+            childElement = parentElement.children[i];
+            if ((childElement === element1) || (childElement === element2)) {
+                if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
+                    if (showElement === undefined) {
+                        showElement = childElement;
+                        continue;
+                    }
+                } else if (hideElement === undefined) {
+                    hideElement = childElement;
+                    continue;
+                }
+            } else if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
+                continue;
+            }
+
+            throw 'Unable to call utils.crossFade(…): One of the given elements must be the only visible child';
+        }
+
+        // get scroll position to restore it after we've detached the elements
+        var scrollTop = window.pageYOffset;
+
+        // reset the parent element's dimensions
+        var parentElementWidth = parentElement.offsetWidth,
+            parentElementHeight = parentElement.offsetHeight;
+        parentElement.style.width = null;
+        parentElement.style.height = null;
+
+        // prepare elements
+        parentElement.classList.add('cross-fade');
+        var crossFadeId = parseInt(parentElement.dataset.crossFadeId) || 0;
+        parentElement.dataset.crossFadeId = ++crossFadeId;
+
+        hideElement.classList.add('cross-fade-hide');
+        hideElement.classList.remove('cross-fade-show');
+        var hideElementCrossFadeId = parseInt(hideElement.dataset.crossFadeId) || 0;
+        hideElement.dataset.crossFadeId = ++hideElementCrossFadeId;
+
+        showElement.classList.add('cross-fade-show');
+        showElement.classList.remove('cross-fade-hide');
+
+        var resetParentElement = function () {
+            parentElement.classList.remove('cross-fade');
+            parentElement.style.width = null;
+            parentElement.style.height = null;
+        };
+        var resetHideElement = function () {
+            if (parseInt(hideElement.dataset.crossFadeId) !== hideElementCrossFadeId) return;
+            hideElement.classList.remove('cross-fade-hide');
+            utils.attach(hideElement);
+        };
+        var resetShowElement = function () {
+            showElement.classList.remove('cross-fade-show');
+            utils.attach(showElement);
+        };
+
+        // detach elements
+        utils.detach(hideElement);
+        utils.detach(showElement);
+
+        // let the parent element's dimensions smoothly change to those of the element to show
+        var showElementWidth = parseInt(showElement.style.width.replace(/px$/, '')),
+            showElementHeight = parseInt(showElement.style.height.replace(/px$/, ''));
+
+        parentElement.style.width = parentElementWidth + 'px';
+        parentElement.style.height = parentElementHeight + 'px';
+
+        if (parentElementWidth !== showElementWidth) {
+            var slideHoricontalOptions = {
+                cssRule: 'width',
+                cssRuleRef: 'offsetWidth',
+                cssRuleReset: false,
+                cssRuleValue: showElementWidth
+            };
+
+            if (parentElementWidth > showElementWidth) {
+                utils.slideOut(parentElement, slideHoricontalOptions);
+            } else {
+                utils.slideIn(parentElement, slideHoricontalOptions);
+            }
+        }
+        if (parentElementHeight !== showElementHeight) {
+            var slideVerticalOptions = {
+                cssRule: 'height',
+                cssRuleRef: 'offsetHeight',
+                cssRuleReset: false,
+                cssRuleValue: showElementHeight,
+            };
+
+            if (parentElementHeight > showElementHeight) {
+                utils.slideOut(parentElement, slideVerticalOptions);
+            } else {
+                utils.slideIn(parentElement, slideVerticalOptions);
+            }
+        }
+
+        window.requestAnimationFrame(function () {
+            // restore scroll position
+            window.scrollTo(window.pageXOffset, scrollTop);
+
+            // do fading and reset the elements
+            hideElement.classList.add('slow');
+            utils.fadeOut(hideElement, resetHideElement, function () {
+                if (parseInt(parentElement.dataset.crossFadeId) !== crossFadeId) return;
+
+                showElement.classList.add('slow');
+                utils.fadeIn(showElement, function () {
+                    if (parseInt(parentElement.dataset.crossFadeId) !== crossFadeId) return;
+
+                    resetShowElement();
+                    resetParentElement();
+
+                    if (finishCallback) {
+                        window.requestAnimationFrame(finishCallback);
+                    }
+                }, startCallback);
+            });
+        });
+    };
+
     /**
      * Create a HTML element from a string
      *
@@ -396,6 +523,10 @@ var utils = {};
 
             return (tmp.childNodes.length) > 1 ? tmp : tmp.lastChild;
         }
+    };
+
+    utils.isElementVisible = function (element) {
+        return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
     };
 
     utils.matches = function (element, selector) {
