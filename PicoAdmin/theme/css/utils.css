@@ -2,6 +2,10 @@
     display: none !important;
 }
 
+.detached {
+    position: absolute !important;
+}
+
 .slide {
     overflow: hidden !important;
     -webkit-transition: height .5s ease-in,

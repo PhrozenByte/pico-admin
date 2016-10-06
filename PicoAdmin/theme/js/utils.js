@@ -134,6 +134,40 @@ var utils = {};
         return xhr;
     };
 
+    utils.detach = function (element, callback) {
+        if (element.classList.contains('detached')) {
+            if (callback) callback();
+            return;
+        }
+
+        var isHidden = element.classList.contains('hidden');
+        if (isHidden) element.classList.remove('hidden');
+
+        element.style.top = element.offsetTop + 'px';
+        element.style.left = element.offsetLeft + 'px';
+        element.style.width = element.offsetWidth + 'px';
+        element.style.height = element.offsetHeight + 'px';
+
+        element.classList.add('detached');
+        if (isHidden) element.classList.add('hidden');
+
+        if (callback) {
+            window.requestAnimationFrame(callback);
+        }
+    };
+
+    utils.attach = function (element, callback) {
+        element.style.height = null;
+        element.style.width = null;
+        element.style.left = null;
+        element.style.top = null;
+        element.classList.remove('detached');
+
+        if (callback) {
+            window.requestAnimationFrame(callback);
+        }
+    };
+
     utils.fadeOut = function (element, finishCallback, startCallback) {
         if (startCallback) startCallback();
         element.classList.add('hidden');
