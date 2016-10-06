@@ -14,6 +14,15 @@
                         width .5s ease-in !important;
 }
 
+.fade {
+    -webkit-transition: opacity .3s ease-in !important;
+            transition: opacity .3s ease-in !important;
+}
+.fade.slow {
+    -webkit-transition: opacity .6s ease-in !important;
+            transition: opacity .6s ease-in !important;
+}
+
 .smooth {
     -webkit-transition: all .2s ease-in;
             transition: all .2s ease-in;

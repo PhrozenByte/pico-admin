@@ -169,15 +169,72 @@ var utils = {};
     };
 
     utils.fadeOut = function (element, finishCallback, startCallback) {
-        if (startCallback) startCallback();
-        element.classList.add('hidden');
-        if (finishCallback) finishCallback();
+        element.style.opacity = window.getComputedStyle(element).opacity || '1';
+        element.classList.remove('fade');
+
+        var fadeId = parseInt(element.dataset.fadeId) || 0;
+        element.dataset.fadeId = ++fadeId;
+
+        window.requestAnimationFrame(function () {
+            element.classList.add('fade');
+
+            window.requestAnimationFrame(function () {
+                element.style.opacity = '0';
+
+                if (startCallback) {
+                    startCallback();
+                }
+
+                window.setTimeout(function () {
+                    if (parseInt(element.dataset.fadeId) !== fadeId) return;
+
+                    element.classList.add('hidden');
+                    element.classList.remove('fade');
+                    element.classList.remove('slow');
+                    element.style.opacity = null;
+
+                    if (finishCallback) {
+                        window.requestAnimationFrame(finishCallback);
+                    }
+                }, element.classList.contains('slow') ? 600 : 300);
+            });
+        });
     };
 
     utils.fadeIn = function (element, finishCallback, startCallback) {
-        if (startCallback) startCallback();
-        element.classList.remove('hidden');
-        if (finishCallback) finishCallback();
+        var fadeId = parseInt(element.dataset.fadeId) || 0;
+        element.dataset.fadeId = ++fadeId;
+
+        if (element.classList.contains('hidden')) {
+            element.style.opacity = '0';
+            element.classList.remove('hidden');
+        } else {
+            element.style.opacity = window.getComputedStyle(element).opacity || '0';
+        }
+        element.classList.remove('fade');
+
+        window.requestAnimationFrame(function () {
+            element.classList.add('fade');
+            window.requestAnimationFrame(function () {
+                element.style.opacity = '1';
+
+                if (startCallback) {
+                    startCallback();
+                }
+
+                window.setTimeout(function () {
+                    if (parseInt(element.dataset.fadeId) !== fadeId) return;
+
+                    element.classList.remove('fade');
+                    element.classList.remove('slow');
+                    element.style.opacity = null;
+
+                    if (finishCallback) {
+                        window.requestAnimationFrame(finishCallback);
+                    }
+                }, element.classList.contains('slow') ? 600 : 300);
+            });
+        });
     };
 
     utils.slideUp = function (element, finishCallback, startCallback) {
