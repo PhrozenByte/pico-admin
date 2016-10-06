@@ -35,6 +35,14 @@ utils.createClass(PicoAdminModule, function () {
         if (landingButton)    utils.addNamedEventListener(landingButton, 'click', 'toggle', toggleMenuEvent);
 
         if (menu) {
+            if (menu.classList.contains('nav-inner')) {
+                // add sliding wrapper
+                var wrapper = document.createElement('div'),
+                    navContainer = moduleNav.querySelector('.nav');
+                wrapper.appendChild(menu);
+                navContainer.appendChild(wrapper);
+            }
+
             // init action buttons
             var headlineActions = moduleNav.querySelector('.headline .actions'),
                 itemActionsList = moduleNav.querySelectorAll('.nav .item .actions');

@@ -74,8 +74,15 @@ main > aside > nav .module .actions > * { display: block; }
 
 main > #content {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+main > #content > * {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
 }
 
 main { overflow-x: auto; }
@@ -403,8 +410,8 @@ footer a[href]:hover { color: #fff; }
 #landing {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
-    max-width: 50em;
     padding: 1em 0;
 }
 
@@ -424,6 +431,7 @@ footer a[href]:hover { color: #fff; }
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
+    max-width: 50em;
     margin: 0;
     padding: 0;
     list-style: none;

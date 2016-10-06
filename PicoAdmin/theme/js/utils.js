@@ -537,8 +537,7 @@ var utils = {};
         } else if (element.msMatchesSelector) {
             return element.msMatchesSelector(selector);
         } else {
-            console.error('Unable to call utils.matches(…): Not supported');
-            return false;
+            throw 'Unable to call utils.matches(…): Not supported';
         }
     };
 
