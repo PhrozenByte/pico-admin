@@ -153,17 +153,13 @@ utils.createClass(PicoAdminModule, function () {
 
     this.prototype.enable = function ()
     {
-        var modulePage = document.getElementById('module-' + this.moduleName);
-        utils.fadeIn(modulePage);
+        // overwrite me
     };
 
     this.prototype.disable = function ()
     {
-        var modulePage = document.getElementById('module-' + this.moduleName),
-            moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
+        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
             activeItem = moduleNav.querySelector('.nav .item.active');
-
-        utils.fadeOut(modulePage);
         if (activeItem) activeItem.classList.remove('active');
     };
 

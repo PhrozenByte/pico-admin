@@ -30,32 +30,39 @@ utils.createClass(PicoAdmin, function () {
 
     this.prototype.selectModule = function (activeModule, activePath, intermediateCallback)
     {
-        var oldModule = this.activeModule ? this.modules[this.activeModule] : null,
+        var landingPage = document.getElementById('landing'),
+            oldModule = this.activeModule ? this.modules[this.activeModule] : null,
+            oldModulePage = oldModule ? document.getElementById('module-' + oldModule.moduleName) : landingPage,
             newModule = activeModule ? this.modules[activeModule] : null,
-            landingPage = document.getElementById('landing');
+            newModulePage = newModule ? document.getElementById('module-' + newModule.moduleName) : landingPage;
 
-        if (oldModule) {
-            if (!newModule || (oldModule.moduleName !== newModule.moduleName)) {
-                oldModule.disable();
-            }
-        } else {
-            utils.fadeOut(landingPage);
+        // disable old module
+        if (oldModule && (!newModule || (oldModule.moduleName !== newModule.moduleName))) {
+            oldModule.disable();
         }
 
+        // call intermediate callback
         if (intermediateCallback) {
             intermediateCallback(oldModule, newModule);
         }
 
+        // cross-fade old and new module page
+        if (oldModulePage && newModulePage && !utils.isElementVisible(newModulePage)) {
+            try {
+                utils.crossFade(oldModulePage, newModulePage);
+            } catch (e) {}
+        }
+
+        // enable new module
         if (newModule) {
             if (!oldModule || (oldModule.moduleName !== newModule.moduleName)) {
                 newModule.enable();
             }
 
+            // actually select module and path
             this.activeModule = newModule.moduleName;
             this.selectPath(activePath);
         } else {
-            utils.fadeIn(landingPage);
-
             this.activeModule = null;
             this.activePath = null;
         }
