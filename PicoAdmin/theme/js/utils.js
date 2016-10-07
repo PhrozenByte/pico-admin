@@ -345,30 +345,24 @@ var utils = {};
         });
     };
 
-    utils.crossFade = function (element1, element2, finishCallback, startCallback) {
-        var hideElement, showElement;
-        if (!element1 || !element2 || (element1.parentNode !== element2.parentNode) || (element1 === element2)) {
+    utils.crossFade = function (hideElement, showElement, finishCallback, startCallback) {
+        if (
+            !hideElement || !showElement || (hideElement === showElement) ||
+            !hideElement.parentNode || (hideElement.parentNode !== showElement.parentNode)
+        ) {
             throw 'Unable to call utils.crossFade(…): The given elements must be siblings';
         }
 
-        var parentElement = element1.parentNode;
+        var parentElement = hideElement.parentNode;
         for (var i = 0, childElement; i < parentElement.children.length; i++) {
             childElement = parentElement.children[i];
-            if ((childElement === element1) || (childElement === element2)) {
-                if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
-                    if (showElement === undefined) {
-                        showElement = childElement;
-                        continue;
-                    }
-                } else if (hideElement === undefined) {
-                    hideElement = childElement;
-                    continue;
-                }
-            } else if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
-                continue;
+            if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
+                if (childElement !== hideElement) continue;
+            } else {
+                if (childElement === hideElement) continue;
             }
 
-            throw 'Unable to call utils.crossFade(…): One of the given elements must be the only visible child';
+            throw 'Unable to call utils.crossFade(…): The element to hide must be the only visible sibling';
         }
 
         // get scroll position to restore it after we've detached the elements

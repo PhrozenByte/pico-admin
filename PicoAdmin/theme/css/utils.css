@@ -29,7 +29,6 @@
 }
 .cross-fade > .cross-fade-hide {
     pointer-events: none !important;
-    z-index: 100;
 }
 
 .smooth {
