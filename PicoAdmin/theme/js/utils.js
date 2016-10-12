@@ -381,8 +381,6 @@ var utils = {};
 
         hideElement.classList.add('cross-fade-hide');
         hideElement.classList.remove('cross-fade-show');
-        var hideElementCrossFadeId = parseInt(hideElement.dataset.crossFadeId) || 0;
-        hideElement.dataset.crossFadeId = ++hideElementCrossFadeId;
 
         showElement.classList.add('cross-fade-show');
         showElement.classList.remove('cross-fade-hide');
@@ -393,7 +391,6 @@ var utils = {};
             parentElement.style.height = null;
         };
         var resetHideElement = function () {
-            if (parseInt(hideElement.dataset.crossFadeId) !== hideElementCrossFadeId) return;
             hideElement.classList.remove('cross-fade-hide');
             utils.attach(hideElement);
         };
