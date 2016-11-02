@@ -394,6 +394,9 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         // write file
+        // LOCK_EX delays concurrent write attempts from other PHP processes,
+        // but doesn't prevent Pico from reading a not completely written file
+        // that's because file_get_contents() doesn't observe locks
         $writtenBytes = file_put_contents($basePath . $path . $fileName, $content, LOCK_EX);
         if ($writtenBytes === false) {
             $result['file']  = array(

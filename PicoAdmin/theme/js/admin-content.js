@@ -391,7 +391,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
             var item = utils.closest(actions, '.item'),
                 path = item.dataset.path;
 
-            if ((item.dataset.type === 'content') && (path !== 'index') && (path !== '404')) {
+            if ((item.dataset.type === 'content') && (path !== 'index')) {
                 var deletePageItem = deletePage.cloneNode(true);
                 deletePageItem.href = self.picoAdmin.getUrl('content', 'delete', path);
                 utils.addNamedEventListener(deletePageItem, 'click', 'action', deletePageEvent);

@@ -136,7 +136,7 @@ var utils = {};
 
     utils.detach = function (element, callback) {
         if (element.classList.contains('detached')) {
-            if (callback) callback();
+            if (callback) window.requestAnimationFrame(callback);
             return;
         }
 
