@@ -42,25 +42,25 @@
 {% endblock %}
 
 {% block content %}
-    <h2 class="sr-only">YAML Editor</h2>
-    <div class="yamlContainer">
+    <section class="yamlContainer">
+        <h2 class="sr-only">YAML Editor</h2>
         <textarea>{{ yaml_content|escape('html') }}</textarea>
-    </div>
+    </section>
 
-    <h2 class="sr-only">Markdown Editor</h2>
-    <div class="markdownContainer">
+    <section class="markdownContainer">
+        <h2 class="sr-only">Markdown Editor</h2>
         <textarea>{{ markdown_content|escape('html') }}</textarea>
-    </div>
+    </section>
 
-    <h2 class="sr-only">Rescue Editor</h2>
-    <div class="rescueContainer hidden">
-        <div class="editor-toolbar">
+    <section class="rescueContainer hidden">
+        <h2 class="sr-only">Rescue Editor</h2>
+        <nav class="editor-toolbar">
             <a title="Save" class="save fa fa-floppy-o"></a>
             <i class="separator">|</i>
             <span class="rescue-info"><strong>Rescue Mode:</strong> This file doesn't contain a valid Pico page.</span>
-        </div>
+        </nav>
         <textarea>{{ raw_content|escape('html') }}</textarea>
-    </div>
+    </section>
 {% endblock %}
 
 {% block landing %}

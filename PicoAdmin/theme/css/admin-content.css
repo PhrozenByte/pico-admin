@@ -61,16 +61,16 @@
 
 .CodeMirror-scroll { overflow: auto !important; }
 
-main > aside > nav .nav .item .actions .delete {
+header > nav .module > .nav .item .actions .delete {
     opacity: 0;
     -webkit-transition: opacity .2s ease-in;
             transition: opacity .2s ease-in;
 }
-main > aside > nav .nav .item:hover .actions .delete { opacity: 1; }
+header > nav .module > .nav .item:hover .actions .delete { opacity: 1; }
 
-main > aside > nav .nav .item[data-path$="index"] > a > .fa { color: #009; }
-main > aside > nav .nav .item[data-path$="404"] > a > .fa { color: #990; }
-main > aside > nav .nav .item > a > .fa.fa-stack-exclamation { color: #900; }
+header > nav .module > .nav .item[data-path$="index"] > a > .fa { color: #009; }
+header > nav .module > .nav .item[data-path$="404"] > a > .fa { color: #990; }
+header > nav .module > .nav .item > a > .fa.fa-stack-exclamation { color: #900; }
 
 footer .editor-statusbar {
     float: right;

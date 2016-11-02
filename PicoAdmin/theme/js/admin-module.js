@@ -195,7 +195,7 @@ utils.createClass(PicoAdminModule, function () {
 
     this.prototype.askFileName = function (notificationData, alert)
     {
-        var navigationButtons = document.querySelectorAll('main > aside > nav .module .headline h3 a'),
+        var navigationButtons = document.querySelectorAll('header > nav .module > .headline h3 a'),
             landingButtons = document.querySelectorAll('#landing .module');
 
         utils.forEach(navigationButtons, function (_, navigationButton) {
@@ -208,7 +208,7 @@ utils.createClass(PicoAdminModule, function () {
 
     this.prototype.closeFileNameModal = function (notificationData, alert)
     {
-        var navigationButtons = document.querySelectorAll('main > aside > nav .module .headline h3 a'),
+        var navigationButtons = document.querySelectorAll('header > nav .module > .headline h3 a'),
             landingButtons = document.querySelectorAll('#landing .module');
 
         utils.forEach(navigationButtons, function (_, navigationButton) {

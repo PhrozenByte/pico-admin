@@ -562,9 +562,9 @@ utils.createClass(PicoAdmin, function () {
         inputField.value = options.value;
 
         // take over navigation
-        var navigation = document.querySelector('main > aside > nav'),
-            actionLists = navigation.querySelectorAll('.headline .actions, .nav .item > .actions'),
-            itemAnchors = navigation.querySelectorAll('.nav .item > a');
+        var navigation = document.querySelector('header > nav'),
+            actionLists = navigation.querySelectorAll('.module .actions'),
+            itemAnchors = navigation.querySelectorAll('.module > .nav .item > a');
 
         var applyPathEvent = function (event) {
             event.preventDefault();
@@ -626,9 +626,9 @@ utils.createClass(PicoAdmin, function () {
     {
         var notification = this.askFileNameModal.alert;
         if (notification) {
-            var navigation = document.querySelector('main > aside > nav'),
-                actionLists = navigation.querySelectorAll('.module .headline .actions, .module .nav .item > .actions'),
-                itemAnchors = navigation.querySelectorAll('.module .nav .item > a');
+            var navigation = document.querySelector('header > nav'),
+                actionLists = navigation.querySelectorAll('.module .actions'),
+                itemAnchors = navigation.querySelectorAll('.module > .nav .item > a');
 
             utils.forEach(actionLists, function (_, actionList) { utils.slideRight(actionList); });
 

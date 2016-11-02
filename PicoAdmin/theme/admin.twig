@@ -24,36 +24,38 @@
 <body>
 
     {% block page %}
-        <main>
-            <aside>
-                <h1 class="page-title"><a href="{{ "index"|link }}">{{ site_title }}</a></h1>
+        <div id="container">
+            <header>
+                <h1><a href="{{ "index"|link }}">{{ site_title }}</a></h1>
                 <nav>
                     <h2 class="sr-only">Navigation</h2>
                     {% block nav %}
-                        {% for moduleName, module in admin_modules %}
-                            <div class="module" id="module-{{ moduleName|escape("html_attr") }}-nav">
-                                <div class="headline">
-                                    <h3>
-                                        <a href="" class="inverse" title="Toggle Navigation" role="button">
-                                            {{ module.title }}
-                                        </a>
-                                    </h3>
-                                    <div class="actions hidden"></div>
-                                </div>
-                                <div class="nav">
-                                    {% if (admin_request.module == moduleName) and (navigation is defined) %}
-                                         {% include "admin-navigation.twig" with { 'items': navigation } only %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <ul>
+                            {% for moduleName, module in admin_modules %}
+                                <li class="module" id="module-{{ moduleName|escape("html_attr") }}-nav">
+                                    <div class="headline">
+                                        <h3>
+                                            <a href="" class="inverse" title="Toggle Navigation" role="button">
+                                                {{ module.title }}
+                                            </a>
+                                        </h3>
+                                        <div class="actions hidden"></div>
+                                    </div>
+                                    <div class="nav">
+                                        {% if (admin_request.module == moduleName) and (navigation is defined) %}
+                                             {% include "admin-navigation.twig" with { 'items': navigation } only %}
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     {% endblock %}
                 </nav>
-            </aside>
+            </header>
 
-            <section id="content">
+            <main>
                 {% block content %}
-                    <div id="landing">
+                    <article id="landing">
                         <h2 class="sr-only">Landing Page</h2>
 
                         <p class="big">
@@ -68,18 +70,18 @@
                                 {% endif %}
                             {% endfor %}
                         </ul>
-                    </div>
+                    </article>
 
                     {% for moduleName, module in admin_modules %}
-                        <div id="module-{{ moduleName|escape("html_attr") }}" class="hidden">
+                        <article id="module-{{ moduleName|escape("html_attr") }}" class="hidden">
                             {% if module.template %}
                                 {{ include_block(module.template, "content") }}
                             {% endif %}
-                        </div>
+                        </article>
                     {% endfor %}
                 {% endblock %}
-            </section>
-        </main>
+            </main>
+        </div>
 
         <footer>
             <p>
