@@ -169,76 +169,68 @@ var utils = {};
     };
 
     utils.fadeOut = function (element, finishCallback, startCallback) {
-        element.style.opacity = window.getComputedStyle(element).opacity || '1';
-        element.classList.remove('fade');
-
-        var fadeId = parseInt(element.dataset.fadeId) || 0;
-        element.dataset.fadeId = ++fadeId;
-
-        window.requestAnimationFrame(function () {
-            element.classList.add('fade');
-
-            window.requestAnimationFrame(function () {
-                element.style.opacity = '0';
-
-                if (startCallback) {
-                    startCallback();
-                }
-
-                window.setTimeout(function () {
-                    if (parseInt(element.dataset.fadeId) !== fadeId) return;
-
-                    element.classList.add('hidden');
-                    element.classList.remove('fade');
-                    element.classList.remove('slow');
-                    element.style.opacity = null;
-
-                    if (finishCallback) {
-                        window.requestAnimationFrame(finishCallback);
-                    }
-                }, element.classList.contains('slow') ? 600 : 300);
-            });
+        utils.fade(element, {
+            fadeTo: '0',
+            startCallback: startCallback,
+            finishCallback: finishCallback
         });
     };
 
     utils.fadeIn = function (element, finishCallback, startCallback) {
-        var fadeId = parseInt(element.dataset.fadeId) || 0;
-        element.dataset.fadeId = ++fadeId;
+        utils.fade(element, {
+            startCallback: startCallback,
+            finishCallback: finishCallback
+        });
+    };
 
-        if (element.classList.contains('hidden')) {
-            element.style.opacity = '0';
-            element.classList.remove('hidden');
-        } else {
-            element.style.opacity = window.getComputedStyle(element).opacity || '0';
+    utils.fade = function (element, options) {
+        var fadeFrom = options.fadeFrom,
+            fadeTo = options.fadeTo;
+
+        if ((options.fadeFrom === undefined) || (options.fadeFrom === null)) {
+            fadeFrom = !element.classList.contains('hidden') && window.getComputedStyle(element).opacity || '0';
         }
+        if ((options.fadeTo === undefined) || (options.fadeTo === null)) {
+            fadeTo = '1';
+        }
+
         element.classList.remove('fade');
+        element.classList.remove('hidden');
+        element.style.opacity = fadeFrom;
 
         window.requestAnimationFrame(function () {
             element.classList.add('fade');
-            window.requestAnimationFrame(function () {
-                element.style.opacity = '1';
 
-                if (startCallback) {
-                    startCallback();
+            window.requestAnimationFrame(function () {
+                element.style.opacity = fadeTo;
+
+                if (options.startCallback) {
+                    options.startCallback();
                 }
 
-                window.setTimeout(function () {
-                    if (parseInt(element.dataset.fadeId) !== fadeId) return;
+                utils.addNamedEventListener(element, 'transitionend', 'fade', function (event) {
+                    if (event.propertyName !== 'opacity') return;
+                    utils.removeNamedEventListener(element, 'transitionend', 'fade');
 
                     element.classList.remove('fade');
                     element.classList.remove('slow');
                     element.style.opacity = null;
 
-                    if (finishCallback) {
-                        window.requestAnimationFrame(finishCallback);
+                    if (fadeTo == '0') {
+                        element.classList.add('hidden');
                     }
-                }, element.classList.contains('slow') ? 600 : 300);
+
+                    if (options.finishCallback) {
+                        window.requestAnimationFrame(options.finishCallback);
+                    }
+                });
             });
         });
     };
 
     utils.slideUp = function (element, finishCallback, startCallback) {
-        utils.slideOut(element, {
+        utils.slide(element, {
+            slideTo: '0px',
             cssRule: 'height',
             cssRuleRef: 'offsetHeight',
             startCallback: startCallback,
@@ -247,7 +239,7 @@ var utils = {};
     };
 
     utils.slideDown = function (element, finishCallback, startCallback) {
-        utils.slideIn(element, {
+        utils.slide(element, {
             cssRule: 'height',
             cssRuleRef: 'offsetHeight',
             startCallback: startCallback,
@@ -256,7 +248,8 @@ var utils = {};
     };
 
     utils.slideLeft = function (element, finishCallback, startCallback) {
-        utils.slideOut(element, {
+        utils.slide(element, {
+            slideTo: '0px',
             cssRule: 'width',
             cssRuleRef: 'offsetWidth',
             startCallback: startCallback,
@@ -265,7 +258,7 @@ var utils = {};
     };
 
     utils.slideRight = function (element, finishCallback, startCallback) {
-        utils.slideIn(element, {
+        utils.slide(element, {
             cssRule: 'width',
             cssRuleRef: 'offsetWidth',
             startCallback: startCallback,
@@ -273,74 +266,51 @@ var utils = {};
         });
     };
 
-    utils.slideOut = function (element, options) {
-        element.style[options.cssRule] = element[options.cssRuleRef] + 'px';
+    utils.slide = function (element, options) {
+        var slideFrom = options.slideFrom,
+            slideTo = options.slideTo;
+
+        if ((options.slideFrom === undefined) || (options.slideFrom === null)) {
+            slideFrom = element[options.cssRuleRef] + 'px';
+        }
+
         element.classList.remove('slide');
-
-        var slideId = parseInt(element.dataset.slideId) || 0;
-        element.dataset.slideId = ++slideId;
-
-        window.requestAnimationFrame(function () {
-            element.classList.add('slide');
-
-            window.requestAnimationFrame(function () {
-                element.style[options.cssRule] = (options.cssRuleValue || 0) + 'px';
-
-                if (options.startCallback) {
-                    options.startCallback();
-                }
-
-                window.setTimeout(function () {
-                    if (parseInt(element.dataset.slideId) !== slideId) return;
-
-                    element.classList.remove('slide');
-                    if (options.cssRuleReset || (options.cssRuleReset === undefined)) {
-                        element.classList.add('hidden');
-                        element.style[options.cssRule] = null;
-                    }
-
-                    if (options.finishCallback) {
-                        window.requestAnimationFrame(options.finishCallback);
-                    }
-                }, 600);
-            });
-        });
-    };
-
-    utils.slideIn = function (element, options) {
-        var cssRuleOriginalValue = element[options.cssRuleRef] + 'px',
-            slideId = parseInt(element.dataset.slideId) || 0;
-        element.dataset.slideId = ++slideId;
-
-        element.style[options.cssRule] = null;
         element.classList.remove('hidden');
-        element.classList.remove('slide');
-        var cssRuleValue = (options.cssRuleValue || element[options.cssRuleRef]) + 'px';
 
-        element.style[options.cssRule] = cssRuleOriginalValue;
+        if ((options.slideTo === undefined) || (options.slideTo === null)) {
+            element.style[options.cssRule] = null;
+            slideTo = element[options.cssRuleRef] + 'px';
+        }
+
+        element.style[options.cssRule] = slideFrom;
 
         window.requestAnimationFrame(function () {
             element.classList.add('slide');
 
             window.requestAnimationFrame(function () {
-                element.style[options.cssRule] = cssRuleValue;
+                element.style[options.cssRule] = slideTo;
 
                 if (options.startCallback) {
                     options.startCallback();
                 }
 
-                window.setTimeout(function () {
-                    if (parseInt(element.dataset.slideId) !== slideId) return;
+                utils.addNamedEventListener(element, 'transitionend', 'slide-' + options.cssRule, function (event) {
+                    if (event.propertyName !== options.cssRule) return;
+                    utils.removeNamedEventListener(element, 'transitionend', 'slide-' + options.cssRule);
 
                     element.classList.remove('slide');
-                    if (options.cssRuleReset || (options.cssRuleReset === undefined)) {
+                    if (options.reset || (options.reset === undefined)) {
                         element.style[options.cssRule] = null;
+
+                        if (slideTo === '0px') {
+                            element.classList.add('hidden');
+                        }
                     }
 
                     if (options.finishCallback) {
                         window.requestAnimationFrame(options.finishCallback);
                     }
-                }, 600);
+                });
             });
         });
     };
