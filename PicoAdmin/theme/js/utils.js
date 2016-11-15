@@ -33,6 +33,31 @@ var utils = {};
         return false;
     };
 
+    utils.multiCallback = function (finishCallback) {
+        var callbackStatusList = [],
+            finishedCallbackCount = 0;
+
+        return function (intermediateCallback) {
+            var callbackId = callbackStatusList.length;
+            var callback = function () {
+                if (!callbackStatusList[callbackId]) {
+                    callbackStatusList[callbackId] = true;
+                    finishedCallbackCount++;
+
+                    if (intermediateCallback) {
+                        intermediateCallback();
+                    }
+                    if (finishedCallbackCount >= callbackStatusList.length) {
+                        finishCallback();
+                    }
+                }
+            };
+
+            callbackStatusList.push(false);
+            return callback;
+        };
+    };
+
     utils.createClass = function (constructor, baseClass, blueprint) {
         if (blueprint === undefined) {
             blueprint = baseClass;
