@@ -23,6 +23,15 @@
             transition: opacity .6s ease-in !important;
 }
 
+.slide.fade {
+    -webkit-transition: height .6s ease-in-out,
+                        width .6s ease-in-out,
+                        opacity .6s ease-in !important;
+            transition: height .6s ease-in-out,
+                        width .6s ease-in-out,
+                        opacity .6s ease-in !important;
+}
+
 .cross-fade {
     position: relative !important;
     overflow: hidden !important;

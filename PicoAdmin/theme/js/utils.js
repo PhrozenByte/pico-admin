@@ -348,9 +348,16 @@ var utils = {};
             throw 'Unable to call utils.crossFade(…): The given elements must be siblings';
         }
 
-        var parentElement = hideElement.parentNode;
+        var parentElement = hideElement.parentNode,
+            placeholderElement = null;
         for (var i = 0, childElement; i < parentElement.children.length; i++) {
             childElement = parentElement.children[i];
+
+            if (!placeholderElement && childElement.classList.contains('cross-fade-placeholder')) {
+                placeholderElement = childElement;
+                continue;
+            }
+
             if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
                 if (childElement !== hideElement) continue;
             } else {
@@ -363,16 +370,12 @@ var utils = {};
         // get scroll position to restore it after we've detached the elements
         var scrollTop = window.pageYOffset;
 
-        // reset the parent element's dimensions
+        // get the initial parent element's dimensions
         var parentElementWidth = parentElement.offsetWidth,
             parentElementHeight = parentElement.offsetHeight;
-        parentElement.style.width = null;
-        parentElement.style.height = null;
 
         // prepare elements
         parentElement.classList.add('cross-fade');
-        var crossFadeId = parseInt(parentElement.dataset.crossFadeId) || 0;
-        parentElement.dataset.crossFadeId = ++crossFadeId;
 
         hideElement.classList.add('cross-fade-hide');
         hideElement.classList.remove('cross-fade-show');
@@ -380,82 +383,92 @@ var utils = {};
         showElement.classList.add('cross-fade-show');
         showElement.classList.remove('cross-fade-hide');
 
-        var resetParentElement = function () {
-            parentElement.classList.remove('cross-fade');
-            parentElement.style.width = null;
-            parentElement.style.height = null;
-        };
-        var resetHideElement = function () {
-            hideElement.classList.remove('cross-fade-hide');
-            utils.attach(hideElement);
-        };
-        var resetShowElement = function () {
-            showElement.classList.remove('cross-fade-show');
-            utils.attach(showElement);
-        };
-
-        // detach elements
+        // detach element to hide, make sure element to show is attached
         utils.detach(hideElement);
-        utils.detach(showElement);
+        utils.attach(showElement);
 
-        // let the parent element's dimensions smoothly change to those of the element to show
-        var showElementWidth = parseInt(showElement.style.width.replace(/px$/, '')),
-            showElementHeight = parseInt(showElement.style.height.replace(/px$/, ''));
+        // let the parent element's dimensions smoothly change to those of the
+        // element to show by either shrinking a placeholder element or growing
+        // the element to show
+        showElement.classList.remove('hidden');
+        showElement.style.opacity = '0';
 
-        parentElement.style.width = parentElementWidth + 'px';
-        parentElement.style.height = parentElementHeight + 'px';
+        var showElementWidth = showElement.offsetWidth,
+            showElementHeight = showElement.offsetHeight;
+
+        if (!placeholderElement) {
+            placeholderElement = document.createElement('div');
+            placeholderElement.classList.add('cross-fade-placeholder');
+            placeholderElement.classList.add('hidden');
+            parentElement.appendChild(placeholderElement);
+        }
 
         if (parentElementWidth !== showElementWidth) {
-            var slideHoricontalOptions = {
+            // there might be a unexpected horicontal slide due to appearing or
+            // disapprearing scrollbars. we explicitly do *not* support large
+            // width changes, as we always animate the element to show, what
+            // might lead to a visible overexpansion or compression of its
+            // contents. however, usually you don't want a width change anyway
+            utils.slide(showElement, {
+                slideFrom: parentElementWidth + 'px',
+                slideTo: showElementWidth + 'px',
                 cssRule: 'width',
-                cssRuleRef: 'offsetWidth',
-                cssRuleReset: false,
-                cssRuleValue: showElementWidth
-            };
-
-            if (parentElementWidth > showElementWidth) {
-                utils.slideOut(parentElement, slideHoricontalOptions);
-            } else {
-                utils.slideIn(parentElement, slideHoricontalOptions);
-            }
+                cssRuleRef: 'offsetWidth'
+            });
         }
         if (parentElementHeight !== showElementHeight) {
-            var slideVerticalOptions = {
+            var slideOptions = {
                 cssRule: 'height',
-                cssRuleRef: 'offsetHeight',
-                cssRuleReset: false,
-                cssRuleValue: showElementHeight,
+                cssRuleRef: 'offsetHeight'
             };
 
             if (parentElementHeight > showElementHeight) {
-                utils.slideOut(parentElement, slideVerticalOptions);
+                showElement.style.height = showElementHeight + 'px';
+
+                utils.slide(placeholderElement, utils.extend(slideOptions, {
+                    slideFrom: (parentElementHeight - showElementHeight) + 'px',
+                    slideTo: '0px',
+                    finishCallback: function () {
+                        showElement.style.height = null;
+                    }
+                }));
             } else {
-                utils.slideIn(parentElement, slideVerticalOptions);
+                placeholderElement.classList.add('hidden');
+
+                utils.slide(showElement, utils.extend(slideOptions, {
+                    slideFrom: parentElementHeight + 'px',
+                    slideTo: showElementHeight + 'px'
+                }));
             }
         }
 
-        window.requestAnimationFrame(function () {
-            // restore scroll position
-            window.scrollTo(window.pageXOffset, scrollTop);
+        // fade and reset elements
+        var finishCallbackGenerator = utils.multiCallback(function () {
+            parentElement.classList.remove('cross-fade');
 
-            // do fading and reset the elements
-            hideElement.classList.add('slow');
-            utils.fadeOut(hideElement, resetHideElement, function () {
-                if (parseInt(parentElement.dataset.crossFadeId) !== crossFadeId) return;
-
-                showElement.classList.add('slow');
-                utils.fadeIn(showElement, function () {
-                    if (parseInt(parentElement.dataset.crossFadeId) !== crossFadeId) return;
-
-                    resetShowElement();
-                    resetParentElement();
-
-                    if (finishCallback) {
-                        window.requestAnimationFrame(finishCallback);
-                    }
-                }, startCallback);
-            });
+            if (finishCallback) {
+                window.requestAnimationFrame(finishCallback);
+            }
         });
+
+        hideElement.classList.add('slow');
+        utils.fadeOut(hideElement, finishCallbackGenerator(function () {
+            hideElement.classList.remove('cross-fade-hide');
+            utils.attach(hideElement);
+        }));
+
+        showElement.classList.add('slow');
+        utils.fadeIn(showElement, finishCallbackGenerator(function () {
+            showElement.classList.remove('cross-fade-show');
+        }));
+
+        // restore scroll position
+        window.scrollTo(window.pageXOffset, scrollTop);
+
+        // execute start callback
+        if (startCallback) {
+            window.requestAnimationFrame(startCallback);
+        }
     };
 
     /**
