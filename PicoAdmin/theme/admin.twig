@@ -55,7 +55,7 @@
 
             <main>
                 {% block content %}
-                    <article id="landing">
+                    <article id="landing"{% if admin_modules[admin_request.module] is defined %} class="hidden"{% endif %}>
                         <h2 class="sr-only">Landing Page</h2>
 
                         <p class="big">
@@ -73,7 +73,7 @@
                     </article>
 
                     {% for moduleName, module in admin_modules %}
-                        <article id="module-{{ moduleName|escape("html_attr") }}" class="hidden">
+                        <article id="module-{{ moduleName|escape("html_attr") }}"{% if admin_request.module != moduleName %} class="hidden"{% endif %}>
                             {% if module.template %}
                                 {{ include_block(module.template, "content") }}
                             {% endif %}

@@ -409,10 +409,6 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
     this.prototype.takeOver = function (mode, page, title)
     {
-        // replace content immediately, don't fade over
-        document.getElementById('landing').classList.add('hidden');
-        document.getElementById('module-' + this.moduleName).classList.remove('hidden');
-
         // assume responsibility
         this.picoAdmin.selectModule(this.moduleName, page);
 

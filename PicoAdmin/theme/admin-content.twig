@@ -29,15 +29,13 @@
     </script>
 
     {% if admin_request.module == "content" %}
-        {% if (admin_request.action == "create") or (admin_request.action == "edit") %}
-            <script type="text/javascript">
-                picoContentAdmin.takeOver(
-                    '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
-                    '{{ page_path|escape("js") }}',
-                    '{{ page_title|escape("js") }}'
-                );
-            </script>
-        {% endif %}
+        <script type="text/javascript">
+            picoContentAdmin.takeOver(
+                '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
+                '{{ page_path|escape("js") }}',
+                '{{ page_title|escape("js") }}'
+            );
+        </script>
     {% endif %}
 {% endblock %}
 
