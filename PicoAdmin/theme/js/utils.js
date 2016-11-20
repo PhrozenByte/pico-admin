@@ -239,10 +239,12 @@ var utils = {};
 
                     element.classList.remove('fade');
                     element.classList.remove('slow');
-                    element.style.opacity = null;
+                    if (options.reset || (options.reset === undefined)) {
+                        element.style.opacity = null;
 
-                    if (fadeTo == '0') {
-                        element.classList.add('hidden');
+                        if (fadeTo == '0') {
+                            element.classList.add('hidden');
+                        }
                     }
 
                     if (options.finishCallback) {

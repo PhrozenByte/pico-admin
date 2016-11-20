@@ -525,9 +525,11 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         this.yamlEditor = new CodeMirror.fromTextArea(element, options);
 
         var self = this;
-        this.yamlEditor.on('change', function (editor) {
-            self.setPendingChanges(true);
-            self.updateToolbar();
+        this.yamlEditor.on('change', function (editor, changeObj) {
+            if (changeObj.origin !== 'setValue') {
+                self.setPendingChanges(true);
+                self.updateToolbar();
+            }
 
             // force syncing all changes
             if (options.forceSync) editor.save();
@@ -753,7 +755,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         this.setPendingChanges(false);
         this.updateToolbar();
 
-        this.markdownEditor.codemirror.on('change', function () {
+        this.markdownEditor.codemirror.on('change', function (editor, changeObj) {
+            if (changeObj.origin === 'setValue') return;
+
             self.setPendingChanges(true);
             self.updateToolbar();
         });
