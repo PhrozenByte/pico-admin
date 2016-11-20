@@ -46,13 +46,6 @@ utils.createClass(PicoAdmin, function () {
             intermediateCallback(oldModule, newModule);
         }
 
-        // cross-fade old and new module page
-        if (oldModulePage && newModulePage && !utils.isElementVisible(newModulePage)) {
-            try {
-                utils.crossFade(oldModulePage, newModulePage);
-            } catch (e) {}
-        }
-
         // enable new module
         if (newModule) {
             if (!oldModule || (oldModule.moduleName !== newModule.moduleName)) {
@@ -65,6 +58,15 @@ utils.createClass(PicoAdmin, function () {
         } else {
             this.activeModule = null;
             this.activePath = null;
+        }
+
+        // cross-fade old and new module page
+        if (oldModulePage && newModulePage) {
+            window.requestAnimationFrame(function () {
+                try {
+                    utils.crossFade(oldModulePage, newModulePage);
+                } catch (e) {}
+            });
         }
     };
 
