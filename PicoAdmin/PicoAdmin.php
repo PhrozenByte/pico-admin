@@ -307,20 +307,13 @@ class PicoAdmin extends AbstractPicoPlugin
 
     public function writeFile($basePath, $path, $content)
     {
-        $result = array(
-            'dirs' => array(),
-            'file' => null,
-            'success' => false
-        );
-
         $isWindows = (strncasecmp(PHP_OS, 'WIN', 3) === 0);
         $pathComponents = explode('/', $path);
         $fileName = array_pop($pathComponents);
         $path = '';
 
         if (empty($fileName)) {
-            // invalid file name
-            return $result;
+            throw new RuntimeException('The given file path is invalid');
         }
 
         // create directory structure
@@ -329,67 +322,41 @@ class PicoAdmin extends AbstractPicoPlugin
             $path .= $pathComponent . '/';
 
             if (!file_exists($basePath . $path)) {
-                if (
-                    !is_writable($basePath . $parentPath)
-                    || (!$isWindows && !is_executable($basePath . $parentPath))
-                ) {
-                    $result['dirs'][$path] = array(
-                        'message' => "You don't have permission to create files or directories in "
-                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory') . '.',
-                        'success' => false
+                if (!is_writable($basePath . $parentPath) || (!$isWindows && !is_executable($basePath . $parentPath))) {
+                    throw new RuntimeException(
+                        "You don't have permission to create files or directories in "
+                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory')
                     );
-                    return $result;
                 }
 
                 // create directory
-                $mkdirResult = mkdir($this->getConfig('content_dir') . $path);
+                $mkdirResult = @mkdir($this->getConfig('content_dir') . $path);
                 if (!$mkdirResult) {
-                    $result['dirs'][$path] = array(
-                        'message' => 'Creating directory "' . $path . '" failed for an unknown reason.',
-                        'success' => false
-                    );
-                    return $result;
+                    throw new RuntimeException('Creating directory "' . $path . '" failed for an unknown reason');
                 }
-
-                $result['dirs'][$path] = array(
-                    'message' => 'Successfully created directory "' . $path . '".',
-                    'success' => true
-                );
             } elseif (!is_dir($this->getConfig('content_dir') . $path)) {
-                $result['dirs'][$path] = array(
-                    'message' => "You can't create the directory \"" . $path . "\", "
-                        . 'because there is already a file of this name.',
-                    'success' => false
+                throw new RuntimeException(
+                    "You can't create the directory \"" . $path . '", '
+                        . 'because there is already another directory entry of this name'
                 );
-                return $result;
             }
         }
 
         // check file permissions
         if (file_exists($basePath . $path . $fileName)) {
             if (!is_file($basePath . $path . $fileName)) {
-                $result['file'] = array(
-                    'message' => "You can't create the file \"" . $path . $fileName . "\n, "
-                        . 'because there is already another directory entry of this name.',
-                    'success' => false
+                throw new RuntimeException(
+                    "You can't create the file \"" . $path . $fileName . '", '
+                        . 'because there is already another directory entry of this name'
                 );
-                return $result;
             }
             if (!is_writable($basePath . $path . $fileName)) {
-                $result['file'] = array(
-                    'message' => "You don't have permission to write to \"" . $path . $fileName . '".',
-                    'success' => false
-                );
-                return $result;
+                throw new RuntimeException("You don't have permission to write to \"" . $path . $fileName . '"');
             }
         } else {
             if (!is_writable($basePath . $path) || (!$isWindows && !is_executable($basePath . $path))) {
-                $result['file'] = array(
-                    'message' => "You don't have permission to create files in "
-                        . (!empty($path) ? '"' . $path . '"' : 'the content directory') . '.',
-                    'success' => false
-                );
-                return $result;
+                $pathName = !empty($path) ? '"' . $path . '"' : 'the content directory';
+                throw new RuntimeException("You don't have permission to create files in " . $pathName);
             }
         }
 
@@ -397,106 +364,57 @@ class PicoAdmin extends AbstractPicoPlugin
         // LOCK_EX delays concurrent write attempts from other PHP processes,
         // but doesn't prevent Pico from reading a not completely written file
         // that's because file_get_contents() doesn't observe locks
-        $writtenBytes = file_put_contents($basePath . $path . $fileName, $content, LOCK_EX);
+        $writtenBytes = @file_put_contents($basePath . $path . $fileName, $content, LOCK_EX);
         if ($writtenBytes === false) {
-            $result['file']  = array(
-                'message' => 'Writing to file "' . $path . $fileName . '" failed for an unknown reason.',
-                'success' => false
-            );
-            return $result;
+            throw new RuntimeException('Writing to file "' . $path . $fileName . '" failed for an unknown reason');
         }
-
-        // success
-        $result['success'] = true;
-        $result['file'] = array(
-            'message' => 'Successfully written to file "' . $path . $fileName . '".',
-            'success' => true
-        );
-        return $result;
     }
 
     public function deleteFile($basePath, $path)
     {
-        $result = array(
-            'dirs' => array(),
-            'file' => null,
-            'success' => false
-        );
-
         $isWindows = (strncasecmp(PHP_OS, 'WIN', 3) === 0);
         $pathComponents = explode('/', $path);
         $fileName = array_pop($pathComponents);
         $path = !empty($pathComponents) ? implode('/', $pathComponents) . '/' : '';
 
         if (empty($fileName)) {
-            // invalid file name
-            return $result;
+            throw new RuntimeException('The given file path is invalid');
         }
 
         // check file permissions
         if (!file_exists($basePath . $path . $fileName)) {
-            $result['file'] = array(
-                'message' => "File \"" . $path . $fileName . '" not found.',
-                'success' => false
-            );
-            return $result;
+            throw new RuntimeException('File "' . $path . $fileName . '" not found');
         }
         if (!is_writable($basePath . $path . $fileName)) {
-            // this permission actually isn't necessary to delete the file, this is just a safety check
-            $result['file'] = array(
-                'message' => "You don't have permission to modify file \"" . $path . $fileName . '".',
-                'success' => false
-            );
-            return $result;
+            // this permission actually isn't necessary to delete the file, it's just a safety check
+            throw new RuntimeException("You don't have permission to modify file \"" . $path . $fileName . '"');
         }
         if (!is_writable($basePath . $path) || (!$isWindows && !is_executable($basePath . $path))) {
-            $result['file'] = array(
-                'message' => "You don't have permission to delete files in "
-                    . (!empty($path) ? '"' . $path . '"' : 'the content directory') . '.',
-                'success' => false
-            );
-            return $result;
+            $pathName = !empty($path) ? '"' . $path . '"' : 'the content directory';
+            throw new RuntimeException("You don't have permission to delete files in " . $pathName);
         }
 
         // delete file
-        $unlinkResult = unlink($basePath . $path . $fileName);
+        $unlinkResult = @unlink($basePath . $path . $fileName);
         if (!$unlinkResult) {
-            $result['file']  = array(
-                'message' => 'Deleting file "' . $path . $fileName . '" failed for an unknown reason.',
-                'success' => false
-            );
-            return $result;
+            throw new RuntimeException('Deleting file "' . $path . $fileName . '" failed for an unknown reason');
         }
 
-        // success
-        $result['success'] = true;
-        $result['file'] = array(
-            'message' => 'Successfully deleted file "' . $path . $fileName . '".',
-            'success' => true
-        );
-
         // delete empty directories
-        // this is just a bonus and doesn't affect the overall success
         if ($path !== '') {
             do {
                 array_pop($pathComponents);
                 $parentPath = implode('/', $pathComponents);
 
                 if (!is_writable($basePath . $path)) {
-                    // this permission actually isn't necessary to delete the directory, this is just a safety check
-                    $result['dirs'][$path] = array(
-                        'message' => "You don't have permission to modify directory \"" . $path . '".',
-                        'success' => false
-                    );
-                    return $result;
+                    // this permission actually isn't necessary to delete the directory, it's just a safety check
+                    throw new RuntimeException("You don't have permission to modify directory \"" . $path . '"');
                 }
                 if (!is_writable($basePath . $parentPath) || (!$isWindows && !is_executable($basePath . $parentPath))) {
-                    $result['dirs'][$path] = array(
-                        'message' => "You don't have permission to delete files or directories in "
-                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory') . '.',
-                        'success' => false
+                    throw new RuntimeException(
+                        "You don't have permission to delete files or directories in "
+                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory')
                     );
-                    return $result;
                 }
 
                 // check whether the directory is empty
@@ -504,41 +422,25 @@ class PicoAdmin extends AbstractPicoPlugin
                     while (($file = readdir($handle)) !== false) {
                         if (($file !== '.') && ($file !== '..')) {
                             // directory not empty; abort...
-                            return $result;
+                            closedir($handle);
+                            return;
                         }
                     }
                     closedir($handle);
 
                     // directory is empty, proceed deleting it
-                    $rmdirResult = rmdir($basePath . $path);
+                    $rmdirResult = @rmdir($basePath . $path);
                     if (!$rmdirResult) {
-                        $result['dirs'][$path] = array(
-                            'message' => 'Deleting empty directory "' . $path . '" failed for an unknown reason.',
-                            'success' => false
+                        throw new RuntimeException(
+                            'Deleting empty directory "' . $path . '" failed for an unknown reason'
                         );
-                        return $result;
                     }
                 } else {
                     // try deleting the dir anyway
-                    $rmdirResult = @rmdir($basePath . $path);
-                    if (!$rmdirResult) {
-                        $result['dirs'][$path] = array(
-                            'message' => 'Deleting directory "' . $path . '" failed for an unknown reason. '
-                                . "The directory is very likely not empty, but we weren't able to check it.",
-                            'success' => false
-                        );
-                        return $result;
-                    }
+                    // we don't care about the result because a failure is likely caused by other files
+                    @rmdir($basePath . $path);
                 }
-
-
-                $result['dirs'][$path] = array(
-                    'message' => 'Successfully deleted empty directory "' . $path . '".',
-                    'success' => true
-                );
             } while (($path = $parentPath) !== '');
         }
-
-        return $result;
     }
 }
