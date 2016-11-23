@@ -1,4 +1,92 @@
-{% from "_includes/macro-file_navigation.twig" import file_navigation %}
+{% macro file_navigation(files) %}
+    {% from _self import file_navigation,
+        _file_navigation_item_args as item_args,
+        _file_navigation_anchor_args as anchor_args,
+        _file_navigation_icon as icon,
+        _file_navigation_path as path %}
+    {% if files.index is defined %}
+        <li>
+            <div {{ item_args(files.index) }}>
+                <a {{ anchor_args(files.index) }}>
+                    {{ icon(files.index) }}
+                    {{ path(files.index.dirName) }}<strong>index</strong>{{ files.index.fileExt }}
+                </a>
+                <div class="actions hidden"></div>
+            </div>
+        </li>
+    {% endif %}
+    {% for file in files if file.fileName != 'index' %}
+        <li>
+            <div {{ item_args(file) }}>
+                {% if file.type == "dir" %}
+                    <a>
+                        {{ icon(file) }}
+                        {{ path(file.dirName) }}{{ file.fileName }}/
+                    </a>
+                {% else %}
+                    <a {{ anchor_args(file) }}>
+                        {{ icon(file) }}
+                        {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ file.fileExt }}
+                    </a>
+                {% endif %}
+                <div class="actions hidden"></div>
+            </div>
+            {% if file.children %}
+                <ul>
+                    {{ file_navigation(file.children) }}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+{% endmacro %}
+
+{% macro _file_navigation_item_args(file) -%}
+    {% set classNames = "item" %}
+    {% if file.error %}{% set classNames = classNames ~ " error" %}{% endif %}
+    {% if file.children %}{% set classNames = classNames ~ " parent" %}{% endif %}
+
+    class="{{ classNames }}"
+    data-path="{{ file.path|escape("html_attr") }}"
+    data-type="{{ file.type|escape("html_attr") }}"
+    {% if file.children %}data-children="{{ file.children|length }}"{% endif %}
+{%- endmacro %}
+
+{% macro _file_navigation_anchor_args(file) -%}
+    href="{{ file.url|escape('html_attr') }}"
+    {% if file.error %}
+        title="{{ file.error|escape("html_attr") }}"
+    {% elseif file.title %}
+        title="{{ file.title|escape("html_attr") }}"
+    {% endif %}
+{%- endmacro %}
+
+{% macro _file_navigation_icon(file) -%}
+    {% set classNames = "fa" %}
+    {% if file.type == "dir" %}
+        {% set classNames = classNames ~ " fa-folder-o" %}
+    {% endif %}
+    {% if file.icon %}
+        {% set classNames = classNames ~ " " ~ file.icon %}
+    {% endif %}
+    {% if file.error %}
+        {% set classNames = classNames ~ " fa-stack-exclamation" %}
+    {% endif %}
+
+    <span class="{{ classNames }}" aria-hidden="true"></span>
+{% endmacro %}
+
+{% macro _file_navigation_path(path) %}
+    {% if path != '.' %}
+        {% set pathParts = path|split('/') %}
+        {% if pathParts|length > 2 -%}
+            …/{{ pathParts|slice(-2)|join('/') }}/
+        {%- else -%}
+            {{ path }}/
+        {%- endif -%}
+    {% endif %}
+{% endmacro %}
+
+{% from _self import file_navigation %}
 {% if items|length %}
     <div class="nav-inner">
         <ul>
