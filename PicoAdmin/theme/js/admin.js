@@ -284,11 +284,7 @@ utils.createClass(PicoAdmin, function () {
                     errorTitle = 'Fatal Error';
                 }
 
-                self.showNotification(
-                    errorTitle,
-                    'An unexpected error has occured.',
-                    'error'
-                );
+                self.showNotification(errorTitle, 'An unexpected error has occured.', 'error', 0);
             }
 
             if (errorCallback) {
@@ -617,6 +613,9 @@ utils.createClass(PicoAdmin, function () {
                 self.submitFileNameModal();
             }
         });
+
+        // focus input field
+        inputField.focus();
 
         var module = this.modules[this.activeModule];
         if (module) module.askFileName(this.askFileNameModal, notification);

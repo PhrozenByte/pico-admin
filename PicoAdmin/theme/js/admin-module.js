@@ -63,16 +63,17 @@ utils.createClass(PicoAdminModule, function () {
             self = this;
 
         this.picoAdmin.ajax(this.moduleName, 'navigation', null, {
-            responseType: 'text',
+            responseType: 'json',
             success: function (xhr, statusText, response) {
-                if (!response || (response === '') || !/^\s*<div class="nav-inner">/.test(response)) {
+                console.log(response);
+                if (!response || !response.navigation || !/^\s*<div class="nav-inner">/.test(response.navigation)) {
                     return false;
                 }
 
                 // add sliding wrapper
                 var wrapper = document.createElement('div');
                 wrapper.classList.add('hidden');
-                wrapper.innerHTML = response;
+                wrapper.innerHTML = response.navigation;
                 navContainer.appendChild(wrapper);
 
                 // init action buttons

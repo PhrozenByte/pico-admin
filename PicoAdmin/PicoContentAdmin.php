@@ -218,85 +218,87 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         $twig->getLoader()->addPath(__DIR__ . '/theme');
 
-        switch ($this->action) {
-            case 'navigation':
-                $templateName = 'admin-navigation.twig';
-                $twigVariables['items'] = $this->getNavigation();
-                break;
+        // HTML requests
+        if (($this->action === 'create') || ($this->action === 'edit')) {
+            $templateName = 'admin.twig';
 
-            case 'create':
-            case 'edit':
-                $templateName = 'admin.twig';
+            if ($this->action === 'edit') {
+                if ($this->rawRequest) {
+                    $twigVariables['raw_content'] = $this->rawContent;
+                }
+
+                if ($this->pageNotFound) {
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+
+                    $twigVariables['error'] = array(
+                        'title' => 'Error 404',
+                        'message' => "Woops. Looks like this page doesn't exist.",
+                        'type' => 'error',
+                        'timeout' => 0
+                    );
+                }
+            } else {
+                if (!$this->pageNotFound) {
+                    $twigVariables['error'] = array(
+                        'title' => 'Conflict',
+                        'message' => "There's already a page of this name, be careful about not accidently overwriting it!",
+                        'type' => 'warning',
+                        'timeout' => 0
+                    );
+                }
+            }
+
+            $meta = $this->getFileMeta();
+
+            $twigVariables['rescue_mode'] = $this->rawRequest;
+            $twigVariables['yaml_content'] = $this->yamlContent;
+            $twigVariables['markdown_content'] = $this->markdownContent;
+            $twigVariables['page_path'] = $this->page;
+            $twigVariables['page_title'] = !empty($meta['title']) ? $meta['title'] : '';
+            $twigVariables['navigation'] = $this->getNavigation();
+
+            return;
+        }
+
+        // JSON requests
+        header('Content-Type: application/json; charset=UTF-8');
+        $templateName = 'admin-ajax.twig';
+
+        $twigVariables['json'] = array();
+
+        switch ($this->action) {
+            case 'load':
+                if ($this->rawRequest) {
+                    $twigVariables['json']['content'] = $this->rawContent;
+                    break;
+                }
+
+                if ($this->pageNotFound) {
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+
+                    $twigVariables['json']['error'] = array(
+                        'title' => 'Error 404',
+                        'message' => "Woops. Looks like this page doesn't exist.",
+                        'type' => 'error'
+                    );
+                    break;
+                }
 
                 $meta = $this->getFileMeta();
-
-                if ($this->action === 'edit') {
-                    if ($this->rawRequest) {
-                        $twigVariables['raw_content'] = $this->rawContent;
-                    }
-
-                    if ($this->pageNotFound) {
-                        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-
-                        $twigVariables['error'] = array(
-                            'title' => 'Error 404',
-                            'message' => "Woops. Looks like this page doesn't exist.",
-                            'type' => 'error',
-                            'timeout' => 0
-                        );
-                    }
-                } else {
-                    if (!$this->pageNotFound) {
-                        $twigVariables['error'] = array(
-                            'title' => 'Conflict',
-                            'message' => "There's already a page of this name, be careful about not accidently overwriting it!",
-                            'type' => 'warning',
-                            'timeout' => 0
-                        );
-                    }
-                }
-
-                $twigVariables['rescue_mode'] = $this->rawRequest;
-                $twigVariables['yaml_content'] = $this->yamlContent;
-                $twigVariables['markdown_content'] = $this->markdownContent;
-                $twigVariables['page_path'] = $this->page;
-                $twigVariables['page_title'] = !empty($meta['title']) ? $meta['title'] : '';
-                $twigVariables['navigation'] = $this->getNavigation();
+                $twigVariables['json']['yaml'] = $this->yamlContent;
+                $twigVariables['json']['markdown'] = $this->markdownContent;
+                $twigVariables['json']['title'] = !empty($meta['title']) ? $meta['title'] : '';
                 break;
 
-            case 'load':
             case 'preview':
-                header('Content-Type: application/json; charset=UTF-8');
-                $templateName = 'admin-ajax.twig';
+                $twigVariables['json']['preview'] = $twigVariables['content'];
+                break;
 
-                if ($this->action === 'load') {
-                    if ($this->rawRequest) {
-                        $twigVariables['json'] = array('content' => $this->rawContent);
-                        break;
-                    }
-
-                    if ($this->pageNotFound) {
-                        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-
-                        $twigVariables['json'] = array('error' => array(
-                            'title' => 'Error 404',
-                            'message' => "Woops. Looks like this page doesn't exist.",
-                            'type' => 'error'
-                        ));
-                        break;
-                    }
-
-                    $meta = $this->getFileMeta();
-                    $twigVariables['json'] = array(
-                        'yaml' => $this->yamlContent,
-                        'markdown' => $this->markdownContent,
-                        'title' => !empty($meta['title']) ? $meta['title'] : ''
-                    );
-                } else {
-                    $twigVariables['json'] = array(
-                        'preview' => $twigVariables['content']
-                    );
-                }
+            case 'navigation':
+                $twigVariables['json']['navigation'] = $twig->render(
+                    'admin-navigation.twig',
+                    array('items' => $this->getNavigation()) + $twigVariables
+                );
                 break;
         }
     }

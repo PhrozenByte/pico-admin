@@ -50,7 +50,10 @@ body {
 #container { flex: 1 0 auto; }
 
 #container { display: flex; }
-#container > header { flex: 0 0 auto; }
+#container > header {
+    flex: 0 0 auto;
+    max-width: 25%;
+}
 #container > main { flex: 2 1 auto; }
 
 #container > header { display: flex; flex-direction: column; }
@@ -87,6 +90,7 @@ body {
 
 @media (max-width: 767px) {
     #container { flex-direction: column; }
+    #container > header { max-width: 100%; }
 }
 
 /*** BASIC LAYOUT STYLING ***/
@@ -96,11 +100,15 @@ header { border-right: 1px solid #ddd; }
 header > h1 {
     margin: 0;
     padding: 1rem;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
     background: #2EAE9B;
+    color: #fff;
 }
 header > h1 a,
 header > h1 a:hover {
-    color: #fff !important;
+    color: inherit !important;
 }
 
 header > nav ul {

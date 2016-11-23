@@ -188,10 +188,14 @@ class PicoAdmin extends AbstractPicoPlugin
         $twig->addFilter(new Twig_SimpleFilter('admin_link', array($this, 'getAdminPageUrl')));
 
         // register include_block filter
-        $twig->addFunction(new Twig_SimpleFunction('include_block', function (Twig_Environment $env, $context, $templateName, $blockName) {
-            $template = $env->loadTemplate($templateName);
-            return $template->renderBlock($blockName, $context);
-        }, array('needs_context' => true, 'needs_environment' => true)));
+        $twig->addFunction(new Twig_SimpleFunction(
+            'include_block',
+            function (Twig_Environment $env, $context, $templateName, $blockName) {
+                $template = $env->loadTemplate($templateName);
+                return $template->renderBlock($blockName, $context);
+            },
+            array('needs_context' => true, 'needs_environment' => true)
+        ));
 
         // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
         if ($this->authenticationRequired && !$this->authenticated) {

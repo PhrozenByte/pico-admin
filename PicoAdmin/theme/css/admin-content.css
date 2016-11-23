@@ -54,12 +54,16 @@
 .editor-toolbar a.error { color: #d00 !important; }
 .editor-toolbar .rescue-info strong { color: #d00; }
 
-.CodeMirror,
-.CodeMirror-scroll {
+.CodeMirror {
+    display: flex;
     min-height: 0;
 }
-
-.CodeMirror-scroll { overflow: auto !important; }
+.CodeMirror-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto !important;
+}
 
 header > nav .module > .nav .item .actions .delete {
     opacity: 0;
