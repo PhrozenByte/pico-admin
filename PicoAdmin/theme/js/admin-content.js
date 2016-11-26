@@ -70,7 +70,15 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         page = page ? page : this.picoAdmin.activePath;
         if (!page) return false;
 
-        requestSave.call(this, page, { yaml: this.getYaml(), markdown: this.getMarkdown() }, false);
+        var data = { yaml: this.getYaml(), markdown: this.getMarkdown() },
+            self = this;
+        requestSave.call(this, page, data, false, function (xhr, statusText, response) {
+            if (!response || !response.success) {
+                return false;
+            }
+
+            return saveCallback.call(self, page, response.title, response.navigation);
+        });
         return true;
     };
 
@@ -81,9 +89,54 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         page = page ? page : this.picoAdmin.activePath;
         if (!page) return false;
 
-        requestSave.call(this, page, { content: self.getRescueContent() }, true);
+        var data = { content: self.getRescueContent() },
+            self = this;
+        requestSave.call(this, page, data, true, function (xhr, statusText, response) {
+            if (!response || !response.success) {
+                return false;
+            }
+
+            return saveCallback.call(self, page, response.title, response.navigation);
+        });
         return true;
     };
+
+    function saveCallback(page, title, navigation)
+    {
+        if (navigation) {
+            if (!/^\s*<div class="nav-inner">/.test(navigation)) {
+                return false;
+            }
+
+            this.replaceNavigation(navigation);
+        }
+
+        var oldMode = this.currentMode;
+
+        if (oldMode === 'rescue') {
+            this.setPendingChanges(false);
+            this.updateToolbar();
+
+            this.picoAdmin.updateHistory();
+
+            this.open(page);
+            return true;
+        }
+
+        this.setPendingChanges(false);
+        this.setMode('edit');
+        this.updateToolbar();
+
+        this.updateTitle('Edit ' + page + this.contentExt + (title ? ' (' + title + ')' : ''));
+
+        if (oldMode === 'create') {
+            this.picoAdmin.updateHistory();
+        } else {
+            this.picoAdmin.pushHistory(this.picoAdmin.getUrl('content', 'edit', page));
+        }
+
+        return true;
+    }
 
     function requestSave(page, data, rawRequest, success, error, complete)
     {
@@ -243,7 +296,19 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
             self.picoAdmin.pushHistory(currentHistoryObject);
 
-            requestDelete.call(self, page);
+            requestDelete.call(self, page, function (xhr, statusText, response) {
+                if (!response || !response.success) {
+                    return false;
+                }
+
+                if (response.navigation) {
+                    if (!/^\s*<div class="nav-inner">/.test(response.navigation)) {
+                        return false;
+                    }
+
+                    self.replaceNavigation(response.navigation);
+                }
+            });
         });
     };
 

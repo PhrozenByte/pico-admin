@@ -21,6 +21,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
     protected $pageNotFound;
 
+    protected $actionError;
+
     protected $rawRequest;
     protected $rawContent;
 
@@ -151,8 +153,20 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
                 break;
 
+            case 'save':
+                $this->rawRequest = (isset($_REQUEST['raw']) && $_REQUEST['raw']);
+
+                if ($this->rawRequest) {
+                    $this->rawContent = isset($_POST['content']) ? (string) $_POST['content'] : '';
+                } else {
+                    $this->yamlContent = isset($_POST['yaml']) ? (string) $_POST['yaml'] : '';
+                    $this->markdownContent = isset($_POST['markdown']) ? (string) $_POST['markdown'] : '';
+                }
+                break;
+
             case 'navigation':
             case 'create':
+            case 'delete':
                 break;
 
             default:
@@ -176,6 +190,39 @@ class PicoContentAdmin extends AbstractPicoPlugin
         switch ($this->action) {
             case 'fullPreview':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
+                break;
+
+            case 'save':
+                $fileContent = '';
+                if ($this->rawRequest) {
+                    $fileContent = $this->rawContent;
+                } else {
+                    if (!empty($this->yamlContent)) {
+                        $fileContent = "---\n" . $this->yamlContent . "\n" . "---\n\n";
+                    }
+                    $fileContent .= $this->markdownContent . "\n";
+                }
+
+                try {
+                    $this->admin->writeFile(
+                        $this->getConfig('content_dir'),
+                        $this->page . $this->getConfig('content_ext'),
+                        $fileContent
+                    );
+                } catch (RuntimeException $e) {
+                    $this->actionError = $e->getMessage();
+                }
+                break;
+
+            case 'delete':
+                try {
+                    $this->admin->deleteFile(
+                        $this->getConfig('content_dir'),
+                        $this->page . $this->getConfig('content_ext')
+                    );
+                } catch (RuntimeException $e) {
+                    $this->actionError = $e->getMessage();
+                }
                 break;
         }
     }
@@ -238,6 +285,24 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     $rawContent = "---\n" . $this->yamlContent . "\n---\n\n";
                 }
                 $rawContent .= $this->markdownContent;
+                break;
+
+            case 'save':
+                $fileContent = '';
+                if ($this->rawRequest) {
+                    $fileContent = $this->rawContent;
+                } elseif (!empty($this->yamlContent)) {
+                    // we don't care about the markdown contents
+                    $fileContent = "---\n" . $this->yamlContent . "\n" . "---\n\n";
+                }
+
+                $headers = $this->getMetaHeaders();
+                try {
+                    $this->meta = $this->parseFileMeta($fileContent, $headers);
+                } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
+                    $this->meta = $this->parseFileMeta('', $headers);
+                    $this->meta['YAML_ParseError'] = $e->getMessage();
+                }
                 break;
         }
     }
@@ -319,6 +384,26 @@ class PicoContentAdmin extends AbstractPicoPlugin
             case 'preview':
                 $twigVariables['json']['preview'] = $twigVariables['content'];
                 break;
+
+            case 'save':
+            case 'delete':
+                if ($this->actionError) {
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
+
+                    $twigVariables['json']['error'] = array(
+                        'title' => 'Failure',
+                        'message' => $this->actionError,
+                        'type' => 'error'
+                    );
+                    break;
+                }
+
+                if ($this->action === 'save') {
+                    $twigVariables['json']['title'] = !empty($this->meta['title']) ? $this->meta['title'] : '';
+                }
+
+                $twigVariables['json']['success'] = true;
+                // intentional fallthrough
 
             case 'navigation':
                 $twigVariables['json']['navigation'] = $twig->render(
