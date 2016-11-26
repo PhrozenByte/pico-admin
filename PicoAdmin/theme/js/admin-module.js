@@ -17,14 +17,15 @@ utils.createClass(PicoAdminModule, function () {
         var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
             navigationButton = moduleNav.querySelector('.headline h3 a'),
             landingButton = document.getElementById('module-' + this.moduleName + '-landing'),
-            menu = moduleNav.querySelector('.nav > div'),
+            navContainer = moduleNav.querySelector('.nav'),
+            navInner = moduleNav.querySelector('.nav > div'),
             self = this;
 
         var toggleMenuEvent = function (event) {
             event.preventDefault();
 
-            var menu = moduleNav.querySelector('.nav > div');
-            if (!menu || (menu.dataset.expanded === 'false')) {
+            var navWrapper = moduleNav.querySelector('.nav > div');
+            if (!navWrapper || (navWrapper.dataset.expanded === 'false')) {
                 self.expandNavigation();
             } else {
                 self.collapseNavigation();
@@ -34,26 +35,59 @@ utils.createClass(PicoAdminModule, function () {
         if (navigationButton) utils.addNamedEventListener(navigationButton, 'click', 'toggle', toggleMenuEvent);
         if (landingButton)    utils.addNamedEventListener(landingButton, 'click', 'toggle', toggleMenuEvent);
 
-        if (menu) {
-            if (menu.classList.contains('nav-inner')) {
+        if (navInner) {
+            if (navInner.classList.contains('nav-inner')) {
                 // add sliding wrapper
-                var wrapper = document.createElement('div'),
-                    navContainer = moduleNav.querySelector('.nav');
-                wrapper.appendChild(menu);
-                navContainer.appendChild(wrapper);
+                var navWrapper = document.createElement('div');
+                navWrapper.appendChild(navInner);
+                navContainer.appendChild(navWrapper);
+            } else {
+                navInner = navContainer.querySelector('.nav-inner');
             }
 
             // init action buttons
             var headlineActions = moduleNav.querySelector('.headline .actions'),
-                itemActionsList = moduleNav.querySelectorAll('.nav .item .actions');
+                itemActionsList = navInner.querySelectorAll('.item .actions');
 
             headlineActions.classList.remove('hidden');
-            utils.forEach(itemActionsList, function (_, itemActions) { itemActions.classList.remove('hidden'); });
-            self.initNavigationActions(headlineActions, itemActionsList);
+            this.initNavigationActions(itemActionsList, headlineActions);
 
             // init items
-            self.initNavigationItems(moduleNav.querySelector('.nav'));
+            this.initNavigationItems(navInner);
         }
+    };
+
+    this.prototype.replaceNavigation = function (navInner, callback)
+    {
+        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
+            navContainer = moduleNav.querySelector('.nav'),
+            oldWrapper = moduleNav.querySelector('.nav > div');
+
+        // wrap navigation and add the wrapper to the navigation container
+        var navWrapper = document.createElement('div');
+        navWrapper.classList.add('hidden');
+        navContainer.appendChild(navWrapper);
+
+        if (typeof navInner === 'string') {
+            navWrapper.innerHTML = navInner;
+            navInner = navWrapper.querySelector('.nav-inner');
+        } else {
+            navWrapper.appendChild(navInner);
+        }
+
+        // init item action buttons
+        var itemActionsList = navInner.querySelectorAll('.item .actions');
+        this.initNavigationActions(itemActionsList);
+
+        // init items
+        this.initNavigationItems(navInner);
+
+        // cross fade new navigation
+        utils.crossFade(oldWrapper, navWrapper, function () {
+            oldWrapper.parentNode.removeChild(oldWrapper);
+
+            if (callback) callback();
+        });
     };
 
     function loadNavigation(callback)
@@ -65,29 +99,28 @@ utils.createClass(PicoAdminModule, function () {
         this.picoAdmin.ajax(this.moduleName, 'navigation', null, {
             responseType: 'json',
             success: function (xhr, statusText, response) {
-                console.log(response);
                 if (!response || !response.navigation || !/^\s*<div class="nav-inner">/.test(response.navigation)) {
                     return false;
                 }
 
                 // add sliding wrapper
-                var wrapper = document.createElement('div');
-                wrapper.classList.add('hidden');
-                wrapper.innerHTML = response.navigation;
-                navContainer.appendChild(wrapper);
+                var navWrapper = document.createElement('div');
+                navWrapper.classList.add('hidden');
+                navWrapper.innerHTML = response.navigation;
+                navContainer.appendChild(navWrapper);
+
+                var navInner = navWrapper.querySelector('.nav-inner');
 
                 // init action buttons
                 var headlineActions = moduleNav.querySelector('.headline .actions'),
-                    itemActionsList = moduleNav.querySelectorAll('.nav .item .actions');
-
-                utils.forEach(itemActionsList, function (_, itemActions) { itemActions.classList.remove('hidden'); });
-                self.initNavigationActions(headlineActions, itemActionsList);
+                    itemActionsList = navInner.querySelectorAll('.item .actions');
+                self.initNavigationActions(itemActionsList, headlineActions);
 
                 // init items
-                self.initNavigationItems(navContainer);
+                self.initNavigationItems(navInner);
 
                 // call callback
-                callback();
+                if (callback) callback();
             }
         });
     }
@@ -97,7 +130,7 @@ utils.createClass(PicoAdminModule, function () {
         // overwrite me
     };
 
-    this.prototype.initNavigationActions = function (headlineActions, itemActionsList)
+    this.prototype.initNavigationActions = function (itemActionsList, headlineActions)
     {
         // overwrite me
     };

@@ -337,9 +337,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         });
     };
 
-    this.prototype.initNavigationActions = function (headlineActions, itemActionsList)
+    this.prototype.initNavigationActions = function (itemActionsList, headlineActions)
     {
-        parent.initNavigationActions.call(this, headlineActions, itemActionsList);
+        parent.initNavigationActions.call(this, itemActionsList, headlineActions);
         var self = this;
 
         // create page action
@@ -382,10 +382,12 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         };
 
         // headline actions
-        var createPageHeadline = createPage.cloneNode(true);
-        createPageHeadline.href = this.picoAdmin.getUrl('content', 'create');
-        utils.addNamedEventListener(createPageHeadline, 'click', 'action', createPageEvent);
-        headlineActions.appendChild(createPageHeadline);
+        if (headlineActions) {
+            var createPageHeadline = createPage.cloneNode(true);
+            createPageHeadline.href = this.picoAdmin.getUrl('content', 'create');
+            utils.addNamedEventListener(createPageHeadline, 'click', 'action', createPageEvent);
+            headlineActions.appendChild(createPageHeadline);
+        }
 
         // item actions
         utils.forEach(itemActionsList, function (_, actions) {

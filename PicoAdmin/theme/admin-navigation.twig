@@ -11,7 +11,7 @@
                     {{ icon(files.index) }}
                     {{ path(files.index.dirName) }}<strong>index</strong>{{ files.index.fileExt }}
                 </a>
-                <div class="actions hidden"></div>
+                <div class="actions"></div>
             </div>
         </li>
     {% endif %}
@@ -29,7 +29,7 @@
                         {{ path(file.dirName) }}<strong>{{ file.fileName }}</strong>{{ file.fileExt }}
                     </a>
                 {% endif %}
-                <div class="actions hidden"></div>
+                <div class="actions"></div>
             </div>
             {% if file.children %}
                 <ul>
