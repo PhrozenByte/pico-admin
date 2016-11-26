@@ -24,6 +24,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
     protected $rawRequest;
     protected $rawContent;
 
+    protected $meta;
     protected $yamlContent;
     protected $markdownContent;
 
@@ -105,6 +106,12 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     }
                 }
 
+                if ($this->action === 'recover') {
+                    header('307 Temporary Redirect');
+                    header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
+                    die();
+                }
+
                 if (empty($this->page)) {
                     if (($this->action === 'edit') || ($this->action === 'load')) {
                         header('307 Temporary Redirect');
@@ -151,7 +158,16 @@ class PicoContentAdmin extends AbstractPicoPlugin
             default:
                 // unknown action; disable module...
                 $this->setEnabled(false);
-                break;
+                return;
+        }
+
+        // JSON requests
+        if (($this->action !== 'create') && ($this->action !== 'edit')) {
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || ($_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest')) {
+                header('307 Temporary Redirect');
+                header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
+                die();
+            }
         }
     }
 
@@ -184,7 +200,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
                 $this->pageNotFound = !file_exists($file);
 
-                $fileContent = !$this->pageNotFound ? $this->loadFileContent($file) : '';
+                $fileContent = '';
+                if (!$this->pageNotFound) {
+                    $fileContent = $this->loadFileContent($file);
+
+                    $headers = $this->getMetaHeaders();
+                    try {
+                        $this->meta = $this->parseFileMeta($fileContent, $headers);
+                    } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
+                        $this->meta = $this->parseFileMeta('', $headers);
+                        $this->meta['YAML_ParseError'] = $e->getMessage();
+                    }
+                }
+
 
                 if ($this->rawRequest) {
                     // rescue mode: return raw file contents
@@ -241,20 +269,19 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 if (!$this->pageNotFound) {
                     $twigVariables['error'] = array(
                         'title' => 'Conflict',
-                        'message' => "There's already a page of this name, be careful about not accidently overwriting it!",
+                        'message' => "There's already a page of this name, "
+                            . 'be careful about not accidently overwriting it!',
                         'type' => 'warning',
                         'timeout' => 0
                     );
                 }
             }
 
-            $meta = $this->getFileMeta();
-
             $twigVariables['rescue_mode'] = $this->rawRequest;
             $twigVariables['yaml_content'] = $this->yamlContent;
             $twigVariables['markdown_content'] = $this->markdownContent;
             $twigVariables['page_path'] = $this->page;
-            $twigVariables['page_title'] = !empty($meta['title']) ? $meta['title'] : '';
+            $twigVariables['page_title'] = !empty($this->meta['title']) ? $this->meta['title'] : '';
             $twigVariables['navigation'] = $this->getNavigation();
 
             return;
@@ -284,10 +311,9 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     break;
                 }
 
-                $meta = $this->getFileMeta();
                 $twigVariables['json']['yaml'] = $this->yamlContent;
                 $twigVariables['json']['markdown'] = $this->markdownContent;
-                $twigVariables['json']['title'] = !empty($meta['title']) ? $meta['title'] : '';
+                $twigVariables['json']['title'] = !empty($this->meta['title']) ? $this->meta['title'] : '';
                 break;
 
             case 'preview':

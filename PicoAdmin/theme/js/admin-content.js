@@ -250,6 +250,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
     function requestDelete(page, success, error, complete)
     {
         return this.picoAdmin.ajax('content', 'delete', page, {
+            responseType: 'json',
             success: success,
             error: error,
             complete: complete

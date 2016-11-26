@@ -180,10 +180,15 @@ utils.createClass(PicoAdmin, function () {
         this.setHistoryObject(this.currentState, historyObject);
 
         // replace the history object only when necessary
-        if (!oldHistoryObject || (historyObject.title !== oldHistoryObject.title) || (historyObject.url !== oldHistoryObject.url)) {
+        if (
+            !oldHistoryObject
+            || (historyObject.title !== oldHistoryObject.title)
+            || (historyObject.url !== oldHistoryObject.url)
+        ) {
             // make sure we don't accidently replace other states than the expected
             // this e.g. happens when navigating back accross modules (PicoContentAdmin.disable() via popstate event)
-            if ((window.history.state === null) || (window.history.state === this.currentState)) {
+            var historyState = window.history.state;
+            if (!historyState || !historyState.PicoAdmin || (historyState.PicoAdmin == this.currentState)) {
                 window.history.replaceState(
                     { PicoAdmin: this.currentState },
                     historyObject.title,

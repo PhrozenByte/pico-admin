@@ -168,7 +168,10 @@ footer a[href] { color: #ddd; }
 footer a[href]:hover { color: #fff; }
 
 @media (max-width: 767px) {
-    header { border-right: 0 none; }
+    header {
+        border-right: 0 none;
+        border-bottom: 1px solid #ddd;
+    }
 }
 
 /*** NOTIFICATIONS ***/

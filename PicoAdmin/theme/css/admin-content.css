@@ -65,12 +65,12 @@
     overflow: auto !important;
 }
 
-header > nav .module > .nav .item .actions .delete {
+header > nav .module > .nav .item .actions .delete > .fa {
     opacity: 0;
     -webkit-transition: opacity .2s ease-in;
             transition: opacity .2s ease-in;
 }
-header > nav .module > .nav .item:hover .actions .delete { opacity: 1; }
+header > nav .module > .nav .item:hover .actions .delete > .fa { opacity: 1; }
 
 header > nav .module > .nav .item[data-path$="index"] > a > .fa { color: #009; }
 header > nav .module > .nav .item[data-path$="404"] > a > .fa { color: #990; }
