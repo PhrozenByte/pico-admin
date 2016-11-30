@@ -155,7 +155,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
     {
         assertEnabled.call(this);
 
-        this.picoAdmin.askFileName({
+        this.askFileName({
             title: 'Save As',
             value: this.picoAdmin.activePath,
             fileExt: this.contentExt,
@@ -420,7 +420,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
             var actions = utils.closest(event.currentTarget, '.actions'),
                 path = actions.parentNode.classList.contains('item') ? actions.parentNode.dataset.path + '/' : '';
 
-            self.picoAdmin.askFileName({
+            self.askFileName({
                 title: 'Create New Page',
                 value: path,
                 fileExt: self.contentExt,
@@ -1003,9 +1003,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         });
     };
 
-    this.prototype.askFileName = function (notificationData, alert)
+    this.prototype.askFileName = function (callback, options)
     {
-        parent.askFileName.call(this, notificationData, alert);
+        parent.askFileName.call(this, callback, options);
 
         if (this.markdownEditor) {
             var toolbar = this.markdownEditor.toolbarElements;
@@ -1013,9 +1013,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         }
     };
 
-    this.prototype.closeFileNameModal = function (notificationData, alert)
+    this.prototype.closeFileNameModal = function ()
     {
-        parent.closeFileNameModal.call(this, notificationData, alert);
+        parent.closeFileNameModal.call(this);
 
         if (this.markdownEditor) {
             var toolbar = this.markdownEditor.toolbarElements;
