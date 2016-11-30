@@ -173,7 +173,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
             var self = this;
             this.load(this.picoAdmin.activePath, function (yaml, markdown, title) {
-                updateContent.call(self, {
+                setContent.call(self, {
                     yaml: yaml,
                     markdown: markdown,
                     pendingChanges: false
@@ -511,6 +511,8 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
                 this.yamlEditorOptions.element,
                 this.yamlEditorOptions
             );
+        } else {
+            this.yamlEditor.refresh();
         }
 
         // init Markdown editor (SimpleMDE, a CodeMirror wrapper)
@@ -526,6 +528,8 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
             var footer = document.querySelector('footer');
             footer.insertBefore(this.markdownEditor.gui.statusbar, footer.firstChild);
+        } else {
+            this.markdownEditor.codemirror.refresh();
         }
 
         // init rescue editor

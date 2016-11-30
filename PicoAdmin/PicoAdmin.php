@@ -88,6 +88,15 @@ class PicoAdmin extends AbstractPicoPlugin
             $this->requestModule = 'info';
             $this->requestAction = $this->requestPayload = '';
         } elseif (empty($this->requestModule)) {
+            // when only a single module is registered, redirect to the main page of this module
+            if (count($this->modules) === 1) {
+                foreach ($this->modules as $moduleName => $module) {
+                    header('307 Temporary Redirect');
+                    header('Location: ' . $this->getAdminPageUrl($moduleName));
+                    die();
+                }
+            }
+
             // show built-in landing page when no specific module was requested
             // landing page requires authentication, therefore non-authenticated users will end up on the login page
             $this->requestModule = 'landing';
