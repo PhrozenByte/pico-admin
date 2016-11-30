@@ -469,9 +469,6 @@ utils.createClass(PicoAdmin, function () {
             notificationData.closeCallback = closeCallback;
         }
 
-        var module = this.modules[this.activeModule];
-        if (module) module.showNotification(notificationData, alert);
-
         utils.slideDown(alert);
         return alert;
     };
@@ -494,9 +491,6 @@ utils.createClass(PicoAdmin, function () {
 
             if (notificationData.timerTimeout) clearTimeout(notificationData.timerTimeout);
             if (notificationData.timerInterval) clearInterval(notificationData.timerInterval);
-
-            var module = this.modules[this.activeModule];
-            if (module) module.hideNotification(notificationData, alert);
 
             utils.slideUp(alert, function() {
                 alert.parentNode.removeChild(alert);
