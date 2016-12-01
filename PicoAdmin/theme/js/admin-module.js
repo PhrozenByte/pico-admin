@@ -63,7 +63,7 @@ utils.createClass(PicoAdminModule, function () {
     {
         var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
             navContainer = moduleNav.querySelector('.nav'),
-            oldWrapper = moduleNav.querySelector('.nav > div');
+            oldWrapper = moduleNav.querySelector('.nav > div:not(.cross-fade-placeholder)');
 
         // wrap navigation and add the wrapper to the navigation container
         var navWrapper = document.createElement('div');

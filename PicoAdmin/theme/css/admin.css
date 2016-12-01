@@ -72,6 +72,9 @@ body {
 #container > header > nav > ul .module > .headline h3 { flex: 1 1 auto; }
 #container > header > nav > ul .module > .headline h3 a { display: block; }
 
+#container > header > nav > ul .module > .nav { display: flex; flex-direction: column; }
+#container > header > nav > ul .module > .nav > * { flex: 1 0 auto; }
+
 #container > header > nav > ul .module > .nav .item { display: flex; }
 #container > header > nav > ul .module > .nav .item > a { flex: 1 1 auto; }
 
