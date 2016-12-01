@@ -271,6 +271,12 @@ class PicoAdmin extends AbstractPicoPlugin
                 throw new RuntimeException('Unable to return auth client token; did you configure the auth token?');
             }
 
+            // bind the auth token to the client's IP address
+            $authToken .= '/' . $_SERVER['REMOTE_ADDR'];
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $authToken .= '/' . $_SERVER['HTTP_X_FORWARDED_FOR'];
+            }
+
             // we slow down verification (i.e. by storing just the salt in the config) on purpose!
             $this->authClientToken = password_hash($authToken, $authTokenInfo['algo'], $authClientOptions);
         }
