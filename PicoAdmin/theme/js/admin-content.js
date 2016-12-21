@@ -108,7 +108,10 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
                 return false;
             }
 
-            this.replaceNavigation(navigation);
+            var self = this;
+            this.replaceNavigation(navigation, function () {
+                self.picoAdmin.selectPath(page);
+            });
         }
 
         var oldMode = this.currentMode;

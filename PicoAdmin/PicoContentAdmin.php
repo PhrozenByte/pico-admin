@@ -89,14 +89,14 @@ class PicoContentAdmin extends AbstractPicoPlugin
     public function onAdminRequest(&$module, &$action, &$payload)
     {
         if ($module === 'content') {
-            if (empty($action)) {
+            if (!$action) {
                 header('307 Temporary Redirect');
                 header('Location: ' . $this->admin->getAdminPageUrl('content/edit/index'));
                 die();
             } else {
                 $this->action = $action;
 
-                if (!empty($payload)) {
+                if ($payload) {
                     $contentDirLength = strlen($this->getConfig('content_dir'));
                     $contentExtLength = strlen($this->getConfig('content_ext'));
 
@@ -108,18 +108,10 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     }
                 }
 
-                if ($this->action === 'recover') {
+                if (!$this->page && ($this->action === 'edit')) {
                     header('307 Temporary Redirect');
-                    header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
+                    header('Location: ' . $this->admin->getAdminPageUrl('content/' . $action . '/index'));
                     die();
-                }
-
-                if (empty($this->page)) {
-                    if (($this->action === 'edit') || ($this->action === 'load')) {
-                        header('307 Temporary Redirect');
-                        header('Location: ' . $this->admin->getAdminPageUrl('content/' . $action . '/index'));
-                        die();
-                    }
                 }
 
                 return;
@@ -197,7 +189,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 if ($this->rawRequest) {
                     $fileContent = $this->rawContent;
                 } else {
-                    if (!empty($this->yamlContent)) {
+                    if ($this->yamlContent) {
                         $fileContent = "---\n" . $this->yamlContent . "\n" . "---\n\n";
                     }
                     $fileContent .= $this->markdownContent . "\n";
@@ -229,10 +221,6 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
     public function onContentLoaded(&$rawContent)
     {
-        // don't let Pico parse Pico Admin's dummy contents
-        // TODO (Pico 2.0): skip the appropriate events instead
-        $rawContent = '';
-
         switch ($this->action) {
             case 'create':
                 $file = $this->getConfig('content_dir') . $this->page . $this->getConfig('content_ext');
@@ -240,6 +228,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
                 $this->yamlContent = '';
                 $this->markdownContent = '';
+
+                $rawContent = '';
                 break;
 
             case 'edit':
@@ -250,16 +240,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $fileContent = '';
                 if (!$this->pageNotFound) {
                     $fileContent = $this->loadFileContent($file);
-
-                    $headers = $this->getMetaHeaders();
-                    try {
-                        $this->meta = $this->parseFileMeta($fileContent, $headers);
-                    } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
-                        $this->meta = $this->parseFileMeta('', $headers);
-                        $this->meta['YAML_ParseError'] = $e->getMessage();
-                    }
                 }
-
 
                 if ($this->rawRequest) {
                     // rescue mode: return raw file contents
@@ -277,11 +258,13 @@ class PicoContentAdmin extends AbstractPicoPlugin
                     $this->yamlContent = '';
                     $this->markdownContent = $fileContent;
                 }
+
+                $rawContent = '';
                 break;
 
             case 'preview':
             case 'fullPreview':
-                if (!empty($this->yamlContent)) {
+                if ($this->yamlContent) {
                     $rawContent = "---\n" . $this->yamlContent . "\n---\n\n";
                 }
                 $rawContent .= $this->markdownContent;
@@ -291,17 +274,38 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $fileContent = '';
                 if ($this->rawRequest) {
                     $fileContent = $this->rawContent;
-                } elseif (!empty($this->yamlContent)) {
+                } elseif ($this->yamlContent) {
                     // we don't care about the markdown contents
                     $fileContent = "---\n" . $this->yamlContent . "\n" . "---\n\n";
                 }
 
-                $headers = $this->getMetaHeaders();
-                try {
-                    $this->meta = $this->parseFileMeta($fileContent, $headers);
-                } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
-                    $this->meta = $this->parseFileMeta('', $headers);
-                    $this->meta['YAML_ParseError'] = $e->getMessage();
+                $rawContent = '';
+                break;
+
+            case 'navigation':
+            case 'delete':
+                $rawContent = '';
+                break;
+        }
+    }
+
+    public function onMetaParsed(array &$meta)
+    {
+        switch ($this->action) {
+            case 'edit':
+            case 'load':
+            case 'save':
+                $this->meta = array();
+                if ($this->yamlContent) {
+                    try {
+                        $fileContent = "---\n" . $this->yamlContent . "\n" . "---\n\n";
+                        $headers = $this->getMetaHeaders();
+
+                        $this->meta = $this->parseFileMeta($fileContent, $headers);
+                    } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
+                        $this->meta = $this->parseFileMeta('', $headers);
+                        $this->meta['YAML_ParseError'] = $e->getMessage();
+                    }
                 }
                 break;
         }
@@ -354,7 +358,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
         // JSON requests
         header('Content-Type: application/json; charset=UTF-8');
-        $templateName = 'admin-ajax.twig';
+        $templateName = 'admin-json.twig';
 
         $twigVariables['json'] = array();
 

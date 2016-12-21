@@ -1,5 +1,6 @@
 ---
 Title: Pico Admin Panel
+Robots: noindex,nofollow
 ---
 
 <style type="text/css">

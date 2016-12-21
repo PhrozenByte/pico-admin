@@ -22,13 +22,15 @@ class PicoAdmin extends AbstractPicoPlugin
      */
     public function onPluginsLoaded(array &$plugins)
     {
-        // require >= Pico 1.1; Pico::VERSION wasn't defined before Pico 1.1
+        // require >= Pico 2.0; Pico::VERSION wasn't defined before Pico 2.0
         if (!defined('Pico::VERSION')) {
             $this->setEnabled(false);
             return;
         }
 
-        // TODO (Pico 2.0): Load built-in admin modules manually
+        // load built-in admin module PicoContentAdmin
+        require_once(__DIR__ . '/PicoContentAdmin.php');
+        $this->loadPlugin(new PicoContentAdmin($this->getPico()));
     }
 
     /**
@@ -50,8 +52,8 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         $config['PicoAdmin'] += $defaultPluginConfig;
-        if (empty($config['PicoAdmin']['url'])) {
-            $config['PicoAdmin']['url'] = 'admin';
+        if (!$config['PicoAdmin']['url']) {
+            $config['PicoAdmin']['url'] = $defaultPluginConfig['url'];
         } else {
             $config['PicoAdmin']['url'] = trim($config['PicoAdmin']['url'], '/');
         }
@@ -303,13 +305,13 @@ class PicoAdmin extends AbstractPicoPlugin
 
     public function getAdminPageUrl($page, $queryData = null)
     {
-        $page = !empty($page) ? $this->getPluginConfig('url') . '/' . $page : $this->getPluginConfig('url');
+        $page = $page ? $this->getPluginConfig('url') . '/' . $page : $this->getPluginConfig('url');
         return $this->getPageUrl($page, $queryData, false);
     }
 
     public function getAdminThemeUrl()
     {
-        if (!empty($this->adminThemeUrl)) {
+        if ($this->adminThemeUrl) {
             return $this->adminThemeUrl;
         }
 
@@ -331,7 +333,7 @@ class PicoAdmin extends AbstractPicoPlugin
         $fileName = array_pop($pathComponents);
         $path = '';
 
-        if (empty($fileName)) {
+        if (!$fileName) {
             throw new RuntimeException('The given file path is invalid');
         }
 
@@ -344,7 +346,7 @@ class PicoAdmin extends AbstractPicoPlugin
                 if (!is_writable($basePath . $parentPath) || (!$isWindows && !is_executable($basePath . $parentPath))) {
                     throw new RuntimeException(
                         "You don't have permission to create files or directories in "
-                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory')
+                            . ($parentPath ? '"' . $parentPath . '"' : 'the content directory')
                     );
                 }
 
@@ -374,7 +376,7 @@ class PicoAdmin extends AbstractPicoPlugin
             }
         } else {
             if (!is_writable($basePath . $path) || (!$isWindows && !is_executable($basePath . $path))) {
-                $pathName = !empty($path) ? '"' . $path . '"' : 'the content directory';
+                $pathName = $path ? '"' . $path . '"' : 'the content directory';
                 throw new RuntimeException("You don't have permission to create files in " . $pathName);
             }
         }
@@ -394,9 +396,9 @@ class PicoAdmin extends AbstractPicoPlugin
         $isWindows = (strncasecmp(PHP_OS, 'WIN', 3) === 0);
         $pathComponents = explode('/', $path);
         $fileName = array_pop($pathComponents);
-        $path = !empty($pathComponents) ? implode('/', $pathComponents) . '/' : '';
+        $path = $pathComponents ? implode('/', $pathComponents) . '/' : '';
 
-        if (empty($fileName)) {
+        if (!$fileName) {
             throw new RuntimeException('The given file path is invalid');
         }
 
@@ -409,7 +411,7 @@ class PicoAdmin extends AbstractPicoPlugin
             throw new RuntimeException("You don't have permission to modify file \"" . $path . $fileName . '"');
         }
         if (!is_writable($basePath . $path) || (!$isWindows && !is_executable($basePath . $path))) {
-            $pathName = !empty($path) ? '"' . $path . '"' : 'the content directory';
+            $pathName = $path ? '"' . $path . '"' : 'the content directory';
             throw new RuntimeException("You don't have permission to delete files in " . $pathName);
         }
 
@@ -432,7 +434,7 @@ class PicoAdmin extends AbstractPicoPlugin
                 if (!is_writable($basePath . $parentPath) || (!$isWindows && !is_executable($basePath . $parentPath))) {
                     throw new RuntimeException(
                         "You don't have permission to delete files or directories in "
-                            . (!empty($parentPath) ? '"' . $parentPath . '"' : 'the content directory')
+                            . ($parentPath ? '"' . $parentPath . '"' : 'the content directory')
                     );
                 }
 
