@@ -17,7 +17,6 @@ Robots: noindex,nofollow
 to use to access the admin panel below and hit `Generate`:
 
 <form action="" method="post">
-    <input type="hidden" name="auth_client_salt" value="%meta.admin_auth_client_salt%" />
     <input type="password" name="password" placeholder="Password" />
     <input type="submit" value="Generate" />
 </form>
@@ -28,7 +27,6 @@ to use to access the admin panel below and hit `Generate`:
 
 ```
 $config['PicoAdmin']['auth_token'] = '%meta.admin_auth_token%';
-$config['PicoAdmin']['auth_client_salt'] = '%meta.admin_auth_client_salt%';
 ```
 
 **Step 3:** Browse to <a href="%admin_url%">%admin_url%</a> and login with the
@@ -39,3 +37,4 @@ password you've configured.
 ### Security
 
 TODO: Inform the user that he should use HTTPS
+TODO: Make sure session.use_cookies is set to 1 in php.ini, warn when session.use_only_cookies isn't set to 1, add a cookie-check (PicoAdmin won't work without cookies!)

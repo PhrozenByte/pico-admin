@@ -99,10 +99,7 @@
         <script src="{{ admin_theme_url }}/js/admin-module.js" type="text/javascript"></script>
 
         <script type="text/javascript">
-            var picoAdmin = new PicoAdmin(
-                '{{ admin_auth_client_token|escape("js") }}',
-                '{{ ""|admin_link|escape("js") }}'
-            );
+            var picoAdmin = new PicoAdmin('{{ ""|admin_link|escape("js") }}');
             picoAdmin.init();
         </script>
 

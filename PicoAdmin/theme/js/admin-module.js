@@ -98,7 +98,7 @@ utils.createClass(PicoAdminModule, function () {
             navContainer = moduleNav.querySelector('.nav'),
             self = this;
 
-        this.picoAdmin.ajax(this.moduleName, 'navigation', null, {
+        this.ajax('navigation', null, {
             responseType: 'json',
             success: function (xhr, statusText, response) {
                 if (!response || !response.navigation || !/^\s*<div class="nav-inner">/.test(response.navigation)) {
@@ -465,5 +465,10 @@ utils.createClass(PicoAdminModule, function () {
             var inputField = notification.querySelector('.input-group > input');
             inputField.value = path;
         }
+    };
+
+    this.prototype.ajax = function (action, payload, options)
+    {
+        return this.picoAdmin.ajax(this.moduleName, action, payload, options);
     };
 });

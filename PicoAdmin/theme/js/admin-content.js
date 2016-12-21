@@ -1,6 +1,8 @@
-function PicoContentAdmin(picoAdmin)
+function PicoContentAdmin(picoAdmin, csrfToken)
 {
     PicoAdminModule.call(this, picoAdmin, 'content');
+
+    this.csrfToken = csrfToken;
 
     this.titleTemplate = null;
     this.contentExt = null;
@@ -144,7 +146,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
     function requestSave(page, data, rawRequest, success, error, complete)
     {
         var queryParams = rawRequest ? { raw: '1' } : {};
-        return this.picoAdmin.ajax('content', 'save', page, {
+        return this.ajax('save', page, {
             queryParams: queryParams,
             postData: data,
             responseType: 'json',
@@ -214,7 +216,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         }
 
         var self = this;
-        this.previewXhr = this.picoAdmin.ajax('content', 'preview', null, {
+        this.previewXhr = this.ajax('preview', null, {
             postData: {
                 yaml: yaml,
                 markdown: markdown
@@ -241,13 +243,11 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
                 '<form action="' + url + '" method="POST" target="_blank" class="hidden">' +
                 '   <textarea class="yaml" name="yaml"></textarea>' +
                 '   <textarea class="markdown" name="markdown"></textarea>' +
-                '   <input class="auth_client_token" type="hidden" name="auth_client_token" value="" />' +
                 '</form>'
             );
 
         form.querySelector('.yaml').value = this.getYaml();
         form.querySelector('.markdown').value = this.getMarkdown();
-        form.querySelector('.auth_client_token').value = this.picoAdmin.authToken;
 
         document.body.appendChild(form);
 
@@ -317,7 +317,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
 
     function requestDelete(page, success, error, complete)
     {
-        return this.picoAdmin.ajax('content', 'delete', page, {
+        return this.ajax('delete', page, {
             responseType: 'json',
             success: success,
             error: error,
@@ -361,7 +361,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         var queryParams = rawRequest ? { raw: '1' } : {},
             self = this;
 
-        this.loadXhr = this.picoAdmin.ajax('content', 'load', page, {
+        this.loadXhr = this.ajax('load', page, {
             queryParams: queryParams,
             responseType: 'json',
             success: success,
@@ -1024,5 +1024,20 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
             var toolbar = this.markdownEditor.toolbarElements;
             if (toolbar['save-as']) toolbar['save-as'].classList.remove('disabled');
         }
+    };
+
+    this.prototype.ajax = function (action, payload, options)
+    {
+        if (options === undefined) {
+            options = { postData: { csrf_token: this.csrfToken } };
+        } else if (options.postData === undefined) {
+            options.postData = { csrf_token: this.csrfToken };
+        } else if (options.postData.csrf_token === undefined) {
+            options.postData.csrf_token = this.csrfToken;
+        } else if (options.postData.csrf_token === null) {
+            delete options.postData.csrf_token;
+        }
+
+        return parent.ajax.call(this, action, payload, options);
     };
 });

@@ -1,6 +1,5 @@
-function PicoAdmin(authToken, baseUrl)
+function PicoAdmin(baseUrl)
 {
-    this.authToken = authToken;
     this.baseUrl = baseUrl;
 
     this.modules = {};
@@ -99,7 +98,6 @@ utils.createClass(PicoAdmin, function () {
 
         // users shouldn't use the browser's reload button
         window.addEventListener('beforeunload', function (event) {
-            event.preventDefault();
             self.updateHistory();
         });
 
@@ -248,16 +246,6 @@ utils.createClass(PicoAdmin, function () {
     this.prototype.ajax = function (module, action, payload, options)
     {
         var self = this;
-
-        if (options === undefined) {
-            options = { postData: { auth_client_token: this.authToken } };
-        } else if (options.postData === undefined) {
-            options.postData = { auth_client_token: this.authToken };
-        } else if (options.postData.auth_client_token === undefined) {
-            options.postData.auth_client_token = this.authToken;
-        } else if (options.postData.auth_client_token === null) {
-            delete options.postData.auth_client_token;
-        }
 
         this.showLoading();
 

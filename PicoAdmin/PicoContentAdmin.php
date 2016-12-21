@@ -9,6 +9,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
      */
     protected $dependsOn = array('PicoAdmin');
 
+    protected $session;
+
     /**
      * Current instance of the PicoAdmin plugin
      *
@@ -18,6 +20,8 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
     protected $action;
     protected $page;
+
+    protected $csrfToken;
 
     protected $pageNotFound;
 
@@ -75,10 +79,15 @@ class PicoContentAdmin extends AbstractPicoPlugin
         $pluginConfig += $defaultPluginConfig;
     }
 
+    public function onSessionInit(PicoSession $session, &$pluginsReadOnly, &$plugins)
+    {
+        $this->session = $session;
+        $plugins['PicoContentAdmin'] = $this;
+    }
+
     public function onAdminInitializing(PicoAdmin $admin, array &$modules)
     {
         $this->admin = $admin;
-
         $modules['content'] = array(
             'title' => 'Pico Content Admin',
             'template' => 'admin-content.twig',
@@ -167,14 +176,22 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 return;
         }
 
-        // JSON requests
-        if (($this->action !== 'create') && ($this->action !== 'edit')) {
-            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || ($_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest')) {
-                header('307 Temporary Redirect');
-                header('Location: ' . $this->admin->getAdminPageUrl('content/edit/' . $this->page));
-                die();
+        // handle CSRF token
+        if (($this->action === 'create') || ($this->action === 'edit')) {
+            $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
+            $this->csrfToken = $this->session->generateSignedToken('PicoContentAdmin', $csrfTokenPayload);
+        } else {
+            $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
+            $csrfToken = (isset($_POST['csrf_token']) && is_array($_POST['csrf_token'])) ? $_POST['csrf_token'] : array();
+
+            if ($this->session->verifySignedToken('PicoContentAdmin', $csrfTokenPayload, $csrfToken)) {
+                $this->csrfToken = $csrfToken;
+            } else {
+                $this->action = 'csrfError';
             }
         }
+
+        $this->session->close('PicoContentAdmin');
     }
 
     public function onRequestFile(&$file)
@@ -352,7 +369,11 @@ class PicoContentAdmin extends AbstractPicoPlugin
             $twigVariables['page_path'] = $this->page;
             $twigVariables['page_title'] = !empty($this->meta['title']) ? $this->meta['title'] : '';
             $twigVariables['navigation'] = $this->getNavigation();
+            $twigVariables['csrf_token'] = $this->csrfToken;
 
+            return;
+        } elseif ($this->action === 'csrfError') {
+            header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
             return;
         }
 
@@ -483,5 +504,17 @@ class PicoContentAdmin extends AbstractPicoPlugin
         }
 
         return $this->navigation;
+    }
+
+    /**
+     * @see PicoPluginInterface::setEnabled()
+     */
+    public function setEnabled($enabled, $recursive = true, $auto = false)
+    {
+        if (!$enabled && $this->session) {
+            $this->session->close('PicoContentAdmin');
+        }
+
+        parent::setEnabled($enabled, $recursive, $auto);
     }
 }

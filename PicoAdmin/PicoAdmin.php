@@ -2,6 +2,10 @@
 
 class PicoAdmin extends AbstractPicoPlugin
 {
+    protected $dependsOn = array('PicoSession');
+
+    protected $session;
+
     protected $modules = array();
 
     protected $requestModule;
@@ -12,8 +16,6 @@ class PicoAdmin extends AbstractPicoPlugin
     protected $authenticationRequired = false;
 
     protected $adminThemeUrl;
-
-    private $authClientToken;
 
     /**
      * Loads built-in admin modules as Pico plugins
@@ -42,8 +44,7 @@ class PicoAdmin extends AbstractPicoPlugin
     {
         $defaultPluginConfig = array(
             'url' => 'admin',
-            'auth_token' => '',
-            'auth_client_salt' => ''
+            'auth_token' => ''
         );
 
         if (!isset($config['PicoAdmin']) || !is_array($config['PicoAdmin'])) {
@@ -57,6 +58,12 @@ class PicoAdmin extends AbstractPicoPlugin
         } else {
             $config['PicoAdmin']['url'] = trim($config['PicoAdmin']['url'], '/');
         }
+    }
+
+    public function onSessionInit(PicoSession $session, &$pluginsReadOnly, &$plugins)
+    {
+        $this->session = $session;
+        $plugins['PicoAdmin'] = $this;
     }
 
     public function onRequestUrl(&$url)
@@ -84,12 +91,11 @@ class PicoAdmin extends AbstractPicoPlugin
     protected function handleAdminRequest()
     {
         $authToken = $this->getPluginConfig('auth_token');
-        $authClientSalt = $this->getPluginConfig('auth_client_salt');
-        if (empty($authToken) || empty($authClientSalt)) {
+        if (!$authToken) {
             // force info screen when no auth token is configured
             $this->requestModule = 'info';
             $this->requestAction = $this->requestPayload = '';
-        } elseif (empty($this->requestModule)) {
+        } elseif (!$this->requestModule) {
             // when only a single module is registered, redirect to the main page of this module
             if (count($this->modules) === 1) {
                 foreach ($this->modules as $moduleName => $module) {
@@ -116,15 +122,29 @@ class PicoAdmin extends AbstractPicoPlugin
     {
         // check auth token
         $authToken = $this->getPluginConfig('auth_token');
-        if (!empty($authToken)) {
-            if (isset($_POST['password'])) {
-                // verify plain password
-                // you should use auth_client_token whenever possible (it's faster and more secure)!
+        if ($authToken) {
+            if (isset($_REQUEST['logout'])) {
+                // perform logout
+                $this->authenticated = false;
+
+                if ($this->session->get('PicoAdmin', 'authenticated')) {
+                    $this->session->migrateSession();
+                    $this->session->set('PicoAdmin', 'authenticated', false);
+                }
+            } elseif (isset($_POST['password'])) {
+                // verify password
                 $this->authenticated = password_verify((string) $_POST['password'], $authToken);
-            } elseif (isset($_POST['auth_client_token'])) {
-                // verify client token
-                $this->authenticated = $this->verifyAuthClientToken($_POST['auth_client_token']);
+
+                if ($this->authenticated !== $this->session->get('PicoAdmin', 'authenticated')) {
+                    $this->session->migrateSession();
+                    $this->session->set('PicoAdmin', 'authenticated', $this->authenticated);
+                }
+            } else {
+                // already authenticated session
+                $this->authenticated = (bool) $this->session->get('PicoAdmin', 'authenticated');
             }
+
+            $this->session->close('PicoAdmin');
         }
 
         $this->triggerEvent('onAdminAuthentication', array(
@@ -162,12 +182,10 @@ class PicoAdmin extends AbstractPicoPlugin
     {
         switch ($this->requestModule) {
             case 'info':
-                if (isset($_POST['password']) && isset($_POST['auth_client_salt'])) {
+                if (isset($_POST['password'])) {
                     $meta['admin_auth_token'] = $this->generateAuthToken((string) $_POST['password']);
-                    $meta['admin_auth_client_salt'] = (string) $_POST['auth_client_salt'];
                 } else {
                     $meta['admin_auth_token'] = '';
-                    $meta['admin_auth_client_salt'] = $this->generateAuthClientSalt();
                 }
                 break;
         }
@@ -227,10 +245,6 @@ class PicoAdmin extends AbstractPicoPlugin
 
         $twigVariables['admin_auth'] = $this->authenticated;
         $twigVariables['admin_auth_required'] = $this->authenticationRequired;
-
-        if ($this->authenticated) {
-            $twigVariables['admin_auth_client_token'] = $this->getAuthClientToken();
-        }
     }
 
     protected function generateAuthToken($password)
@@ -247,60 +261,6 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         return $authToken;
-    }
-
-    protected function generateAuthClientSalt()
-    {
-        $bcrypt = password_hash('PicoAdmin', PASSWORD_BCRYPT, array('cost' => 4));
-        if (!$bcrypt) {
-            throw new RuntimeException('Unable to generate client salt');
-        }
-
-        // we don't care about the hash, just the randomly generated salt
-        return substr($bcrypt, 7, 22);
-    }
-
-    protected function getAuthClientToken()
-    {
-        if ($this->authClientToken === null) {
-            $authToken = $this->getPluginConfig('auth_token');
-            $authTokenInfo = password_get_info($authToken);
-
-            $authClientOptions = $authTokenInfo['options'];
-            $authClientOptions['salt'] = $this->getPluginConfig('auth_client_salt');
-
-            if (($authTokenInfo['algo'] === 0) || empty($authClientOptions['salt'])) {
-                throw new RuntimeException('Unable to return auth client token; did you configure the auth token?');
-            }
-
-            // bind the auth token to the client's IP address
-            $authToken .= '/' . $_SERVER['REMOTE_ADDR'];
-            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $authToken .= '/' . $_SERVER['HTTP_X_FORWARDED_FOR'];
-            }
-
-            // we slow down verification (i.e. by storing just the salt in the config) on purpose!
-            $this->authClientToken = password_hash($authToken, $authTokenInfo['algo'], $authClientOptions);
-        }
-
-        return $this->authClientToken;
-    }
-
-    protected function verifyAuthClientToken($authClientToken)
-    {
-        $authClientToken1 = (string) $authClientToken;
-        $authClientToken2 = (string) $this->getAuthClientToken();
-
-        if (strlen($authClientToken1) !== strlen($authClientToken2)) {
-            return false;
-        }
-
-        $result = 0;
-        for ($i = 0, $length = strlen($authClientToken1); $i < $length; $i++) {
-            $result |= ord($authClientToken1[$i]) ^ ord($authClientToken2[$i]);
-        }
-
-        return ($result === 0);
     }
 
     public function getAdminPageUrl($page, $queryData = null)
@@ -463,5 +423,17 @@ class PicoAdmin extends AbstractPicoPlugin
                 }
             } while (($path = $parentPath) !== '');
         }
+    }
+
+    /**
+     * @see PicoPluginInterface::setEnabled()
+     */
+    public function setEnabled($enabled, $recursive = true, $auto = false)
+    {
+        if (!$enabled && $this->session) {
+            $this->session->close('PicoAdmin');
+        }
+
+        parent::setEnabled($enabled, $recursive, $auto);
     }
 }
