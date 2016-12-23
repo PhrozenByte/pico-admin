@@ -208,13 +208,18 @@ footer a[href]:hover { color: #fff; }
     border-bottom-left-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
 }
-#notification > .alert > p { text-align: justify; }
+#notification > .alert p { text-align: justify; }
 
 @media (max-width: 767px) {
     #notification > .alert { flex-wrap: wrap; }
-    #notification > .alert > p {
+    #notification > .alert > p,
+    #notification > .alert > div {
         order: 1;
         width: 100%;
+    }
+    #notification > .alert > h1 + p,
+    #notification > .alert > h1 + div {
+        margin-top: 0;
     }
 }
 
@@ -233,7 +238,8 @@ footer a[href]:hover { color: #fff; }
 .alert.alert-error {   background: #f66; border-color: #c33; }
 
 .alert > h1,
-.alert > p {
+.alert > p,
+.alert > div {
     margin: 1rem;
 }
 .alert > h1 {
@@ -242,7 +248,27 @@ footer a[href]:hover { color: #fff; }
     white-space: nowrap;
     font-weight: bold;
 }
-.alert > p { flex: 1000000 1 auto; }
+.alert > p,
+.alert > div {
+    flex: 1000000 1 auto;
+}
+
+.alert > .button {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    display: block;
+    margin: 1rem;
+    padding: 0.5em 1em;
+    color: #444;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0.3em;
+    cursor: pointer;
+    -webkit-transition: background .2s ease-in;
+            transition: background .2s ease-in;
+}
+.alert > .button:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
 
 .alert > .dismiss {
     align-self: flex-start;
@@ -257,6 +283,8 @@ footer a[href]:hover { color: #fff; }
     background: rgba(0, 0, 0, 0.15);
     border-radius: 0.3rem;
     cursor: default;
+    -webkit-transition: background .2s ease-in;
+            transition: background .2s ease-in;
 }
 .alert > .dismiss.closeable:hover {
     background: rgba(0, 0, 0, 0.3);

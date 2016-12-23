@@ -412,12 +412,28 @@ utils.createClass(PicoAdmin, function () {
             var messageElement;
             if (typeof message === 'string') {
                 messageElement = utils.parse('<p>' + message + '</p>');
-            } else {
-                messageElement = document.createElement('p');
-                messageElement.appendChild(message);
+            } else if (message.nodeName) {
+                if ((message.nodeName.toLowerCase() === 'div') || (message.nodeName.toLowerCase() === 'p')) {
+                    messageElement = message;
+                } else {
+                    messageElement = document.createElement('div');
+                    messageElement.appendChild(message);
+                }
             }
-            alert.appendChild(messageElement);
-            notificationData.message = message;
+            if (messageElement) {
+                alert.appendChild(messageElement);
+                notificationData.message = message;
+            }
+        }
+
+        if (options.button) {
+            var buttonElement = utils.parse(
+                '<a href="' + options.button.href + '" class="button" role="button">' +
+                '    <span class="fa ' + options.button.iconName + '" aria-hidden="true"></span>' +
+                '    <span>' + options.button.title + '</span>' +
+                '</a>'
+            );
+            alert.appendChild(buttonElement);
         }
 
         var addCloseButton = options.closeable,
