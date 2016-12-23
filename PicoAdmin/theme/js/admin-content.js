@@ -266,8 +266,7 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
                     'just tried to open a pop-up. You can either use the matching toolbar button ' +
                     'to open the full page preview instead, or configure your web browser to ' +
                     'allow pop-ups on ' + window.location.origin + '/.',
-                'warning',
-                0
+                { type: 'warning', timeout: 0 }
             );
         }
 

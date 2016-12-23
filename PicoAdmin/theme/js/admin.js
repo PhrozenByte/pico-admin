@@ -276,7 +276,7 @@ utils.createClass(PicoAdmin, function () {
                     errorTitle = 'Fatal Error';
                 }
 
-                self.showNotification(errorTitle, 'An unexpected error has occured.', 'error', 0);
+                self.showNotification(errorTitle, 'An unexpected error has occured.', { type: 'error', timeout: 0 });
             }
 
             if (errorCallback) {
@@ -315,18 +315,19 @@ utils.createClass(PicoAdmin, function () {
         document.body.appendChild(notification);
     };
 
-    this.prototype.showNotification = function (title, message, type, timeout, closeable, closeCallback)
+    this.prototype.showNotification = function (title, message, options)
     {
-        if ((timeout === undefined) || (timeout === null)) timeout = 5;
-        if ((closeable === undefined) || (closeable === null)) closeable = true;
+        if (!options) options = {};
+        if ((options.timeout === undefined) || (options.timeout === null)) options.timeout = 5;
+        if ((options.closeable === undefined) || (options.closeable === null)) options.closeable = true;
 
         var className = '',
             iconName = '';
-        if (typeof(type) === 'object') {
-            if (type.className) className = ' ' + type.className;
-            if (type.iconName) iconName = ' ' + type.iconName;
-        } else {
-            switch (type) {
+        if (typeof(options.type) === 'object') {
+            if (options.type.className) className = ' ' + options.type.className;
+            if (options.type.iconName) iconName = ' ' + options.type.iconName;
+        } else if (options.type) {
+            switch (options.type) {
                 case 'success':
                     className = ' alert-success';
                     iconName = ' fa-check';
@@ -360,7 +361,7 @@ utils.createClass(PicoAdmin, function () {
         this.notifications.push(notificationData);
         alert.dataset.notificationId = notificationId;
 
-        notificationData.type = type;
+        notificationData.type = options.type;
 
         if ((title !== undefined) && (title !== null)) {
             var titleElement = utils.parse('<h1><span class="fa' + iconName + ' fa-fw"></span> ' + title + '</h1>');
@@ -380,28 +381,28 @@ utils.createClass(PicoAdmin, function () {
             notificationData.message = message;
         }
 
-        var addCloseButton = closeable,
+        var addCloseButton = options.closeable,
             self = this;
-        if (timeout > 0) {
-            notificationData.timeout = timeout;
+        if (options.timeout > 0) {
+            notificationData.timeout = options.timeout;
 
-            if (timeout >= 100) {
+            if (options.timeout >= 100) {
                 var timeoutCallback = this.hideNotification.bind(this, alert);
-                notificationData.timerTimeout = setTimeout(timeoutCallback, (timeout * 1000));
+                notificationData.timerTimeout = setTimeout(timeoutCallback, (options.timeout * 1000));
             } else {
                 var dismiss;
-                if (closeable) {
+                if (options.closeable) {
                     dismiss = utils.parse(
                         '<a href="" class="dismiss countdown closeable" role="button">' +
                         '    <span class="close" aria-hidden="true">&times;</span>' +
-                        '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                        '    <span class="timer" aria-hidden="true">' + options.timeout + '</span>' +
                         '    <span class="sr-only">Close</span>' +
                         '</a>'
                     );
                 } else {
                     dismiss = utils.parse(
                         '<span class="dismiss countdown">' +
-                        '    <span class="timer" aria-hidden="true">' + timeout + '</span>' +
+                        '    <span class="timer" aria-hidden="true">' + options.timeout + '</span>' +
                         '</span>'
                     );
                 }
@@ -418,7 +419,7 @@ utils.createClass(PicoAdmin, function () {
                     if (value === 1) self.hideNotification(alert);
                 }, 1000);
 
-                if (closeable) {
+                if (options.closeable) {
                     dismiss.addEventListener('click', function (event) {
                         event.preventDefault();
                         self.hideNotification(alert);
@@ -450,10 +451,10 @@ utils.createClass(PicoAdmin, function () {
             alert.appendChild(closeButton);
         }
 
-        notificationData.closeable = closeable;
+        notificationData.closeable = options.closeable;
 
-        if (closeCallback) {
-            notificationData.closeCallback = closeCallback;
+        if (options.closeCallback) {
+            notificationData.closeCallback = options.closeCallback;
         }
 
         utils.slideDown(alert);

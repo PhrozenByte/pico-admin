@@ -319,14 +319,12 @@ utils.createClass(PicoAdminModule, function () {
         utils.forEach(actionLists, function (_, actionList) { utils.slideLeft(actionList); });
 
         // create notification
-        var notification = this.picoAdmin.showNotification(
-            options.title,
-            content,
-            { iconName: options.iconName, className: options.className },
-            0,
-            options.closeable,
-            function () { self.closeFileNameModal(); }
-        );
+        var notification = this.picoAdmin.showNotification(options.title, content, {
+            icon: { iconName: options.iconName, className: options.className },
+            timeout: 0,
+            closeable: options.closeable,
+            closeCallback: function () { self.closeFileNameModal(); }
+        });
 
         var notificationId = notification.dataset.notificationId;
         this.askFileNameModal = utils.extend(
@@ -429,7 +427,7 @@ utils.createClass(PicoAdminModule, function () {
                         'Conflict',
                         "There's already a page of this name, be careful about not accidently overwriting it! " +
                             'Try again to overwrite the file.',
-                        'warning'
+                        { type: 'warning' }
                     );
 
                     this.askFileNameModal.conflictValue = value;
@@ -450,7 +448,7 @@ utils.createClass(PicoAdminModule, function () {
                 this.picoAdmin.showNotification(
                     'Invalid Path',
                     'The path you\'ve entered is invalid. Please specify a valid file path.',
-                    'error'
+                    { type: 'error' }
                 );
             } else if (submitCallback) {
                 submitCallback(value);
