@@ -99,7 +99,7 @@ utils.createClass(PicoAdmin, function () {
 
         // users shouldn't use the browser's reload button
         window.addEventListener('beforeunload', function (event) {
-            self.updateHistory();
+            self.updateHistory({}, true);
         });
 
         // restore history objects of a previous session
@@ -110,17 +110,34 @@ utils.createClass(PicoAdmin, function () {
 
             this.updateHistory();
         } else {
-            var currentHistoryObject = this.createHistoryObject();
+            var currentHistoryObject = this.createHistoryObject(),
+                historyAction = 'replaceState',
+                historyObject = null;
 
-            this.currentState = 1;
-            for (var historyObject; this.currentState <= this.latestState; this.currentState++) {
+            this.currentState = 0;
+            do {
+                this.currentState++;
                 historyObject = this.getHistoryObject(this.currentState);
                 if (!historyObject.isLost) {
-                    window.history.pushState(
+                    window.history[historyAction](
                         { PicoAdmin: this.currentState },
                         historyObject.title,
                         '/' + historyObject.url.replace(/^(?:https?:\/\/[^/]+)?(?:\/)?/, '')
                     );
+                    historyAction = 'pushState';
+                }
+            } while (this.currentState < this.latestState);
+
+            // did the server session expire accidently?
+            // if true, throw away the initial page and let the module restore the state appropiately
+            var oldHistoryObject = this.getHistoryObject(this.latestState);
+            if (oldHistoryObject && oldHistoryObject.sessionExpired) {
+                var urlRegExp = /^(?:https?:\/\/[^/?#]*)?(?:\/)?(.*?)(?:#.*)?$/,
+                    oldUrl = oldHistoryObject.url.replace(urlRegExp, '/$1'),
+                    currentUrl = window.location.href.replace(urlRegExp, '/$1');
+
+                if (oldUrl === currentUrl) {
+                    return;
                 }
             }
 
@@ -166,15 +183,17 @@ utils.createClass(PicoAdmin, function () {
         sessionStorage.setItem('PicoAdminHistory', this.latestState);
     };
 
-    this.prototype.updateHistory = function (historyObject)
+    this.prototype.updateHistory = function (historyObject, mergeHistory)
     {
+        var oldHistoryObject = this.getHistoryObject(this.currentState);
+
         historyObject = utils.extend(
             { lastUpdate: (new Date()).getTime() },
+            mergeHistory && oldHistoryObject || {},
             this.createHistoryObject(),
             historyObject || {}
         );
 
-        var oldHistoryObject = this.getHistoryObject(this.currentState);
         this.setHistoryObject(this.currentState, historyObject);
 
         // replace the history object only when necessary
@@ -261,24 +280,49 @@ utils.createClass(PicoAdmin, function () {
 
         var errorCallback = options.error;
         options.error = function (xhr, statusText, response) {
-            if (utils.isPlainObject(response) && (response.error !== undefined)) {
-                self.showNotification(
-                    response.error.title,
-                    response.error.message,
-                    response.error.type || 'error',
-                    response.error.timeout,
-                    response.error.closeable
-                );
-            } else {
-                var errorTitle;
-                if ((xhr.status >= 400) && (xhr.status <= 600)) {
-                    errorTitle = '' + xhr.status + ' ' + statusText;
-                } else {
-                    errorTitle = 'Fatal Error';
-                }
+            var errorNotification = null;
 
-                self.showNotification(errorTitle, 'An unexpected error has occured.', { type: 'error', timeout: 0 });
+            if (utils.isPlainObject(response)) {
+                if (response.error) {
+                    errorNotification = response.error;
+                } else if (xhr.status === 401) {
+                    if ((response.admin_auth !== undefined) && (response.admin_auth_required !== undefined)) {
+                        if (response.admin_auth_required && !response.admin_auth) {
+                            errorNotification = {
+                                title: 'Session Expired',
+                                message: "For security reasons you have to login again. We'll save your changes, " +
+                                    "however, the action that lead to this error has not been taken.",
+                                button: { title: 'Login', iconName: 'fa-sign-in', href: '' },
+                                closeable: false
+                            };
+
+                            // show inhibitor
+                            self.showInhibitor();
+
+                            // mark state as expired to restore it after logging in again
+                            self.updateHistory({ sessionExpired: true });
+                        }
+                    }
+                }
             }
+
+            if (!errorNotification) {
+                errorNotification = {
+                    title: 'Unknown Error',
+                    message: 'An unexpected error has occured.'
+                };
+
+                if ((xhr.status >= 400) && (xhr.status < 600)) {
+                    errorNotification.title = '' + xhr.status + ' ' + statusText;
+                }
+            }
+
+            self.showNotification(errorNotification.title, errorNotification.message, {
+                type: errorNotification.type || 'error',
+                button: errorNotification.button,
+                timeout: errorNotification.timeout || 0,
+                closeable: errorNotification.closeable
+            });
 
             if (errorCallback) {
                 errorCallback(xhr, statusText, response);

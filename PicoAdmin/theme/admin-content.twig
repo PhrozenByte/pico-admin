@@ -30,11 +30,13 @@
 
     {% if admin_request.module == "content" %}
         <script type="text/javascript">
-            picoContentAdmin.takeOver(
-                '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
-                '{{ page_path|escape("js") }}',
-                '{{ page_title|escape("js") }}'
-            );
+            if (!picoContentAdmin.restore()) {
+                picoContentAdmin.takeOver(
+                    '{{ page_path|escape("js") }}',
+                    '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
+                    '{{ page_title|escape("js") }}'
+                );
+            }
         </script>
     {% endif %}
 {% endblock %}

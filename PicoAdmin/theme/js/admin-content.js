@@ -477,10 +477,9 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         });
     };
 
-    this.prototype.takeOver = function (mode, page, title)
+    this.prototype.takeOver = function (page, mode, title)
     {
-        // assume responsibility
-        this.picoAdmin.selectModule(this.moduleName, page);
+        parent.takeOver.call(this, page);
 
         // init editor
         this.setMode(mode);

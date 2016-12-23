@@ -207,6 +207,16 @@ class PicoAdmin extends AbstractPicoPlugin
             header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
         }
 
+        // requesting login page with a JSON request - send auth status
+        if (($this->requestModule === 'login') && $this->isJsonRequest()) {
+            $twig->getLoader()->addPath(__DIR__ . '/theme');
+            $templateName = 'admin-json.twig';
+
+            $twigVariables['json'] = array();
+            $twigVariables['json']['admin_auth'] = $this->authenticated;
+            $twigVariables['json']['admin_auth_required'] = $this->authenticationRequired;
+        }
+
         // fallback to frontend theme
         if (($this->requestModule === 'info') || ($this->requestModule === 'login')) {
             return;

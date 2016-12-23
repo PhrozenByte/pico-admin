@@ -187,6 +187,34 @@ utils.createClass(PicoAdminModule, function () {
         }
     };
 
+    this.prototype.restore = function ()
+    {
+        // did the server session expire accidently?
+        // if true, throw away the default contents and restore the old contents instead
+        var oldHistoryObject = this.picoAdmin.getHistoryObject(this.picoAdmin.latestState);
+        if (oldHistoryObject && oldHistoryObject.sessionExpired) {
+            if (oldHistoryObject.activeModule === this.moduleName) {
+                var urlRegExp = /^(?:https?:\/\/[^/?#]*)?(?:\/)?(.*?)(?:#.*)?$/,
+                    oldUrl = oldHistoryObject.url.replace(urlRegExp, '/$1'),
+                    currentUrl = window.location.href.replace(urlRegExp, '/$1');
+
+                if (oldUrl === currentUrl) {
+                    this.picoAdmin.selectModule(this.moduleName, oldHistoryObject.activePath);
+                    this.picoAdmin.restoreHistory(this.picoAdmin.latestState);
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
+    this.prototype.takeOver = function (page)
+    {
+        this.picoAdmin.selectModule(this.moduleName, page);
+    };
+
     this.prototype.enable = function ()
     {
         // overwrite me
