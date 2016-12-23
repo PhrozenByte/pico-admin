@@ -17,6 +17,7 @@ utils.createClass(PicoAdmin, function () {
     this.prototype.init = function ()
     {
         this.initNotification();
+        this.initInhibitor();
         this.initLoading();
         this.initHistory();
     };
@@ -307,6 +308,44 @@ utils.createClass(PicoAdmin, function () {
         }
 
         return url;
+    };
+
+    this.prototype.initInhibitor = function ()
+    {
+        inhibitor = utils.parse('<div id="inhibitor" class="hidden"></div>');
+        document.body.appendChild(inhibitor);
+    };
+
+    this.prototype.showInhibitor = function ()
+    {
+        var inhibitor = document.getElementById('inhibitor');
+        if (inhibitor) {
+            var layers = parseInt(inhibitor.dataset.layers) || 0;
+            inhibitor.dataset.layers = layers + 1;
+            utils.fade(inhibitor, { fadeTo: 0.5, reset: false });
+
+            if (layers === 0) {
+                utils.addNamedEventListener(document.body, 'keypress', 'inhibitor', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+    };
+
+    this.prototype.hideInhibitor = function ()
+    {
+        var inhibitor = document.getElementById('inhibitor');
+        if (inhibitor) {
+            var layers = parseInt(inhibitor.dataset.layers) || 0;
+            if (layers > 0) {
+                inhibitor.dataset.layers = layers - 1;
+
+                if (layers === 1) {
+                    utils.fadeOut(inhibitor);
+                    utils.removeNamedEventListener(document.body, 'keypress', 'inhibitor');
+                }
+            }
+        }
     };
 
     this.prototype.initNotification = function ()
