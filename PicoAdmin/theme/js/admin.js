@@ -523,20 +523,22 @@ utils.createClass(PicoAdmin, function () {
     {
         var loading = document.getElementById('loading');
         if (loading) {
-            var requestCount = parseInt(loading.dataset.requests) || 0;
-            loading.dataset.requests = requestCount - 1;
+            var requests = parseInt(loading.dataset.requests) || 0;
+            if (requests > 0) {
+                loading.dataset.requests = requests - 1;
 
-            if (requestCount == 1) {
-                loading.classList.remove('wait');
-                loading.classList.add('finish');
-                loading.style.width = null;
+                if (requests === 1) {
+                    loading.classList.remove('wait');
+                    loading.classList.add('finish');
+                    loading.style.width = null;
 
-                loading.dataset.timeout = window.setTimeout(function () {
-                    loading.classList.remove('finish');
-                    delete loading.dataset.timeout;
-                }, 800);
+                    loading.dataset.timeout = window.setTimeout(function () {
+                        loading.classList.remove('finish');
+                        delete loading.dataset.timeout;
+                    }, 800);
 
-                return true;
+                    return true;
+                }
             }
         }
 

@@ -202,6 +202,11 @@ class PicoAdmin extends AbstractPicoPlugin
 
     public function onPageRendering(Twig_Environment &$twig, array &$twigVariables, &$templateName)
     {
+        // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
+        if ($this->authenticationRequired && !$this->authenticated) {
+            header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
+        }
+
         // fallback to frontend theme
         if (($this->requestModule === 'info') || ($this->requestModule === 'login')) {
             return;
@@ -225,11 +230,6 @@ class PicoAdmin extends AbstractPicoPlugin
             },
             array('needs_context' => true, 'needs_environment' => true)
         ));
-
-        // send "401 Unauthorized" header when authentication was requested, but user isn't authenticated
-        if ($this->authenticationRequired && !$this->authenticated) {
-            header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
-        }
 
         // register variables
         $twigVariables['admin_modules'] = $this->modules;
@@ -284,6 +284,11 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         return $this->adminThemeUrl;
+    }
+
+    public function isJsonRequest()
+    {
+        return (isset($_SERVER['HTTP_ACCEPT']) && ($_SERVER['HTTP_ACCEPT'] === 'application/json'));
     }
 
     public function writeFile($basePath, $path, $content)

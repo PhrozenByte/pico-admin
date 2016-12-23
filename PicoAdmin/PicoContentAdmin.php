@@ -176,11 +176,12 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 return;
         }
 
-        // handle CSRF token
         if (($this->action === 'create') || ($this->action === 'edit')) {
+            // create new CSRF token
             $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
             $this->csrfToken = $this->session->generateSignedToken('PicoContentAdmin', $csrfTokenPayload);
         } else {
+            // check CSRF token
             $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
             $csrfToken = (isset($_POST['csrf_token']) && is_array($_POST['csrf_token'])) ? $_POST['csrf_token'] : array();
 
@@ -188,6 +189,11 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 $this->csrfToken = $csrfToken;
             } else {
                 $this->action = 'csrfError';
+            }
+
+            // make sure that this is a JSON request
+            if (!$this->admin->isJsonRequest()) {
+                $this->action = 'error';
             }
         }
 
@@ -371,6 +377,9 @@ class PicoContentAdmin extends AbstractPicoPlugin
             $twigVariables['navigation'] = $this->getNavigation();
             $twigVariables['csrf_token'] = $this->csrfToken;
 
+            return;
+        } elseif ($this->action === 'error') {
+            header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
             return;
         } elseif ($this->action === 'csrfError') {
             header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');

@@ -105,6 +105,7 @@ var utils = {};
 
         if (options.responseType) {
             xhr.responseType = options.responseType;
+            if (options.responseType === 'text') xhr.setRequestHeader('Accept', 'text/plain');
             if (options.responseType === 'json') xhr.setRequestHeader('Accept', 'application/json');
         }
 
