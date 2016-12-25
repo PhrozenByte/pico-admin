@@ -180,7 +180,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
             // create new CSRF token
             $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
             $this->csrfToken = $this->session->generateSignedToken('PicoContentAdmin', $csrfTokenPayload);
-        } else {
+        } elseif ($this->action !== 'fullPreview') {
             // check CSRF token
             $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
             $csrfToken = (isset($_POST['csrf_token']) && is_array($_POST['csrf_token'])) ? $_POST['csrf_token'] : array();
@@ -287,9 +287,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
 
             case 'preview':
             case 'fullPreview':
-                if ($this->yamlContent) {
-                    $rawContent = "---\n" . $this->yamlContent . "\n---\n\n";
-                }
+                $rawContent = $this->yamlContent ? "---\n" . $this->yamlContent . "\n---\n\n" : '';
                 $rawContent .= $this->markdownContent;
                 break;
 
@@ -377,6 +375,9 @@ class PicoContentAdmin extends AbstractPicoPlugin
             $twigVariables['navigation'] = $this->getNavigation();
             $twigVariables['csrf_token'] = $this->csrfToken;
 
+            return;
+        } elseif ($this->action === 'fullPreview') {
+            // use frontend theme
             return;
         } elseif ($this->action === 'error') {
             header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');

@@ -241,8 +241,8 @@ utils.createClass(PicoContentAdmin, PicoAdminModule, function (parent) {
         var url = this.picoAdmin.getUrl('content', 'fullPreview', this.picoAdmin.activePath),
             form = utils.parse(
                 '<form action="' + url + '" method="POST" target="_blank" class="hidden">' +
-                '   <textarea class="yaml" name="yaml"></textarea>' +
-                '   <textarea class="markdown" name="markdown"></textarea>' +
+                '    <textarea class="yaml" name="yaml"></textarea>' +
+                '    <textarea class="markdown" name="markdown"></textarea>' +
                 '</form>'
             );
 
