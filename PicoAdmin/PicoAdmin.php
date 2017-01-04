@@ -127,18 +127,14 @@ class PicoAdmin extends AbstractPicoPlugin
                 // perform logout
                 $this->authenticated = false;
 
-                if ($this->session->get('PicoAdmin', 'authenticated')) {
-                    $this->session->migrateSession();
-                    $this->session->set('PicoAdmin', 'authenticated', false);
-                }
+                $this->session->set('PicoAdmin', 'authenticated', false);
+                $this->session->migrateSession();
             } elseif (isset($_POST['password'])) {
                 // verify password
                 $this->authenticated = password_verify((string) $_POST['password'], $authToken);
 
-                if ($this->authenticated !== $this->session->get('PicoAdmin', 'authenticated')) {
-                    $this->session->migrateSession();
-                    $this->session->set('PicoAdmin', 'authenticated', $this->authenticated);
-                }
+                $this->session->migrateSession();
+                $this->session->set('PicoAdmin', 'authenticated', $this->authenticated);
             } else {
                 // already authenticated session
                 $this->authenticated = (bool) $this->session->get('PicoAdmin', 'authenticated');
@@ -153,7 +149,7 @@ class PicoAdmin extends AbstractPicoPlugin
         ));
 
         if ($this->authenticationRequired && !$this->authenticated) {
-            // force login screen when authentication was requested, but user isn't authenticated
+            // force login screen when authentication was requested, but the user isn't authenticated
             // admin modules which require authentication MUST disable themselves in this case!
             $this->requestModule = 'login';
             $this->requestAction = $this->requestPayload = '';
