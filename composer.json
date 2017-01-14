@@ -1,5 +1,6 @@
 {
     "name": "phrozenbyte/pico-admin",
+    "type": "pico-plugin",
     "description": "This is Pico's official admin plugin. Pico is a stupidly simple, blazing fast, flat file CMS.",
     "keywords": ["admin","pico","pico-plugin"],
     "homepage": "http://picocms.org/",
@@ -23,6 +24,7 @@
     },
     "require": {
         "php": ">=5.3.7",
+        "composer/installers": "~1.0",
         "ircmaxell/password-compat": "^1.0"
     },
     "autoload": {
