@@ -1,7 +1,8 @@
 var utils = {};
 
 (function () {
-    utils.forEach = function (object, callback) {
+    utils.forEach = function (object, callback)
+    {
         var i = 0,
             keys = Object.keys(object),
             length = keys.length;
@@ -12,7 +13,8 @@ var utils = {};
         }
     };
 
-    utils.extend = function (target) {
+    utils.extend = function (target)
+    {
         var mergeCallback = function (key, value) { this[key] = value; };
         for (var i = 1; i < arguments.length; i++) {
             utils.forEach(arguments[i], mergeCallback.bind(target));
@@ -20,7 +22,8 @@ var utils = {};
         return target;
     };
 
-    utils.isPlainObject = function (object) {
+    utils.isPlainObject = function (object)
+    {
         if ((object !== null) && (typeof object === 'object')) {
             if (typeof Object.getPrototypeOf === 'function') {
                 var objectPrototype = Object.getPrototypeOf(object);
@@ -33,7 +36,8 @@ var utils = {};
         return false;
     };
 
-    utils.multiCallback = function (finishCallback) {
+    utils.multiCallback = function (finishCallback)
+    {
         var callbackStatusList = [],
             finishedCallbackCount = 0;
 
@@ -58,7 +62,8 @@ var utils = {};
         };
     };
 
-    utils.createClass = function (constructor, baseClass, blueprint) {
+    utils.createClass = function (constructor, baseClass, blueprint)
+    {
         if (blueprint === undefined) {
             blueprint = baseClass;
             baseClass = undefined;
@@ -74,7 +79,8 @@ var utils = {};
         return constructor;
     };
 
-    utils.encodeUriParams = function(params) {
+    utils.encodeUriParams = function (params)
+    {
         var iterator = function (params, keyPrefix) {
             var result = '';
             utils.forEach(params, function (key, value) {
@@ -94,10 +100,11 @@ var utils = {};
         return (params !== '') ? result.slice(1) : '';
     };
 
-    utils.ajax = function (url, options) {
+    utils.ajax = function (url, options)
+    {
         if (options.queryParams) {
             var queryString = utils.encodeUriParams(options.queryParams);
-            if (queryString !== '') url += (url.indexOf('?') === -1) ? '?' + queryString : '&' + queryString;
+            url += queryString ? ((url.indexOf('?') === -1) ? '?' + queryString : '&' + queryString) : '';
         }
 
         var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
@@ -105,8 +112,11 @@ var utils = {};
 
         if (options.responseType) {
             xhr.responseType = options.responseType;
-            if (options.responseType === 'text') xhr.setRequestHeader('Accept', 'text/plain');
-            if (options.responseType === 'json') xhr.setRequestHeader('Accept', 'application/json');
+            if (options.responseType === 'text') {
+                xhr.setRequestHeader('Accept', 'text/plain');
+            } else if (options.responseType === 'json') {
+                xhr.setRequestHeader('Accept', 'application/json');
+            }
         }
 
         if (options.header) {
@@ -115,7 +125,7 @@ var utils = {};
             });
         }
 
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
             if (xhr.readyState > 3) {
                 var isSuccessful = null;
                 if ((xhr.status >= 200) && (xhr.status < 300)) {
@@ -160,14 +170,19 @@ var utils = {};
         return xhr;
     };
 
-    utils.detach = function (element, callback) {
+    utils.detach = function (element, callback)
+    {
         if (element.classList.contains('detached')) {
-            if (callback) window.requestAnimationFrame(callback);
+            if (callback) {
+                window.requestAnimationFrame(callback);
+            }
             return;
         }
 
         var isHidden = element.classList.contains('hidden');
-        if (isHidden) element.classList.remove('hidden');
+        if (isHidden) {
+            element.classList.remove('hidden');
+        }
 
         element.style.top = element.offsetTop + 'px';
         element.style.left = element.offsetLeft + 'px';
@@ -175,14 +190,17 @@ var utils = {};
         element.style.height = element.offsetHeight + 'px';
 
         element.classList.add('detached');
-        if (isHidden) element.classList.add('hidden');
+        if (isHidden) {
+            element.classList.add('hidden');
+        }
 
         if (callback) {
             window.requestAnimationFrame(callback);
         }
     };
 
-    utils.attach = function (element, callback) {
+    utils.attach = function (element, callback)
+    {
         element.style.height = null;
         element.style.width = null;
         element.style.left = null;
@@ -194,7 +212,8 @@ var utils = {};
         }
     };
 
-    utils.fadeOut = function (element, finishCallback, startCallback) {
+    utils.fadeOut = function (element, finishCallback, startCallback)
+    {
         utils.fade(element, {
             fadeTo: '0',
             startCallback: startCallback,
@@ -202,14 +221,16 @@ var utils = {};
         });
     };
 
-    utils.fadeIn = function (element, finishCallback, startCallback) {
+    utils.fadeIn = function (element, finishCallback, startCallback)
+    {
         utils.fade(element, {
             startCallback: startCallback,
             finishCallback: finishCallback
         });
     };
 
-    utils.fade = function (element, options) {
+    utils.fade = function (element, options)
+    {
         var fadeFrom = options.fadeFrom,
             fadeTo = options.fadeTo;
 
@@ -235,7 +256,10 @@ var utils = {};
                 }
 
                 utils.addNamedEventListener(element, 'transitionend', 'fade', function (event) {
-                    if (event.propertyName !== 'opacity') return;
+                    if (event.propertyName !== 'opacity') {
+                        return;
+                    }
+
                     utils.removeNamedEventListener(element, 'transitionend', 'fade');
 
                     element.classList.remove('fade');
@@ -256,7 +280,8 @@ var utils = {};
         });
     };
 
-    utils.slideUp = function (element, finishCallback, startCallback) {
+    utils.slideUp = function (element, finishCallback, startCallback)
+    {
         utils.slide(element, {
             slideTo: '0px',
             cssRule: 'height',
@@ -266,7 +291,8 @@ var utils = {};
         });
     };
 
-    utils.slideDown = function (element, finishCallback, startCallback) {
+    utils.slideDown = function (element, finishCallback, startCallback)
+    {
         utils.slide(element, {
             cssRule: 'height',
             cssRuleRef: 'offsetHeight',
@@ -275,7 +301,8 @@ var utils = {};
         });
     };
 
-    utils.slideLeft = function (element, finishCallback, startCallback) {
+    utils.slideLeft = function (element, finishCallback, startCallback)
+    {
         utils.slide(element, {
             slideTo: '0px',
             cssRule: 'width',
@@ -285,7 +312,8 @@ var utils = {};
         });
     };
 
-    utils.slideRight = function (element, finishCallback, startCallback) {
+    utils.slideRight = function (element, finishCallback, startCallback)
+    {
         utils.slide(element, {
             cssRule: 'width',
             cssRuleRef: 'offsetWidth',
@@ -294,7 +322,8 @@ var utils = {};
         });
     };
 
-    utils.slide = function (element, options) {
+    utils.slide = function (element, options)
+    {
         var slideFrom = options.slideFrom,
             slideTo = options.slideTo;
 
@@ -323,7 +352,10 @@ var utils = {};
                 }
 
                 utils.addNamedEventListener(element, 'transitionend', 'slide-' + options.cssRule, function (event) {
-                    if (event.propertyName !== options.cssRule) return;
+                    if (event.propertyName !== options.cssRule) {
+                        return;
+                    }
+
                     utils.removeNamedEventListener(element, 'transitionend', 'slide-' + options.cssRule);
 
                     element.classList.remove('slide');
@@ -343,12 +375,13 @@ var utils = {};
         });
     };
 
-    utils.crossFade = function (hideElement, showElement, finishCallback, startCallback) {
+    utils.crossFade = function (hideElement, showElement, finishCallback, startCallback)
+    {
         if (
             !hideElement || !showElement || (hideElement === showElement) ||
             !hideElement.parentNode || (hideElement.parentNode !== showElement.parentNode)
         ) {
-            throw 'Unable to call utils.crossFade(…): The given elements must be siblings';
+            throw 'Unable to call utils.crossFade(): The given elements must be siblings';
         }
 
         var parentElement = hideElement.parentNode,
@@ -362,12 +395,14 @@ var utils = {};
             }
 
             if (!utils.isElementVisible(childElement) || childElement.classList.contains('cross-fade-hide')) {
-                if (childElement !== hideElement) continue;
-            } else {
-                if (childElement === hideElement) continue;
+                if (childElement !== hideElement) {
+                    continue;
+                }
+            } else if (childElement === hideElement) {
+                continue;
             }
 
-            throw 'Unable to call utils.crossFade(…): The element to hide must be the only visible sibling';
+            throw 'Unable to call utils.crossFade(): The element to hide must be the only visible sibling';
         }
 
         // get scroll position to restore it after we've detached the elements
@@ -487,7 +522,8 @@ var utils = {};
      * Released under the MIT license
      * http://jquery.org/license
      */
-    utils.parse = function (html) {
+    utils.parse = function (html)
+    {
         var rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
             rtagName = /<([\w:]+)/,
             rhtml = /<|&#?\w+;/,
@@ -521,17 +557,21 @@ var utils = {};
 
             // descend through wrappers to the right content
             var j = wrap[0];
-            while (j--) tmp = tmp.lastChild;
+            while (j--) {
+                tmp = tmp.lastChild;
+            }
 
             return (tmp.childNodes.length) > 1 ? tmp : tmp.lastChild;
         }
     };
 
-    utils.isElementVisible = function (element) {
+    utils.isElementVisible = function (element)
+    {
         return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
     };
 
-    utils.matches = function (element, selector) {
+    utils.matches = function (element, selector)
+    {
         if (element.matches) {
             return element.matches(selector);
         } else if (element.webkitMatchesSelector) {
@@ -539,11 +579,12 @@ var utils = {};
         } else if (element.msMatchesSelector) {
             return element.msMatchesSelector(selector);
         } else {
-            throw 'Unable to call utils.matches(…): Not supported';
+            throw 'Unable to call utils.matches(): Not supported';
         }
     };
 
-    utils.closest = function (element, selector) {
+    utils.closest = function (element, selector)
+    {
         if (element.closest) {
             return element.closest(selector);
         }
@@ -559,7 +600,8 @@ var utils = {};
 
     var namedEventListener = {};
 
-    function getNamedEventListener(element, type, name) {
+    function getNamedEventListener(element, type, name)
+    {
         var elementEventId = element.dataset.eventId;
 
         if (!elementEventId) return null;
@@ -570,7 +612,8 @@ var utils = {};
         return namedEventListener[elementEventId][type][name];
     }
 
-    utils.addNamedEventListener = function (element, type, name, listener) {
+    utils.addNamedEventListener = function (element, type, name, listener)
+    {
         var elementEventId = element.dataset.eventId;
         if (!elementEventId) {
             do {
@@ -578,8 +621,12 @@ var utils = {};
             } while (namedEventListener[elementEventId]);
         }
 
-        if (!namedEventListener[elementEventId]) namedEventListener[elementEventId] = {};
-        if (!namedEventListener[elementEventId][type]) namedEventListener[elementEventId][type] = {};
+        if (!namedEventListener[elementEventId]) {
+            namedEventListener[elementEventId] = {};
+        }
+        if (!namedEventListener[elementEventId][type]) {
+            namedEventListener[elementEventId][type] = {};
+        }
 
         if (namedEventListener[elementEventId][type][name]) {
             // remove a previously added, conflicting event (event names must be unique)
@@ -591,7 +638,8 @@ var utils = {};
         element.addEventListener(type, listener);
     };
 
-    utils.removeNamedEventListener = function (element, type, name) {
+    utils.removeNamedEventListener = function (element, type, name)
+    {
         var listener = getNamedEventListener(element, type, name);
         if (listener) {
             element.removeEventListener(type, listener);
@@ -599,7 +647,8 @@ var utils = {};
         }
     };
 
-    utils.enableNamedEventListener = function (element, type, name) {
+    utils.enableNamedEventListener = function (element, type, name)
+    {
         var listener = getNamedEventListener(element, type, name);
         if (listener) {
             // browsers won't add the same event listener multiple times, thus this is completely safe
@@ -607,7 +656,8 @@ var utils = {};
         }
     };
 
-    utils.disableNamedEventListener = function (element, type, name) {
+    utils.disableNamedEventListener = function (element, type, name)
+    {
         var listener = getNamedEventListener(element, type, name);
         if (listener) {
             element.removeEventListener(type, listener);

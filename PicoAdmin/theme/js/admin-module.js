@@ -1,169 +1,146 @@
 function PicoAdminModule(picoAdmin, moduleName)
 {
-    this.picoAdmin = picoAdmin;
-    this.moduleName = moduleName;
+    this._picoAdmin = picoAdmin;
+    this._moduleName = moduleName;
 
-    this.askFileNameModal = null;
+    this._container = null;
+    this._navigation = null;
+    this._navigationInner = null;
+
+    this._askFileNameModal = null;
 }
 
 utils.createClass(PicoAdminModule, function () {
-    this.prototype.init = function (options)
+    this.prototype.init = function ()
     {
-        this.picoAdmin.registerModule(this.moduleName, this);
+        this._container = document.getElementById('module-' + this._moduleName);
+        this._navigation = document.getElementById('module-' + this._moduleName + '-nav');
+        this._navigationInner = this._navigation.querySelector('.nav-inner');
 
-        this.initNavigation();
+        // register module
+        this._picoAdmin.modules[this._moduleName] = this;
+
+        this._initNavigation();
     };
 
-    this.prototype.initNavigation = function ()
+    this.prototype._initNavigation = function ()
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            navigationButton = moduleNav.querySelector('.headline h3 a'),
-            landingButton = document.getElementById('module-' + this.moduleName + '-landing'),
-            navContainer = moduleNav.querySelector('.nav'),
-            navInner = moduleNav.querySelector('.nav > div'),
+        var navigationButton = this._navigation.querySelector('.headline h3 a'),
+            landingButton = document.getElementById('module-' + this._moduleName + '-landing'),
             self = this;
 
         var toggleMenuEvent = function (event) {
             event.preventDefault();
 
-            var navWrapper = moduleNav.querySelector('.nav > div');
-            if (!navWrapper || (navWrapper.dataset.expanded === 'false')) {
+            var wrapper = self._navigationInner ? self._navigationInner.parentNode : null;
+            if (!wrapper || (wrapper.dataset.expanded === 'false')) {
                 self.expandNavigation();
             } else {
                 self.collapseNavigation();
             }
         };
 
-        if (navigationButton) utils.addNamedEventListener(navigationButton, 'click', 'toggle', toggleMenuEvent);
-        if (landingButton)    utils.addNamedEventListener(landingButton, 'click', 'toggle', toggleMenuEvent);
+        if (navigationButton) {
+            utils.addNamedEventListener(navigationButton, 'click', 'toggle', toggleMenuEvent);
+        }
+        if (landingButton) {
+            utils.addNamedEventListener(landingButton, 'click', 'toggle', toggleMenuEvent);
+        }
 
-        if (navInner) {
-            if (navInner.classList.contains('nav-inner')) {
+        if (this._navigationInner) {
+            if (this._navigationInner.parentNode.classList.contains('nav')) {
                 // add sliding wrapper
-                var navWrapper = document.createElement('div');
-                navWrapper.appendChild(navInner);
-                navContainer.appendChild(navWrapper);
-            } else {
-                navInner = navContainer.querySelector('.nav-inner');
+                var wrapper = document.createElement('div');
+                this._navigationInner.parentNode.appendChild(wrapper);
+                wrapper.appendChild(this._navigationInner);
             }
 
-            // init action buttons
-            var headlineActions = moduleNav.querySelector('.headline .actions'),
-                itemActionsList = navInner.querySelectorAll('.item .actions');
+            // show headline actions
+            var headlineActions = this._navigation.querySelector('.headline .actions');
+            if (headlineActions) {
+                headlineActions.classList.remove('hidden');
+            }
 
-            headlineActions.classList.remove('hidden');
-            this.initNavigationActions(itemActionsList, headlineActions);
-
-            // init items
-            this.initNavigationItems(navInner);
+            // init navigation items
+            this._initNavigationItems();
         }
     };
 
-    this.prototype.replaceNavigation = function (navInner, callback)
+    this.prototype._replaceNavigation = function (html, callback)
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            navContainer = moduleNav.querySelector('.nav'),
-            oldWrapper = moduleNav.querySelector('.nav > div:not(.cross-fade-placeholder)');
+        var container = this._navigation.querySelector('.nav'),
+            oldWrapper = this._navigationInner ? this._navigationInner.parentNode : null,
+            newWrapper = document.createElement('div');
 
-        // wrap navigation and add the wrapper to the navigation container
-        var navWrapper = document.createElement('div');
-        navWrapper.classList.add('hidden');
-        navContainer.appendChild(navWrapper);
+        newWrapper.classList.add('hidden');
+        newWrapper.innerHTML = html;
+        container.appendChild(newWrapper);
 
-        if (typeof navInner === 'string') {
-            navWrapper.innerHTML = navInner;
-            navInner = navWrapper.querySelector('.nav-inner');
-        } else {
-            navWrapper.appendChild(navInner);
+        this._navigationInner = newWrapper.querySelector('.nav-inner');
+
+        // init navigation items
+        this._initNavigationItems();
+
+        // highlight active navigation item
+        var activePath = this._picoAdmin.getActivePath(),
+            activeItem = this._navigationInner.querySelector('.item[data-path="' + activePath + '"]');
+        if (activeItem) {
+            activeItem.classList.add('active');
         }
-
-        // init item action buttons
-        var itemActionsList = navInner.querySelectorAll('.item .actions');
-        this.initNavigationActions(itemActionsList);
-
-        // init items
-        this.initNavigationItems(navInner);
 
         // cross fade new navigation
-        utils.crossFade(oldWrapper, navWrapper, function () {
-            oldWrapper.parentNode.removeChild(oldWrapper);
-
-            if (callback) callback();
-        });
-    };
-
-    function loadNavigation(callback)
-    {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            navContainer = moduleNav.querySelector('.nav'),
-            self = this;
-
-        this.ajax('navigation', null, {
-            responseType: 'json',
-            success: function (xhr, statusText, response) {
-                if (!response || !response.navigation || !/^\s*<div class="nav-inner">/.test(response.navigation)) {
-                    return false;
+        if (oldWrapper) {
+            utils.crossFade(oldWrapper, newWrapper, function () {
+                oldWrapper.parentNode.removeChild(oldWrapper);
+                if (callback) {
+                    callback();
                 }
-
-                // add sliding wrapper
-                var navWrapper = document.createElement('div');
-                navWrapper.classList.add('hidden');
-                navWrapper.innerHTML = response.navigation;
-                navContainer.appendChild(navWrapper);
-
-                var navInner = navWrapper.querySelector('.nav-inner');
-
-                // init action buttons
-                var headlineActions = moduleNav.querySelector('.headline .actions'),
-                    itemActionsList = navInner.querySelectorAll('.item .actions');
-                self.initNavigationActions(itemActionsList, headlineActions);
-
-                // init items
-                self.initNavigationItems(navInner);
-
-                // call callback
-                if (callback) callback();
-            }
-        });
-    }
-
-    this.prototype.initNavigationItems = function (navContainer)
-    {
-        // overwrite me
+            });
+        } else if (callback) {
+            callback();
+        }
     };
 
-    this.prototype.initNavigationActions = function (itemActionsList, headlineActions)
+    this.prototype._initNavigationItems = function ()
     {
         // overwrite me
     };
 
     this.prototype.expandNavigation = function ()
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            menu = moduleNav.querySelector('.nav > div'),
+        var wrapper = this._navigationInner ? this._navigationInner.parentNode : null,
             self = this;
 
         // make sure the navigation has been loaded already
-        if (!menu) {
-            loadNavigation.call(this, function () {
-                self.expandNavigation();
+        if (!wrapper) {
+            this._ajax('navigation', null, {
+                responseType: 'json',
+                success: function (xhr, statusText, response) {
+                    if (!response || !response.navigation || !/^\s*<div class="nav-inner">/.test(response.navigation)) {
+                        return false;
+                    }
+
+                    self._replaceNavigation(response.navigation, function () {
+                        self.expandNavigation();
+                    });
+                }
             });
             return;
         }
 
-        // expand menu
-        menu.dataset.expanded = 'true';
-        utils.slideDown(menu);
+        // expand navigation
+        wrapper.dataset.expanded = 'true';
+        utils.slideDown(wrapper);
 
         // expand headline actions
-        var headlineActions = moduleNav.querySelector('.headline .actions');
+        var headlineActions = this._navigation.querySelector('.headline .actions');
         if (headlineActions) {
             utils.slideRight(headlineActions);
         }
 
         // collapse all other module navigations
-        utils.forEach(this.picoAdmin.modules, function (moduleName, module) {
-            if (moduleName !== self.moduleName) {
+        utils.forEach(this._picoAdmin.modules, function (moduleName, module) {
+            if (moduleName !== self._moduleName) {
                 module.collapseNavigation();
             }
         });
@@ -171,17 +148,15 @@ utils.createClass(PicoAdminModule, function () {
 
     this.prototype.collapseNavigation = function ()
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav');
-
-        // collapse menu
-        var menu = moduleNav.querySelector('.nav > div');
-        if (menu) {
-            menu.dataset.expanded = 'false';
-            utils.slideUp(menu);
+        // collapse navigation
+        var wrapper = this._navigationInner ? this._navigationInner.parentNode : null;
+        if (wrapper) {
+            wrapper.dataset.expanded = 'false';
+            utils.slideUp(wrapper);
         }
 
         // collapse headline actions
-        var headlineActions = moduleNav.querySelector('.headline .actions');
+        var headlineActions = this._navigation.querySelector('.headline .actions');
         if (headlineActions) {
             utils.slideLeft(headlineActions);
         }
@@ -190,17 +165,17 @@ utils.createClass(PicoAdminModule, function () {
     this.prototype.restore = function ()
     {
         // did the server session expire accidently?
-        // if true, throw away the default contents and restore the old contents instead
-        var oldHistoryObject = this.picoAdmin.getHistoryObject(this.picoAdmin.latestState);
+        // if true, throw away the default page state and restore the old page state instead
+        var oldHistoryObject = this._picoAdmin.getHistoryObject(this._picoAdmin.getLatestState());
         if (oldHistoryObject && oldHistoryObject.sessionExpired) {
-            if (oldHistoryObject.activeModule === this.moduleName) {
-                var urlRegExp = /^(?:https?:\/\/[^/?#]*)?(?:\/)?(.*?)(?:#.*)?$/,
+            if (oldHistoryObject.activeModule === this._moduleName) {
+                var urlRegExp = /^(?:https?:\/\/[^/?#]*)?(?:\/)?(.*?)\??(?:#.*)?$/,
                     oldUrl = oldHistoryObject.url.replace(urlRegExp, '/$1'),
                     currentUrl = window.location.href.replace(urlRegExp, '/$1');
 
                 if (oldUrl === currentUrl) {
-                    this.picoAdmin.selectModule(this.moduleName, oldHistoryObject.activePath);
-                    this.picoAdmin.restoreHistory(this.picoAdmin.latestState);
+                    this._picoAdmin.selectModule(this._moduleName, oldHistoryObject.activePath);
+                    this._picoAdmin.restoreHistory(this._picoAdmin.getLatestState());
 
                     return true;
                 }
@@ -210,9 +185,9 @@ utils.createClass(PicoAdminModule, function () {
         return false;
     };
 
-    this.prototype.takeOver = function (page)
+    this.prototype.takeOver = function ()
     {
-        this.picoAdmin.selectModule(this.moduleName, page);
+        // overwrite me
     };
 
     this.prototype.enable = function ()
@@ -222,51 +197,53 @@ utils.createClass(PicoAdminModule, function () {
 
     this.prototype.disable = function ()
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            activeItem = moduleNav.querySelector('.nav .item.active');
-        if (activeItem) activeItem.classList.remove('active');
+        var activeItem = this._navigationInner.querySelector('.item.active');
+        if (activeItem) {
+            activeItem.classList.remove('active');
+        }
     };
 
     this.prototype.selectPath = function (path)
     {
-        var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-            oldActiveItem = moduleNav.querySelector('.nav .item.active'),
-            newActiveItem = moduleNav.querySelector('.nav .item[data-path="' + path + '"]');
+        var oldActiveItem = this._navigationInner.querySelector('.item.active'),
+            newActiveItem = this._navigationInner.querySelector('.item[data-path="' + path + '"]');
 
-        if (oldActiveItem) oldActiveItem.classList.remove('active');
-        if (newActiveItem) newActiveItem.classList.add('active');
+        if (oldActiveItem) {
+            oldActiveItem.classList.remove('active');
+        }
+        if (newActiveItem) {
+            newActiveItem.classList.add('active');
+        }
     };
 
-    this.prototype.restoreHistory = function (historyObject, state)
+    this.prototype.getState = function ()
     {
         // overwrite me
     };
 
-    this.prototype.createHistoryObject = function (historyObject)
+    this.prototype.setState = function (data)
     {
         // overwrite me
     };
 
-    this.prototype.showNotification = function (notificationData, alert)
+    this.prototype.getName = function ()
     {
-        // overwrite me
+        return this._moduleName;
     };
 
-    this.prototype.hideNotification = function (notificationData, alert)
+    this.prototype.getContainer = function ()
     {
-        // overwrite me
+        return this._container;
     };
 
-    this.prototype.askFileName = function (callback, options)
+    this.prototype.getNavigation = function ()
+    {
+        return this._navigation;
+    };
+
+    this.prototype._askFileName = function (options)
     {
         var self = this;
-
-        if ((options === undefined) && utils.isPlainObject(callback)) {
-            options = callback;
-        } else {
-            if (!options) options = {};
-            if (callback) options.callback = callback;
-        }
 
         options = utils.extend({
             title: null,
@@ -279,26 +256,29 @@ utils.createClass(PicoAdminModule, function () {
         }, options);
 
         // disallow opening multiple file name notifications at the same time
-        if (this.askFileNameModal) return null;
-        this.askFileNameModal = {};
+        if (this._askFileNameModal) {
+            return null;
+        }
+        this._askFileNameModal = {};
 
         // prepare notification content
         var content = utils.parse(
-                '<div class="input-group">' +
-                '    <input type="text" />' +
-                '    <div class="button" role="button">' +
-                '        <span class="fa fa-floppy-o" aria-hidden="true"></span>' +
-                '        <span class="sr-only">Save</span>' +
-                '    </div>' +
-                '</div>' +
-                '<small>' +
-                '    <span class="fa fa-lightbulb-o" aria-hidden="true"></span>' +
-                '    <strong>Pro Tip:</strong> Click on a item in the file navigation to copy its path.' +
-                '</small>'
-            ),
-            inputGroup = content.querySelector('div > .input-group'),
-            inputField = inputGroup.querySelector('div > input'),
-            submitButton = inputGroup.querySelector('div > .button');
+            '<div class="input-group">' +
+            '    <input type="text" />' +
+            '    <div class="button" role="button">' +
+            '        <span class="fa fa-floppy-o" aria-hidden="true"></span>' +
+            '        <span class="sr-only">Save</span>' +
+            '    </div>' +
+            '</div>' +
+            '<small>' +
+            '    <span class="fa fa-lightbulb-o" aria-hidden="true"></span>' +
+            '    <strong>Pro Tip:</strong> Click on a item in the file navigation to copy its path.' +
+            '</small>'
+        );
+
+        var inputGroup = content.querySelector('.input-group'),
+            inputField = inputGroup.querySelector('input'),
+            submitButton = inputGroup.querySelector('.button');
 
         if (options.fileExt) {
             inputGroup.insertBefore(
@@ -307,8 +287,12 @@ utils.createClass(PicoAdminModule, function () {
             );
         }
 
-        inputField.addEventListener('focus', function () { inputGroup.classList.add('focus'); });
-        inputField.addEventListener('blur', function () { inputGroup.classList.remove('focus'); });
+        inputField.addEventListener('focus', function () {
+            inputGroup.classList.add('focus');
+        });
+        inputField.addEventListener('blur', function () {
+            inputGroup.classList.remove('focus');
+        });
 
         // set default value
         inputField.value = options.value;
@@ -318,14 +302,17 @@ utils.createClass(PicoAdminModule, function () {
             moduleButtons = navigation.querySelectorAll('.module > .headline h3 a'),
             landingModuleButtons = document.querySelectorAll('#landing .module'),
             actionLists = navigation.querySelectorAll('.module .actions'),
-            itemAnchors = navigation.querySelectorAll('.module > .nav .item > a');
+            itemAnchors = navigation.querySelectorAll('.module .nav-inner .item > a');
 
-        utils.forEach(moduleButtons, function (_, moduleButton) {
-            moduleButton.classList.add('disabled');
-        });
-        utils.forEach(landingModuleButtons, function (_, landingModuleButton) {
-            landingModuleButton.classList.add('disabled');
-        });
+        for (var i = 0; i < moduleButtons.length; i++) {
+            moduleButtons[i].classList.add('disabled');
+        }
+        for (var i = 0; i < landingModuleButtons.length; i++) {
+            landingModuleButtons[i].classList.add('disabled');
+        }
+        for (var i = 0; i < actionLists.length; i++) {
+            utils.slideLeft(actionLists[i]);
+        }
 
         var applyPathEvent = function (event) {
             event.preventDefault();
@@ -334,44 +321,41 @@ utils.createClass(PicoAdminModule, function () {
                 item = utils.closest(anchor, '.item'),
                 path = item.dataset.path + (item.classList.contains('parent') ? '/' : '');
 
-            self.setFileNameModalValue(path);
+            self._setFileNameModalValue(path);
         };
 
-        utils.forEach(itemAnchors, function (_, itemAnchor) {
-            utils.disableNamedEventListener(itemAnchor, 'click', 'action');
+        for (var i = 0; i < itemAnchors.length; i++) {
+            utils.disableNamedEventListener(itemAnchors[i], 'click', 'action');
+            utils.addNamedEventListener(itemAnchors[i], 'click', 'apply-path', applyPathEvent);
 
-            if (!itemAnchor.hasAttribute('href')) itemAnchor.setAttribute('href', '');
-            utils.addNamedEventListener(itemAnchor, 'click', 'apply-path', applyPathEvent);
-        });
-
-        utils.forEach(actionLists, function (_, actionList) { utils.slideLeft(actionList); });
+            if (!itemAnchors[i].hasAttribute('href')) {
+                itemAnchors[i].setAttribute('href', '');
+            }
+        }
 
         // create notification
-        var notification = this.picoAdmin.showNotification(options.title, content, {
+        var notification = this._picoAdmin.showNotification(options.title, content, {
             icon: { iconName: options.iconName, className: options.className },
             timeout: 0,
             closeable: options.closeable,
-            closeCallback: function () { self.closeFileNameModal(); }
+            closeCallback: function () {
+                self._closeFileNameModal();
+            }
         });
 
         var notificationId = notification.dataset.notificationId;
-        this.askFileNameModal = utils.extend(
-            { alert: notification},
-            this.picoAdmin.notifications[notificationId],
-            {
-                defaultValue: options.value,
-                fileExt: options.fileExt,
-                submitCallback: options.callback
-            }
+        this._askFileNameModal = utils.extend(
+            { alert: notification },
+            options
         );
 
         // make the save button functional
         submitButton.addEventListener('click', function () {
-            self.submitFileNameModal();
+            self._submitFileNameModal();
         });
         inputField.addEventListener('keydown', function (event) {
             if (event.keyCode == 13) {
-                self.submitFileNameModal();
+                self._submitFileNameModal();
             }
         });
 
@@ -381,61 +365,63 @@ utils.createClass(PicoAdminModule, function () {
         return notification;
     };
 
-    this.prototype.closeFileNameModal = function ()
+    this.prototype._closeFileNameModal = function ()
     {
-        var notification = this.askFileNameModal.alert;
+        var notification = this._askFileNameModal ? this._askFileNameModal.alert : null;
         if (notification) {
             // reset navigation
             var navigation = document.querySelector('header > nav'),
                 moduleButtons = navigation.querySelectorAll('.module > .headline h3 a'),
                 landingModuleButtons = document.querySelectorAll('#landing .module'),
                 actionLists = navigation.querySelectorAll('.module .actions'),
-                itemAnchors = navigation.querySelectorAll('.module > .nav .item > a');
+                itemAnchors = navigation.querySelectorAll('.module .nav-inner .item > a');
 
-            utils.forEach(moduleButtons, function (_, moduleButton) {
-                moduleButton.classList.remove('disabled');
-            });
-            utils.forEach(landingModuleButtons, function (_, landingModuleButton) {
-                landingModuleButton.classList.remove('disabled');
-            });
+            for (var i = 0; i < moduleButtons.length; i++) {
+                moduleButtons[i].classList.remove('disabled');
+            }
+            for (var i = 0; i < landingModuleButtons.length; i++) {
+                landingModuleButtons[i].classList.remove('disabled');
+            }
+            for (var i = 0; i < actionLists.length; i++) {
+                utils.slideRight(actionLists[i]);
+            }
 
-            utils.forEach(actionLists, function (_, actionList) { utils.slideRight(actionList); });
+            for (var i = 0; i < itemAnchors.length; i++) {
+                utils.removeNamedEventListener(itemAnchors[i], 'click', 'apply-path');
+                utils.enableNamedEventListener(itemAnchors[i], 'click', 'action');
 
-            utils.forEach(itemAnchors, function (_, itemAnchor) {
-                utils.removeNamedEventListener(itemAnchor, 'click', 'apply-path');
-                if (itemAnchor.getAttribute('href') === '') itemAnchor.removeAttribute('href');
-
-                utils.enableNamedEventListener(itemAnchor, 'click', 'action');
-            });
-
-            // close conflict notifications
-            var conflictNotifications = this.askFileNameModal.conflictNotifications;
-            if (conflictNotifications) {
-                for (var i = 0; i < conflictNotifications.length; i++) {
-                    this.picoAdmin.hideNotification(conflictNotifications[i]);
+                if (itemAnchors[i].getAttribute('href') === '') {
+                    itemAnchors[i].removeAttribute('href');
                 }
             }
 
-            this.askFileNameModal = null;
+            // close conflict notifications
+            if (this._askFileNameModal.conflicts) {
+                var conflicts = this._askFileNameModal.conflicts;
+                for (var i = 0; i < conflicts.length; i++) {
+                    this._picoAdmin.hideNotification(conflicts[i]);
+                }
+            }
+
+            this._askFileNameModal = null;
         }
     };
 
-    this.prototype.submitFileNameModal = function ()
+    this.prototype._submitFileNameModal = function ()
     {
-        var notification = this.askFileNameModal.alert;
+        var notification = this._askFileNameModal ? this._askFileNameModal.alert : null;
         if (notification) {
-            var inputField = notification.querySelector('.input-group > input'),
-                value = inputField.value,
-                submitCallback = this.askFileNameModal.submitCallback;
+            var value = notification.querySelector('.input-group > input').value,
+                submitCallback = this._askFileNameModal.callback;
 
             // just close the notification when no value has been entered
             if (value === '') {
-                this.picoAdmin.hideNotification(notification);
+                this._picoAdmin.hideNotification(notification);
                 return;
             }
 
             // drop file extension when necessary
-            var fileExt = this.askFileNameModal.fileExt;
+            var fileExt = this._askFileNameModal.fileExt;
             if (fileExt) {
                 var testFileExt = value.substr(-fileExt.length);
                 if (testFileExt === fileExt) {
@@ -445,56 +431,60 @@ utils.createClass(PicoAdminModule, function () {
             }
 
             // check for conflicting files
-            var defaultValue = this.askFileNameModal.defaultValue,
-                conflictValue = this.askFileNameModal.conflictValue;
+            var defaultValue = this._askFileNameModal.value,
+                conflictValue = this._askFileNameModal.conflictValue;
             if ((value !== defaultValue) && (value !== conflictValue)) {
-                var moduleNav = document.getElementById('module-' + this.moduleName + '-nav'),
-                    conflictItem = moduleNav.querySelector('.nav .item[data-path="' + value + '"]');
+                var conflictItem = this._navigationInner.querySelector('.item[data-path="' + value + '"]');
                 if (conflictItem) {
-                    var conflictNotification = this.picoAdmin.showNotification(
+                    var conflictNotification = this._picoAdmin.showNotification(
                         'Conflict',
                         "There's already a page of this name, be careful about not accidently overwriting it! " +
                             'Try again to overwrite the file.',
                         { type: 'warning' }
                     );
 
-                    this.askFileNameModal.conflictValue = value;
-
-                    if (!this.askFileNameModal.conflictNotifications) {
-                        this.askFileNameModal.conflictNotifications = [ conflictNotification ];
-                    } else {
-                        this.askFileNameModal.conflictNotifications.push(conflictNotification);
+                    if (!this._askFileNameModal.conflicts) {
+                        this._askFileNameModal.conflicts = [];
                     }
+
+                    this._askFileNameModal.conflicts.push(conflictNotification);
+                    this._askFileNameModal.conflictValue = value;
+
                     return;
                 }
             }
 
-            this.picoAdmin.hideNotification(notification);
-
-            // validate path and call success callback
+            // validate entered value
             if (value.substr(-1) === '/') {
-                this.picoAdmin.showNotification(
+                this._picoAdmin.showNotification(
                     'Invalid Path',
                     'The path you\'ve entered is invalid. Please specify a valid file path.',
                     { type: 'error' }
                 );
-            } else if (submitCallback) {
+
+                return;
+            }
+
+            // hide notification and call submit callback
+            this._picoAdmin.hideNotification(notification);
+
+            if (submitCallback) {
                 submitCallback(value);
             }
         }
     };
 
-    this.prototype.setFileNameModalValue = function (path)
+    this.prototype._setFileNameModalValue = function (path)
     {
-        var notification = this.askFileNameModal.alert;
+        var notification = this._askFileNameModal ? this._askFileNameModal.alert : null;
         if (notification) {
             var inputField = notification.querySelector('.input-group > input');
             inputField.value = path;
         }
     };
 
-    this.prototype.ajax = function (action, payload, options)
+    this.prototype._ajax = function (action, payload, options)
     {
-        return this.picoAdmin.ajax(this.moduleName, action, payload, options);
+        return this._picoAdmin.ajax(this._moduleName, action, payload, options);
     };
 });

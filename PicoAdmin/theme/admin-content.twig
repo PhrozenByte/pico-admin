@@ -11,9 +11,12 @@
     <script src="{{ admin_theme_url }}/js/admin-content.js" type="text/javascript"></script>
 
     <script type="text/javascript">
-        var picoContentAdmin = new PicoContentAdmin(picoAdmin, {{ csrf_token|json_encode }});
+        var picoContentAdmin = new PicoContentAdmin(
+            picoAdmin,
+            {{ csrf_token|json_encode }},
+            {% filter json_encode %}{1} | Pico Admin Panel | {{ site_title }}{% endfilter %}
+        );
         picoContentAdmin.init({
-            title: {% filter json_encode %}{1} | Pico Admin Panel | {{ site_title }}{% endfilter %},
             contentExt: {{ config.content_ext|json_encode }},
             yamlEditorOptions: utils.extend(
                 {{ config.PicoAdmin.PicoContentAdmin.yamlEditor|json_encode }},
@@ -30,13 +33,10 @@
 
     {% if admin_request.module == "content" %}
         <script type="text/javascript">
-            if (!picoContentAdmin.restore()) {
-                picoContentAdmin.takeOver(
-                    '{{ page_path|escape("js") }}',
-                    '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
-                    '{{ page_title|escape("js") }}'
-                );
-            }
+            picoAdmin.takeOver('content', '{{ page_path|escape("js") }}', [
+                '{% if not rescue_mode %}{{ admin_request.action }}{% else %}rescue{% endif %}',
+                '{{ page_title|escape("js") }}'
+            ]);
         </script>
     {% endif %}
 {% endblock %}

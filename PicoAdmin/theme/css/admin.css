@@ -103,9 +103,11 @@ header { border-right: 1px solid #ddd; }
 header > h1 {
     margin: 0;
     padding: 1rem;
+
     white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;
+
     background: #2EAE9B;
     color: #fff;
 }
@@ -183,8 +185,10 @@ footer a[href]:hover { color: #fff; }
     position: fixed;
     top: 0;
     left: 0;
+
     width: 100%;
     height: 100%;
+
     z-index: 100;
     background: #000;
 }
@@ -196,14 +200,19 @@ footer a[href]:hover { color: #fff; }
     top: 0;
     left: 0;
     right: 0;
+
     width: 768px;
     max-width: 100%;
     margin: 0 auto;
     padding: 0 0.5em;
+
     z-index: 200;
     opacity: 0.95;
 }
-#notification > .alert { border-top: 0 none; }
+#notification > .alert {
+    border-top: 0 none;
+    margin-bottom: 0;
+}
 #notification > .alert:last-child {
     border-bottom-left-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
@@ -231,6 +240,7 @@ footer a[href]:hover { color: #fff; }
     align-items: center;
     background: #ccc;
     border: 1px solid #999;
+    margin-bottom: 1em;
 }
 .alert.alert-info {    background: #6cc; border-color: #399; }
 .alert.alert-success { background: #6c9; border-color: #396; }
@@ -256,13 +266,16 @@ footer a[href]:hover { color: #fff; }
 .alert > .button {
     align-self: flex-start;
     flex: 0 0 auto;
+
     display: block;
     margin: 1rem;
     padding: 0.5em 1em;
+
     color: #444;
     background: rgba(0, 0, 0, 0.15);
     border-radius: 0.3em;
     cursor: pointer;
+
     -webkit-transition: background .2s ease-in;
             transition: background .2s ease-in;
 }
@@ -272,17 +285,21 @@ footer a[href]:hover { color: #fff; }
 
 .alert > .dismiss {
     align-self: flex-start;
+
     min-width: 2em;
     height: 2em;
     margin: 1rem;
     line-height: 2em;
+
     font-size: 0.7rem;
     text-align: center;
     font-weight: bold;
+
     color: rgba(0, 0, 0, 0.4);
     background: rgba(0, 0, 0, 0.15);
     border-radius: 0.3rem;
     cursor: default;
+
     -webkit-transition: background .2s ease-in;
             transition: background .2s ease-in;
 }
@@ -407,10 +424,12 @@ footer a[href]:hover { color: #fff; }
     width: 2em;
     margin: 0;
     padding: 0.3em;
+
     background: #eee;
     text-align: center;
     color: #444;
     cursor: pointer;
+
     -webkit-transition: color .2s ease-in;
             transition: color .2s ease-in;
 }
@@ -493,13 +512,17 @@ footer a[href]:hover { color: #fff; }
     display: flex;
     flex-direction: column;
     justify-content: center;
+
     width: 12em;
     height: 10em;
-    border: 1px solid #ddd;
-    border-radius: 0.5em;
     margin: 0.25em;
     padding: 1em;
+
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+
     cursor: pointer;
+
     -webkit-transition: border-color .2s ease-in,
                         box-shadow .2s ease-in;
             transition: border-color .2s ease-in,

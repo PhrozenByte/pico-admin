@@ -17,8 +17,10 @@ Robots: noindex,nofollow
 to use to access the admin panel below and hit `Generate`:
 
 <form action="" method="post">
-    <input type="password" name="password" placeholder="Password" />
-    <input type="submit" value="Generate" />
+    <fieldset>
+        <input type="password" name="password" placeholder="Password" />
+        <input type="submit" value="Generate" />
+    </fieldset>
 </form>
 
 <div class="admin-auth-token" data-auth-token="%meta.admin_auth_token%" markdown="1">

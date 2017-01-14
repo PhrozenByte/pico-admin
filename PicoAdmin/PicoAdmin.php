@@ -108,6 +108,7 @@ class PicoAdmin extends AbstractPicoPlugin
             // show built-in landing page when no specific module was requested
             // landing page requires authentication, therefore non-authenticated users will end up on the login page
             $this->requestModule = 'landing';
+            $this->requestAction = $this->requestPayload = '';
             $this->authenticationRequired = true;
         }
 
@@ -267,6 +268,11 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         return $authToken;
+    }
+
+    public function isAuthenticated()
+    {
+        return $this->authenticated;
     }
 
     public function getAdminPageUrl($page, $queryData = null)
