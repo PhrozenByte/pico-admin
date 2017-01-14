@@ -99,7 +99,7 @@ class PicoAdmin extends AbstractPicoPlugin
             // when only a single module is registered, redirect to the main page of this module
             if (count($this->modules) === 1) {
                 foreach ($this->modules as $moduleName => $module) {
-                    header('307 Temporary Redirect');
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 307 Temporary Redirect');
                     header('Location: ' . $this->getAdminPageUrl($moduleName));
                     die();
                 }

@@ -99,7 +99,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
     {
         if ($module === 'content') {
             if (!$action) {
-                header('307 Temporary Redirect');
+                header($_SERVER['SERVER_PROTOCOL'] . ' 307 Temporary Redirect');
                 header('Location: ' . $this->admin->getAdminPageUrl('content/edit/index'));
                 die();
             } else {
@@ -118,7 +118,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 }
 
                 if (!$this->page && ($this->action === 'edit')) {
-                    header('307 Temporary Redirect');
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 307 Temporary Redirect');
                     header('Location: ' . $this->admin->getAdminPageUrl('content/' . $action . '/index'));
                     die();
                 }
