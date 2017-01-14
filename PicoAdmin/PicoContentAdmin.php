@@ -176,7 +176,13 @@ class PicoContentAdmin extends AbstractPicoPlugin
                 return;
         }
 
-        if (($this->action === 'create') || ($this->action === 'edit')) {
+        if (!$this->page && in_array($this->action, array('edit', 'load', 'save', 'delete'), true)) {
+            // invalid non-payload request; disable module...
+            $this->setEnabled(false);
+            return;
+        }
+
+        if (in_array($this->action, array('create', 'edit'), true)) {
             // create new CSRF token
             $csrfTokenPayload = 'PicoContentAdmin|' . $this->admin->getPluginConfig('auth_token');
             $this->csrfToken = $this->session->generateSignedToken('PicoContentAdmin', $csrfTokenPayload);
@@ -337,7 +343,7 @@ class PicoContentAdmin extends AbstractPicoPlugin
         $twig->getLoader()->addPath(__DIR__ . '/theme');
 
         // HTML requests
-        if (($this->action === 'create') || ($this->action === 'edit')) {
+        if (in_array($this->action, array('create', 'edit'), true)) {
             $templateName = 'admin.twig';
 
             if ($this->action === 'edit') {

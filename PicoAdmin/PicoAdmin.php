@@ -215,7 +215,7 @@ class PicoAdmin extends AbstractPicoPlugin
         }
 
         // fallback to frontend theme
-        if (($this->requestModule === 'info') || ($this->requestModule === 'login')) {
+        if (in_array($this->requestModule, array('info', 'login'), true)) {
             return;
         }
 
