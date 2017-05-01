@@ -22,9 +22,15 @@
         "issues": "https://github.com/PhrozenByte/pico-admin/issues",
         "source": "https://github.com/PhrozenByte/pico-admin"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "/var/www/html/projects/private/pico/Composer-Installers"
+        }
+    ],
     "require": {
         "php": ">=5.3.7",
-        "composer/installers": "~1.0",
+        "composer/installers": "dev-master",
         "ircmaxell/password-compat": "^1.0"
     },
     "autoload": {
